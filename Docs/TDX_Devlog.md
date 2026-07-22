@@ -10,7 +10,7 @@ Jogo checked the build over and called it solid → B0 before any unit code.
 - **Pre-commit cleanliness**: deleted stray `Code/sim.mjs` (Session-1 harness, superseded by `tests/sim.mjs` — the two had diverged). Suite still 48/48 after removal.
 - **Repo**: `git init` at `05_TDX/` root (whole project per Jogo — Code, Docs, Notes, Assets), branch `main`, `.gitignore` (.DS_Store, iCloud artifacts, editor cruft). Initial commit tagged **v1.01-altair**; 27 files tracked, tree clean.
 - **Backup procedure** written into `TDX_QuickStart.md`: session cadence (tests green → commit → push), milestone-only tagging rule, one-time remote setup for Jogo (GitHub Desktop or terminal), iCloud/git caveat (iCloud can evict file contents — hit it twice this session; GitHub is the real backup). QuickStart prompt also refreshed to current state (48 checks, roadmap pointer).
-- **Published**: Jogo installed GitHub Desktop, added the existing local repo, published private as **github.com/Jogosity/TDX**. First push verified (origin/main at the session-10 commit). **B0 CLOSED.** Note: tag `v1.01-altair` was CLI-created, so Desktop may not have pushed it — if absent from the repo's Tags page, `git push --tags` from Terminal fixes it.
+- **Published**: Jogo installed GitHub Desktop, added the existing local repo, published private as **github.com/Jogosity/TDX**. First push verified (origin/main at the session-10 commit). **B0 CLOSED.** Tag push hiccup solved: Terminal auth rejects account passwords (GitHub is token-only since 2021), so instead the repo got `push.followTags` — tags now ride along with ordinary Desktop pushes, no Terminal needed. `v1.01-altair` confirmed on the remote.
 
 **Next session: Phase B1 — Pulse + Compressor towers.**
 

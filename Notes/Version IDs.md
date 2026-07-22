@@ -28,6 +28,3 @@ X
 Y
 ZX81
 
-
-
-qicfu9-tifqen-Jiwnum
