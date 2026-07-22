@@ -13,7 +13,9 @@ Before doing anything else, read these files in `1_projects/05_TDX/`:
 4. `Docs/TDX_Initial_Design.md` — the original design doc (reference).
 5. `Code/js/config.js` — all balance and level data. I may have hand-edited this since the last session; treat it as the current source of truth.
 
-The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (43 checks passing at milestone close). To play: `cd Code && python3 -m http.server 8000` (phone via LAN IP).
+The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (48 checks passing as of M2 Stage A). To play: `cd Code && python3 -m http.server 8000` (phone via LAN IP).
+
+The project is a git repo (root of `05_TDX/`) — commit at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap (M2–M5, phased) is at the bottom of `TDX_Todos.md`.
 
 Where we left off — Milestone 1 shipped:
 - Full battle loop: 5 levels with per-level grids/themes, lockout cells, multi-spawn entry points, CRASH events, wave TEV/MAV/RTV rhythm.
@@ -26,6 +28,27 @@ Known-open items parked for Milestone 2 planning:
 - Retention Modules 4 (Re-engagement; Daily Quests design unfinished in the design doc) and 5 (Collection secondary).
 - Smaller: lateral map asymmetry, Limiter rebalance, crash cost-cap, sound.
 
-Today: I'll define the Milestone 2 objectives, then let's plan the milestone and break it into stages before writing any code.
+Today: [state the phase from the Milestones section of TDX_Todos.md — next up: Phase B1, Pulse + Compressor towers]
 
-Update the devlog at the end of the session.
+Update the devlog and commit to git at the end of the session.
+
+---
+
+# Backup Procedure (git)
+
+The repo root is `1_projects/05_TDX/` (whole project: Code, Docs, Notes, Assets). `.DS_Store` and iCloud artifacts are gitignored.
+
+**Every session (Claude does this):**
+1. `node tests/sim.mjs` green before committing.
+2. `git add -A && git commit` with a session-summary message.
+3. `git push` (once the remote exists).
+
+**Milestone close only:** tag the commit `vX.XX-codename` (e.g. `v1.01-altair`) — same rule as the version display: tag only when the milestone's full feature set has landed.
+
+**One-time remote setup (Jogo, on the Mac — needs your GitHub login):**
+- Easiest: install GitHub Desktop → File → Add Local Repository → select the `05_TDX` folder → Publish repository (tick "keep private").
+- Or terminal: create a private repo named `TDX` at github.com/new (no README/gitignore — the repo already has history), then from the `05_TDX` folder:
+  `git remote add origin https://github.com/YOURUSER/TDX.git`
+  `git push -u origin main --tags`
+
+**Caveat:** the repo lives inside iCloud Drive, which can evict file contents ("dataless" files) and confuse git. GitHub is the real backup; if git ever acts strangely locally, download the folder fully in Finder (right-click → Download Now) before running git commands.

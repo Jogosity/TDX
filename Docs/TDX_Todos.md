@@ -49,7 +49,7 @@ The game is intended as a 360° demonstration of game craft — each milestone s
 New units land in small phases with playtest + iteration between each. No rushing units to "done" — they mature across phases.
 
 - [x] **Phase A — Tweaks** ✅ S9 (version display, per-level budgets, delta verify + Level Select display)
-- [ ] **Phase B0 — GitHub repo** (slotted here deliberately: version control BEFORE the unit-iteration churn starts. Account exists, no repos yet → create private repo, .gitignore, initial commit tagged v1.01-altair, note the backup procedure in the QuickStart doc)
+- [x] **Phase B0 — GitHub repo** ✅ S10: local repo live (init at project root, .gitignore, initial commit tagged v1.01-altair, stray Code/sim.mjs removed, backup procedure in QuickStart). ⏳ One Jogo step left: publish private repo + first push (steps in QuickStart)
 - [ ] **Phase B1 — Familiar-weapon towers**: Pulse (burst rifle — mostly config) + Compressor (pump shotgun — multi-pellet cone). Playtest, iterate.
 - [ ] **Phase B2 — New-system towers**: Tracer (laser-beam weapon class) + Overclock (adjacency damage-buff aura). Playtest, iterate.
 - [ ] **Phase C — Simple enemies**: Turtle (config) + Stinger (fast pack, non-optimal route — ⚠️ spec contradiction: "same as Worm" vs listed 70hp/EV350, Jogo to rule) + Bug (tower-hunter, ignores base).

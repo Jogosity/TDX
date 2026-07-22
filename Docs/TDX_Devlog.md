@@ -3,6 +3,18 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 10 — 2026-07-22 — Phase B0: git repo (the safety step)
+
+Jogo checked the build over and called it solid → B0 before any unit code.
+
+- **Pre-commit cleanliness**: deleted stray `Code/sim.mjs` (Session-1 harness, superseded by `tests/sim.mjs` — the two had diverged). Suite still 48/48 after removal.
+- **Repo**: `git init` at `05_TDX/` root (whole project per Jogo — Code, Docs, Notes, Assets), branch `main`, `.gitignore` (.DS_Store, iCloud artifacts, editor cruft). Initial commit tagged **v1.01-altair**; 27 files tracked, tree clean.
+- **Backup procedure** written into `TDX_QuickStart.md`: session cadence (tests green → commit → push), milestone-only tagging rule, one-time remote setup for Jogo (GitHub Desktop or terminal), iCloud/git caveat (iCloud can evict file contents — hit it twice this session; GitHub is the real backup). QuickStart prompt also refreshed to current state (48 checks, roadmap pointer).
+- **Remaining for Jogo** (needs his GitHub login, account has no repos yet): create the private `TDX` repo and push — exact steps in the QuickStart. B0 closes when the first push lands.
+
+**Next session: Phase B1 — Pulse + Compressor towers.**
+
+---
 ## Session 9 — 2026-07-21 — Milestone 2 planned + Stage A landed
 
 ### Milestone 2 — "Basic" (per TDX_Todos.md + TDX_Towers_and_Enemies.md)
