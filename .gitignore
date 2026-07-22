@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# iCloud sync artifacts
+*.icloud
+
+# editor cruft
+*.swp
+.vscode/
