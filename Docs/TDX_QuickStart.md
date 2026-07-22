@@ -51,4 +51,6 @@ The repo root is `1_projects/05_TDX/` (whole project: Code, Docs, Notes, Assets)
   `git remote add origin https://github.com/YOURUSER/TDX.git`
   `git push -u origin main --tags`
 
+**Auth note:** Terminal git asks for a password but GitHub no longer accepts account passwords (token-only since 2021) — don't fight it. The repo has `push.followTags` set, so milestone tags ride along automatically with a normal GitHub Desktop "Push origin". No Terminal needed.
+
 **Caveat:** the repo lives inside iCloud Drive, which can evict file contents ("dataless" files) and confuse git. GitHub is the real backup; if git ever acts strangely locally, download the folder fully in Finder (right-click → Download Now) before running git commands.
