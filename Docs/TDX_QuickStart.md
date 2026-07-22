@@ -4,7 +4,7 @@ Paste the prompt below into a fresh session (with the JogoHome folder connected)
 
 ---
 
-We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestone 1 is complete** (core battle loop + Retention Modules 1–3); we're starting Milestone 2.
+We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestone 1 is complete** (core battle loop + Retention Modules 1–3). **Milestone 2 ("Basic" — Tower & Enemy Expansion, phased) is in progress**: Stage A (tweaks) and Phase B0 (GitHub repo, private at github.com/Jogosity/TDX) are done. The full M2–M5 roadmap lives at the bottom of TDX_Todos.md.
 
 Before doing anything else, read these files in `1_projects/05_TDX/`:
 1. `Docs/TDX_Devlog.md` — session history and decisions. Read the MILESTONE 1 COMPLETE summary and the newest session entry first.
@@ -17,16 +17,7 @@ The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dep
 
 The project is a git repo (root of `05_TDX/`) — commit at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap (M2–M5, phased) is at the bottom of `TDX_Todos.md`.
 
-Where we left off — Milestone 1 shipped:
-- Full battle loop: 5 levels with per-level grids/themes, lockout cells, multi-spawn entry points, CRASH events, wave TEV/MAV/RTV rhythm.
-- Retention: per-tower upgrade tiers (BITS + Tokens), region-locked Blueprint collection with tower unlocks, linear level progression + level select.
-- Main menu, tabbed debug menu (⚙️), persistent save with migrations.
-
-Known-open items parked for Milestone 2 planning:
-- Difficulty: game too easy; L2–L5 waves are generated scaffolds — awaiting the AI difficulty-analysis sub-project (grow tests/sim.mjs into a headless balance simulator).
-- Content: more towers + enemies to thicken the mix (scaffold ready — config entry + art case; L5 bpPool is empty).
-- Retention Modules 4 (Re-engagement; Daily Quests design unfinished in the design doc) and 5 (Collection secondary).
-- Smaller: lateral map asymmetry, Limiter rebalance, crash cost-cap, sound.
+Where we left off (Session 10): repo live and pushed, v1.01-altair tagged, 48/48 tests green. New units are specced in `Docs/TDX_Towers_and_Enemies.md` — they land in small phases with playtest + iteration between each; don't rush units to "done". Parked for later milestones (see roadmap): difficulty sim (M3, needs the roster settled first), Re-engagement modules (M4), onboarding/sound/polish (M5).
 
 Today: [state the phase from the Milestones section of TDX_Todos.md — next up: Phase B1, Pulse + Compressor towers]
 
