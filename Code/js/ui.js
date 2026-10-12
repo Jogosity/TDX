@@ -64,6 +64,11 @@ export class UI {
       this.el.tray.appendChild(btn);
       this.trayBtns[key] = { btn, cost };
     }
+    // double-stack the tray once the roster outgrows a phone-width row
+    const n = TOWER_ORDER.length;
+    const stacked = n > 5;
+    this.el.tray.style.setProperty('--tray-cols', stacked ? Math.ceil(n / 2) : n);
+    this.el.tray.classList.toggle('stacked', stacked);
   }
 
   towerIcon(key, sizePx, shapeSize) {
@@ -384,6 +389,11 @@ export class UI {
           this.dbgButton(el, 'Add 100 Tokens', () => this.game.debugAddTokens(100));
           this.dbgButton(el, 'Add 10 Bits', () => this.game.debugAddBits(10));
           this.dbgButton(el, 'Trigger CRASH now', () => { this.hideDebugMenu(); this.game.executeCrash(); });
+          const pause = this.dbgButton(el, this.pauseLabel(), () => {
+            this.game.spawnPaused = !this.game.spawnPaused;
+            pause.textContent = this.pauseLabel();
+            this.toast(this.game.spawnPaused ? 'Wave spawning paused' : 'Wave spawning resumed');
+          });
           this.dbgButton(el, 'Unlock all towers', () => this.game.debugUnlockAllTowers());
           this.dbgButton(el, 'Lock all towers', () => this.game.debugLockAllTowers());
           this.dbgButton(el, 'Unlock all levels', () => this.game.debugUnlockAllLevels());
@@ -412,7 +422,10 @@ export class UI {
     b.textContent = label;
     b.addEventListener('click', onTap);
     parent.appendChild(b);
+    return b;
   }
+
+  pauseLabel() { return this.game.spawnPaused ? 'Resume wave spawning' : 'Pause wave spawning'; }
 
   showDebugMenu() {
     this.activeDebugTab = this.activeDebugTab ?? 0;

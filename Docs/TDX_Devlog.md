@@ -3,6 +3,35 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 11 — 2026-10-12 — Phase B1: Pulse + Compressor (first pass)
+
+Run remotely on Jogo's Mac mini. Config read as source of truth (no hand-edits since S10).
+
+### New towers (TOWERS + WEAPONS, art, tray)
+- **Pulse** — `pulseRifle`: 3-round bursts (0.08s between rounds), 1.5 pulses/s, clip = 5 pulses (15 rounds), 1.8s reload, 14 dmg/round, range 2.3 (= Threader). Cost 400 / 150hp, tier4 350hp / 30 dmg. Art: three slim rounds side by side, centre one leading. Violet.
+  - Paper DPS ≈ 49 sustained (vs Threader 20) — per-cell upgrade over Threader, but 4 Threaders still out-DPS one Pulse per Token. That's the playtest question if Pulse is meant to supplant Threader.
+- **Compressor** — new `pumpShotgun` (aimed cone class): 8 pellets fanned evenly across a 45° cone, 7 dmg each, 1.4 pumps/s, clip 4, 2.4s reload, range 1.8, pellets fly straight and die at the range edge (reuses the Defrag pellet path). Cost 400 / 100hp, tier4 250hp / 15 dmg. Art: 45° fan wedge on a pump block. Mint-teal.
+  - Paper max ≈ 42 DPS if every pellet lands (point-blank on one target, or into packs); at full range the fan is ~1.5 cells wide so single targets eat only a few pellets.
+- **Engine**: weapons with `cone` + `pelletCount` fire an aimed pellet fan. **Burst/reload fix**: a clip's last burst now finishes before the reload starts — previously the final pulse fired 1 round and the other 2 leaked out after the reload (no existing tower used clip + burst, so it never showed).
+- **BPs**: both set to 16 but **not in any bpPool yet** — region locks are Phase E (Pulse→L4, Compressor→L3). For playtest: Debug → ECONOMY → Unlock all towers.
+
+### From the Todos "Phase 1" list (playtest support)
+- **Tray double-stacks** once the roster passes 5: 7 towers = 4 + 3 grid, slightly shorter buttons. Single row unchanged at ≤5.
+- **Debug: Pause / Resume wave spawning** (ECONOMY tab) — holds natural wave spawns; debug SPAWN still works, so you can line up one enemy type against a test build.
+
+### Tests
+48 → **56 checks**: roster/BP presence, Pulse = Threader range, full 3-round bursts before reload (15 rounds per clip), burst rhythm (tight burst then 1/fireRate pause), Compressor fan count, pellets inside the 45° cone, pellets hit up close and die at range, tier-4 targets on the new tower. 56/56.
+- Node isn't installed on the Mac mini, so I added `tests/run.html` — a browser runner for the same `sim.mjs` (shims `process.exit` + a mockable `localStorage`). Serve `Code/` and open `/tests/run.html`. `node tests/sim.mjs` still works wherever Node exists.
+- Smoke-played L1 at phone size (375×812): both towers place, build, aim and fire; tray fits; no console errors.
+
+### Playtest asks for Jogo
+- Pulse: does the burst read and feel distinct from Threader? Is 400 right for ~2.5× Threader DPS?
+- Compressor: is 1.8 range too short to matter? Does it want to sit at chokes / beside the path?
+- Both are first-pass numbers — tune freely in config.
+
+**Next: playtest + iterate B1, then Phase B2 (Tracer + Overclock).**
+
+---
 ## Session 10 — 2026-07-22 — Phase B0: git repo (the safety step)
 
 Jogo checked the build over and called it solid → B0 before any unit code.

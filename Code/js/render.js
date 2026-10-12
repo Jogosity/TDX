@@ -604,6 +604,34 @@ export function drawTowerShape(ctx, type, s, def) {
       }
       break;
     }
+    case 'pulse': { // three slim rounds side by side — the 3-round burst
+      for (let i = -1; i <= 1; i++) {
+        const x = i * s * 0.42;
+        const top = i === 0 ? -s * 1.0 : -s * 0.7;   // centre round leads
+        const w = s * 0.15;
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x + w, top + s * 0.32);
+        ctx.lineTo(x + w, s * 0.8);
+        ctx.lineTo(x - w, s * 0.8);
+        ctx.lineTo(x - w, top + s * 0.32);
+        ctx.closePath();
+        ctx.fill();
+      }
+      break;
+    }
+    case 'compressor': { // 45° fan wedge with a solid pump block behind it
+      const r = s * 1.15, half = Math.PI / 8;      // 22.5° each side
+      const cy = s * 0.45;                          // fan apex sits low
+      ctx.beginPath();
+      ctx.moveTo(0, cy);
+      ctx.arc(0, cy, r, -Math.PI / 2 - half, -Math.PI / 2 + half);
+      ctx.closePath();
+      ctx.fill();
+      roundRect(ctx, -s * 0.34, cy - s * 0.05, s * 0.68, s * 0.42, s * 0.1);
+      ctx.fill();
+      break;
+    }
   }
 }
 

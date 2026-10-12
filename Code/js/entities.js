@@ -119,6 +119,10 @@ export class Tower {
         if (target) this.fire(target, projectiles, grid);
         this.burstLeft--;
         this.burstTimer = this.weapon.burstInterval;
+        // the clip's last burst finishes before the reload starts
+        if (this.burstLeft === 0 && this.weapon.clipSize > 0 && this.clip <= 0) {
+          this.reloading = this.weapon.reloadTime;
+        }
       }
       return;
     }
@@ -134,8 +138,8 @@ export class Tower {
       this.burstTimer = this.weapon.burstInterval;
     }
     if (this.weapon.clipSize > 0) {
-      this.clip--;
-      if (this.clip <= 0) this.reloading = this.weapon.reloadTime;
+      this.clip--;   // one clip unit per trigger pull (a whole burst)
+      if (this.clip <= 0 && this.burstLeft === 0) this.reloading = this.weapon.reloadTime;
     }
   }
 
@@ -159,6 +163,18 @@ export class Tower {
       this.flash = 1;
       for (let i = 0; i < w.pelletCount; i++) {
         const angle = (Math.PI * 2 * i) / w.pelletCount
+          + (Math.random() - 0.5) * 2 * w.spread;
+        projectiles.push(new Projectile(this, null, angle, grid));
+      }
+      return;
+    }
+    if (w.cone) {
+      // shotgun: pellets fanned evenly across the cone, centred on the target
+      const centre = Math.atan2(target.y - this.y, target.x - this.x);
+      this.aim = centre;
+      this.flash = 1;
+      for (let i = 0; i < w.pelletCount; i++) {
+        const angle = centre - w.cone / 2 + (w.cone * (i + 0.5)) / w.pelletCount
           + (Math.random() - 0.5) * 2 * w.spread;
         projectiles.push(new Projectile(this, null, angle, grid));
       }
@@ -188,8 +204,8 @@ export class Projectile {
     this.splashPx = w.splashRadius * cellPx(grid);
     // splash weapons aim at a point (grenade lobs at where the target is now)
     this.aimPoint = w.splashRadius > 0 ? { x: target.x, y: target.y } : null;
-    // radial pellets fly straight and die at the weapon's range edge
-    this.pellet = !!w.radial;
+    // radial and shotgun pellets fly straight and die at the weapon's range edge
+    this.pellet = !!(w.radial || w.cone);
     if (this.pellet) this.maxDist = w.range * cellPx(grid) * 1.1;
     this.traveled = 0;
     this.alive = true;

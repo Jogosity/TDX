@@ -17,6 +17,7 @@ class Game {
     this.renderer = new Renderer(this.canvas);
     this.grid = null;
     this.field = null;
+    this.spawnPaused = false;   // debug: hold natural wave spawning
 
     this.save = loadSave();
 
@@ -470,7 +471,8 @@ class Game {
       }
     }
 
-    if (inWave) this.wave.update(dt, s.enemies);
+    // Debug: spawning can be paused (debug-spawned enemies still arrive)
+    if (inWave && !this.spawnPaused) this.wave.update(dt, s.enemies);
 
     for (const t of s.towers) t.update(dt, s.enemies, s.projectiles, this.grid);
     this.syncPopup();

@@ -52,6 +52,24 @@ export const WEAPONS = {
     radial: true, pelletCount: 12,
     projectile: { color: '#7f7bff', size: 3.5 },
   },
+  // Pulse rifle (M2 B1): 3-round bursts. One clip unit = one whole burst, so
+  // clipSize 5 = 5 pulses (15 rounds) before a full reload. fireRate = pulses/sec.
+  pulseRifle: {
+    damage: 14, fireRate: 1.5, clipSize: 5, reloadTime: 1.8,
+    burstCount: 3, burstInterval: 0.08, spread: 0.04,
+    projectileSpeed: 14, splashRadius: 0, range: 2.3,   // same reach as Threader
+    projectile: { color: '#c3b8ff', size: 3 },
+  },
+  // Pump shotgun (M2 B1): aimed cone of straight-flying pellets.
+  // cone = total spread angle (radians); pellets fan evenly across it and die
+  // at the range edge like scatterShot. damage is per pellet.
+  pumpShotgun: {
+    damage: 7, fireRate: 1.4, clipSize: 4, reloadTime: 2.4,
+    burstCount: 1, burstInterval: 0, spread: 0.05,
+    projectileSpeed: 9, splashRadius: 0, range: 1.8,
+    cone: Math.PI / 4, pelletCount: 8,                    // 45° fan per spec
+    projectile: { color: '#7af0e2', size: 2.6 },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -158,10 +176,29 @@ export const TOWERS = {
     desc: 'Long-range sniper. Huge single hits, slow cycle.',
     color: '#4ec9ff', glow: '#8fd0ff',
   },
+  // --- M2 Phase B1 (first pass — playtest + iterate) -------------------------
+  // BP region locks land in Phase E (Pulse→L4, Compressor→L3); until then use
+  // Debug → ECONOMY → Unlock all towers to play them.
+  pulse: {
+    name: 'Pulse', cost: 400, health: 150,
+    weapon: 'pulseRifle',
+    tier4: { health: 350, damage: 30 },
+    blueprints: 16,
+    desc: 'Burst rifle. Three-round pulses, Threader reach, heavier hits.',
+    color: '#9b8cff', glow: '#b8a8ff',
+  },
+  compressor: {
+    name: 'Compressor', cost: 400, health: 100,
+    weapon: 'pumpShotgun',
+    tier4: { health: 250, damage: 15 },
+    blueprints: 16,
+    desc: 'Pump shotgun. 45° pellet fan — brutal up close, short reach.',
+    color: '#4fd8c8', glow: '#7af0e2',
+  },
 };
 
 // Limiter deliberately absent (kept in code, hidden from play).
-export const TOWER_ORDER = ['threader', 'vault', 'ddos', 'defrag', 'deleter'];
+export const TOWER_ORDER = ['threader', 'vault', 'ddos', 'defrag', 'deleter', 'pulse', 'compressor'];
 
 // ---------------------------------------------------------------------------
 // Enemies. EV = Enemy Value (wave budget weight). reward = Tokens on kill.

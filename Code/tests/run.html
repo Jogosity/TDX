@@ -1,0 +1,38 @@
+<!doctype html>
+<!-- TDX — browser runner for tests/sim.mjs, for machines without Node.
+     Serve Code/ (python3 -m http.server 8000) and open /tests/run.html.
+     Shims the two node-isms the suite uses: process.exit and a writable
+     localStorage (the suite swaps in a mock store, so the real save is untouched). -->
+<meta charset="utf-8">
+<title>TDX sim tests</title>
+<style>
+  body { background: #07112a; color: #cfe8ff; font: 13px/1.45 ui-monospace, Menlo, monospace; padding: 16px; }
+  .fail { color: #ff5c8a; } .pass { color: #49e6b0; } #sum { font-size: 16px; font-weight: 700; margin-top: 10px; }
+</style>
+<pre id="out"></pre>
+<div id="sum">running…</div>
+<script>
+  Object.defineProperty(window, 'localStorage', { value: undefined, writable: true, configurable: true });
+  window.process = { exit: (code) => { window.__exitCode = code; } };
+  const out = document.getElementById('out');
+  const log = console.log.bind(console);
+  console.log = (...a) => {
+    const line = a.join(' ');
+    const span = document.createElement('span');
+    span.className = line.startsWith(' FAIL') ? 'fail' : line.startsWith(' PASS') ? 'pass' : '';
+    span.textContent = line + '\n';
+    out.appendChild(span);
+    log(...a);
+  };
+</script>
+<script type="module">
+  try {
+    await import('./sim.mjs');
+  } catch (e) {
+    console.log(' FAIL suite crashed: ' + (e && e.stack || e));
+    window.__exitCode = 1;
+  }
+  const lines = out.textContent.trim().split('\n');
+  document.getElementById('sum').textContent = lines[lines.length - 1];
+  window.__done = true;
+</script>

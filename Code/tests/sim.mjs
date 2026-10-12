@@ -252,5 +252,68 @@ check('starting budgets never shrink across levels',
   check('enemy delta carries the damage multiplier', v.damageMult === d.damage);
 }
 
+// --- Milestone 2 Phase B1: Pulse (burst rifle) + Compressor (pump shotgun) ----
+{
+  const px = cellPx(grid);
+  const cell = [...grid.cells.values()].find(c => !c.occupied && c.r === 5);
+  const mkFoe = (dx) => ({
+    alive: true, x: cell.x + dx, y: cell.y, radius: 8,
+    path: { total: 100 }, dist: 0, hits: 0, count: 0,
+    damage(n) { this.hits += n; this.count++; },
+  });
+
+  check('Pulse + Compressor are in the tray and need Blueprints',
+    TOWER_ORDER.includes('pulse') && TOWER_ORDER.includes('compressor') &&
+    TOWERS.pulse.blueprints > 0 && TOWERS.compressor.blueprints > 0);
+  check('Pulse matches Threader range', WEAPONS.pulseRifle.range === WEAPONS.machineGun.range);
+
+  // Pulse: whole clip = clipSize bursts of burstCount rounds, then a reload
+  const pulse = new Tower('pulse', cell);
+  pulse.upgrading = null;                       // skip the build clock
+  const foe = mkFoe(px);
+  const shots = [];
+  let reloadSeenAt = -1;
+  for (let i = 0; i < 400; i++) {               // 0.01s steps, 4s
+    pulse.update(0.01, [foe], shots, grid);
+    if (pulse.reloading > 0 && reloadSeenAt < 0) reloadSeenAt = shots.length;
+  }
+  const w = WEAPONS.pulseRifle;
+  check('Pulse fires full 3-round bursts before reloading',
+    reloadSeenAt === w.clipSize * w.burstCount);
+
+  // burst rhythm: rounds within a burst are burstInterval apart, pulses 1/fireRate apart
+  const p2 = new Tower('pulse', cell);
+  p2.upgrading = null;
+  const times = [];
+  const sink = { push: () => times.push(t2) };
+  let t2 = 0;
+  for (let i = 0; i < 200; i++) { t2 = +(i * 0.01).toFixed(2); p2.update(0.01, [foe], sink, grid); }
+  const gapIn = times[1] - times[0], gapPulse = times[3] - times[0];
+  check('Pulse rhythm: tight burst, then a pause',
+    Math.abs(gapIn - w.burstInterval) < 0.025 && Math.abs(gapPulse - 1 / w.fireRate) < 0.025);
+
+  // Compressor: aimed fan of pellets, all inside the 45° cone
+  const comp = new Tower('compressor', cell);
+  comp.upgrading = null;
+  const near = mkFoe(px * 0.9);
+  const pellets = [];
+  comp.update(0.01, [near], pellets, grid);
+  const sg = WEAPONS.pumpShotgun;
+  check('Compressor fires a full pellet fan', pellets.length === sg.pelletCount);
+  check('Compressor pellets stay inside the 45° cone',
+    pellets.every(p => Math.abs(p.angle) <= sg.cone / 2 + sg.spread + 1e-9));
+  for (let i = 0; i < 100 && pellets.some(p => p.alive); i++) {
+    for (const p of pellets) if (p.alive) p.update(0.02, [near], []);
+  }
+  check('Compressor pellets hit up close and die at range',
+    near.count > 0 && pellets.every(p => !p.alive));
+
+  // tier 4 targets apply to the new weapons too
+  const t4 = new Tower('compressor', cell);
+  t4.applyTier(4);
+  check('new towers hit their tier-4 targets',
+    t4.weapon.damage === TOWERS.compressor.tier4.damage && t4.maxHealth === TOWERS.compressor.tier4.health);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

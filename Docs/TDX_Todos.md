@@ -27,9 +27,9 @@ Kernel
 **Phase 1 of New Towers and Enemies**
 - [ ] Build Tower 6 and 7
 - [ ] Build Enemy 6 and 7
-- [ ] Add a double stacked for the Tower cards.
+- [x] Add a double stacked for the Tower cards. ✅ S11
 - [ ] Include new enemies in the debug menu so that they can be insta-spawned.
-- [ ] Add a Pause/Unpause Spawning button to the Debug menu. This will pause the natural enemy spawn, but allow the spawning of enemies via the debug menu.
+- [x] Add a Pause/Unpause Spawning button to the Debug menu. ✅ S11 This will pause the natural enemy spawn, but allow the spawning of enemies via the debug menu.
 
 
 Phase 2
@@ -50,7 +50,7 @@ New units land in small phases with playtest + iteration between each. No rushin
 
 - [x] **Phase A — Tweaks** ✅ S9 (version display, per-level budgets, delta verify + Level Select display)
 - [x] **Phase B0 — GitHub repo** ✅ S10: local repo at project root (initial commit tagged v1.01-altair, stray Code/sim.mjs removed, backup procedure in QuickStart) → published private to github.com/Jogosity/TDX via GitHub Desktop. CLOSED
-- [ ] **Phase B1 — Familiar-weapon towers**: Pulse (burst rifle — mostly config) + Compressor (pump shotgun — multi-pellet cone). Playtest, iterate.
+- [ ] **Phase B1 — Familiar-weapon towers**: Pulse (burst rifle — mostly config) + Compressor (pump shotgun — multi-pellet cone). Playtest, iterate. ✱ S11: first pass landed (both towers, double-stack tray, debug spawn pause, 56 checks) — awaiting playtest
 - [ ] **Phase B2 — New-system towers**: Tracer (laser-beam weapon class) + Overclock (adjacency damage-buff aura). Playtest, iterate.
 - [ ] **Phase C — Simple enemies**: Turtle (config) + Stinger (fast pack, non-optimal route — ⚠️ spec contradiction: "same as Worm" vs listed 70hp/EV350, Jogo to rule) + Bug (tower-hunter, ignores base).
 - [ ] **Phase D — Exotic enemies**: Cypher (teleport, untargetable while phased) + Bit Rot (contact damage aura; Limiter slows movement, never damage).
