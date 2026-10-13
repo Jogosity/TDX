@@ -64,6 +64,44 @@ export class PathField {
     return false;
   }
 
+  // BFS step counts from one cell to every open cell it can reach.
+  distancesFrom(from) {
+    const dist = new Map([[from.key, 0]]);
+    const queue = [from];
+    let head = 0;
+    while (head < queue.length) {
+      const cur = queue[head++];
+      for (const n of this.grid.neighbors(cur)) {
+        if (dist.has(n.key) || this.isBlocked(n)) continue;
+        dist.set(n.key, dist.get(cur.key) + 1);
+        queue.push(n);
+      }
+    }
+    return dist;
+  }
+
+  // Shortest open route between two cells (BFS over unoccupied cells).
+  // Returns the cell list from `from` to `to` inclusive, or null if cut off.
+  routeBetween(from, to) {
+    const prev = new Map([[from.key, null]]);
+    const queue = [from];
+    let head = 0;
+    while (head < queue.length) {
+      const cur = queue[head++];
+      if (cur.key === to.key) {
+        const cells = [];
+        for (let c = cur; c; c = prev.get(c.key)) cells.push(c);
+        return cells.reverse();
+      }
+      for (const n of this.grid.neighbors(cur)) {
+        if (prev.has(n.key) || this.isBlocked(n)) continue;
+        prev.set(n.key, cur);
+        queue.push(n);
+      }
+    }
+    return null;
+  }
+
   // Waypoint list (cell centres) from a cell to the exit, then the base point.
   waypointsFrom(cell) {
     const pts = [];

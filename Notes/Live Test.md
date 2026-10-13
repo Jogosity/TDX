@@ -8,9 +8,13 @@ Here's the walkthrough:
 1. Open **Terminal** (press `Cmd+Space`, type "Terminal", hit Enter).
 2. Paste this in and press Enter (it's one long line — the quotes matter because your folder path has spaces):
 
+**Use this on my MacBook Pro**
 
 cd "/Users/Jogosity/Library/Mobile Documents/iCloud~md~obsidian/Documents/JogoHome/1_projects/05_TDX/Code" && python3 -m http.server 8000
 
+
+Use this on my Mac Mini
+cd ~/Library/Mobile\ cd ~/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/JogoHome/1_projects/05_TDX/Code && python3 -m http.server 8000
 
 3. You should see `Serving HTTP on :: port 8000`. That means it's running.\
 4. Open your browser and go to **[http://localhost:8000](http://localhost:8000)** — the game should load. Since it's designed portrait-first, narrow your browser window to a tall phone-ish shape for the intended look.
@@ -24,6 +28,9 @@ To try it on your phone later: with the server running, type `ipconfig getifaddr
 
 
 http://192.168.4.29:8000
+
+Updated 
+[http://192.168.4.20:8000](http://192.168.4.20:8000)
 
 
 

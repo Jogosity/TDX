@@ -13,13 +13,13 @@ Before doing anything else, read these files in `1_projects/05_TDX/`:
 4. `Docs/TDX_Initial_Design.md` — the original design doc (reference).
 5. `Code/js/config.js` — all balance and level data. I may have hand-edited this since the last session; treat it as the current source of truth.
 
-The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (56 checks passing as of M2 Phase B1; no Node? serve Code/ and open `/tests/run.html`). To play: `cd Code && python3 -m http.server 8000` (phone via LAN IP).
+The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (66 checks passing as of M2 Phase 2B; no Node? serve Code/ and open `/tests/run.html`). To play: `cd Code && python3 -m http.server 8000` (phone via LAN IP).
 
 The project is a git repo (root of `05_TDX/`) — commit at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap (M2–M5, phased) is at the bottom of `TDX_Todos.md`.
 
-Where we left off (Session 11): Phase B1 first pass landed (Pulse + Compressor, double-stack tray, debug spawn pause), 56/56 tests green, awaiting playtest. New units are specced in `Docs/TDX_Towers_and_Enemies.md` — they land in small phases with playtest + iteration between each; don't rush units to "done". Parked for later milestones (see roadmap): difficulty sim (M3, needs the roster settled first), Re-engagement modules (M4), onboarding/sound/polish (M5).
+Where we left off (Session 12): Phase 2A towers (Pulse, Compressor) and 2B enemies (Bug, Stinger) landed as first passes, 66/66 tests green. Content is now on hold; next is M3 "Cobol" — the difficulty simulator. New units are specced in `Docs/TDX_Towers_and_Enemies.md` — they land in small phases with playtest + iteration between each; don't rush units to "done". Parked for later milestones (see roadmap): difficulty sim (M3, needs the roster settled first), Re-engagement modules (M4), onboarding/sound/polish (M5).
 
-Today: [state the phase from the Milestones section of TDX_Todos.md — next up: B1 playtest feedback, then Phase B2, Tracer + Overclock towers]
+Today: [state the phase from the Milestones section of TDX_Todos.md — next up: M3 Cobol, difficulty simulator]
 
 Update the devlog and commit to git at the end of the session.
 
@@ -41,6 +41,8 @@ The repo root is `1_projects/05_TDX/` (whole project: Code, Docs, Notes, Assets)
 - Or terminal: create a private repo named `TDX` at github.com/new (no README/gitignore — the repo already has history), then from the `05_TDX` folder:
   `git remote add origin https://github.com/YOURUSER/TDX.git`
   `git push -u origin main --tags`
+
+**One working copy only:** GitHub Desktop must point at this iCloud `05_TDX` folder (File → Add Local Repository). Don't clone the repo anywhere else — two copies drift apart. Hover a repo in Desktop's dropdown to see its path before removing anything.
 
 **Auth note:** Terminal git asks for a password but GitHub no longer accepts account passwords (token-only since 2021) — don't fight it. The repo has `push.followTags` set, so milestone tags ride along automatically with a normal GitHub Desktop "Push origin". No Terminal needed.
 

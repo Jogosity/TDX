@@ -301,13 +301,57 @@ export class Enemy {
   }
 
   buildPath(field, grid) {
+    this.field = field;
     const cell = this.currentCell(grid);
     const start = { x: this.x, y: this.y };
-    const wps = cell && field.reachable(cell)
-      ? [start, ...field.waypointsFrom(cell)]
-      : [start, { x: grid.baseX, y: grid.baseY }];
+    this.detourAt = Infinity;   // arc length where the detour cell is passed
+    let wps;
+    if (cell && field.reachable(cell)) {
+      const leg = this.def.detour && !this.detourDone ? this.detourLeg(cell, field) : null;
+      if (leg) {
+        // start → detour cell (shortest open route) → optimal path to base
+        const tail = field.waypointsFrom(leg[leg.length - 1]).slice(1);
+        wps = [start, ...leg.map(c => ({ x: c.x, y: c.y })), ...tail];
+        this.detourAt = leg.length;   // waypoint index of the detour cell
+      } else {
+        wps = [start, ...field.waypointsFrom(cell)];
+      }
+    } else {
+      wps = [start, { x: grid.baseX, y: grid.baseY }];
+    }
     this.path = smoothPath(wps);
+    // smoothPath emits 8 samples per waypoint segment — map index → arc length
+    if (this.detourAt !== Infinity) this.detourAt = this.path.lens[this.detourAt * 8] ?? Infinity;
     this.dist = 0;
+  }
+
+  // Stinger: pick (or keep) a detour cell off the optimal route, partway to the
+  // exit, and return the open cell route to it. null = no detour available.
+  detourLeg(cell, field) {
+    const grid = field.grid;
+    const keep = this.detourCell;
+    if (keep && !keep.occupied && field.reachable(keep)) {
+      const leg = field.routeBetween(cell, keep);
+      if (leg) return leg;
+    }
+    // A genuine detour: going via the cell must cost at least
+    // detour.extraSteps more than the best route (a hex board has many
+    // equally-short routes, so merely "off the BFS path" isn't enough).
+    const d0 = field.dist.get(cell.key);
+    const fromHere = field.distancesFrom(cell);
+    const lo = d0 * this.def.detour.min, hi = d0 * this.def.detour.max;
+    const extra = new Map();   // cell → steps added by routing through it
+    for (const c of grid.cells.values()) {
+      const d = field.dist.get(c.key);
+      if (d === undefined || d < lo || d > hi || c.occupied || !fromHere.has(c.key)) continue;
+      extra.set(c, fromHere.get(c.key) + d - d0);
+    }
+    // tight boards may not offer extraSteps — settle for the longest available
+    const need = Math.min(this.def.detour.extraSteps, Math.max(0, ...extra.values()));
+    const candidates = need > 0 ? [...extra].filter(([, x]) => x >= need).map(([c]) => c) : [];
+    if (candidates.length === 0) { this.detourDone = true; return null; }
+    this.detourCell = candidates[Math.floor(Math.random() * candidates.length)];
+    return field.routeBetween(cell, this.detourCell);
   }
 
   currentCell(grid) {
@@ -327,12 +371,43 @@ export class Enemy {
     if (this.health <= 0) this.alive = false;
   }
 
+  // Fly straight at attackTarget; once adjacent, hold position and drain it.
+  closeInAndDrain(dt, px) {
+    const t = this.attackTarget;
+    const d = Math.hypot(t.x - this.x, t.y - this.y);
+    this.angle = Math.atan2(t.y - this.y, t.x - this.x);
+    if (d <= px * 1.05) { // adjacent-cell distance: apply damage over time
+      this.attackTimer -= dt;
+      if (this.attackTimer <= 0) {
+        t.damage(this.def.attack.damage * this.damageMult);
+        this.attackTimer = this.def.attack.reload;
+      }
+      return;
+    }
+    const step = this.def.speed * this.slow * px * dt;
+    this.x += Math.cos(this.angle) * step;
+    this.y += Math.sin(this.angle) * step;
+  }
+
   update(dt, grid, towers) {
     this.hitFlash = Math.max(0, this.hitFlash - dt * 6);
     const px = cellPx(grid);
 
+    // Bug-class behaviour: hunt a random tower anywhere on the board.
+    // With no towers left, fall back to walking the path to the base.
+    if (this.def.hunter) {
+      if (this.attackTarget && !this.attackTarget.alive) this.attackTarget = null;
+      if (!this.attackTarget) {
+        const alive = towers.filter(t => t.alive);
+        this.attackTarget = alive.length ? alive[Math.floor(Math.random() * alive.length)] : null;
+        if (this.attackTarget) this.pathing = false;
+      }
+      if (this.attackTarget) { this.closeInAndDrain(dt, px); return; }
+      if (!this.pathing) { this.pathing = true; this.buildPath(this.field, grid); }
+    }
+
     // Virus-class behaviour: latch onto a nearby tower and drain it.
-    if (this.def.attack) {
+    else if (this.def.attack) {
       if (this.attackTarget && !this.attackTarget.alive) this.attackTarget = null;
       if (!this.attackTarget) {
         let best = null, bestD = this.def.attack.scanRange * px;
@@ -343,31 +418,12 @@ export class Enemy {
         }
         this.attackTarget = best;
       }
-      if (this.attackTarget) {
-        const t = this.attackTarget;
-        const d = Math.hypot(t.x - this.x, t.y - this.y);
-        const holdAt = px * 1.05; // adjacent-cell distance
-        if (d <= holdAt) {
-          // in position: apply damage over time
-          this.angle = Math.atan2(t.y - this.y, t.x - this.x);
-          this.attackTimer -= dt;
-          if (this.attackTimer <= 0) {
-            t.damage(this.def.attack.damage * this.damageMult);
-            this.attackTimer = this.def.attack.reload;
-          }
-          return; // holds position while attacking
-        }
-        // close in directly
-        const step = this.def.speed * this.slow * px * dt;
-        this.angle = Math.atan2(t.y - this.y, t.x - this.x);
-        this.x += Math.cos(this.angle) * step;
-        this.y += Math.sin(this.angle) * step;
-        return;
-      }
+      if (this.attackTarget) { this.closeInAndDrain(dt, px); return; }
     }
 
     // normal path-following
     this.dist += this.def.speed * this.slow * px * dt;
+    if (this.dist >= this.detourAt) this.detourDone = true;  // Stinger detour passed
     const p = pointAt(this.path, this.dist);
     this.x = p.x;
     this.y = p.y;

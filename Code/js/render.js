@@ -676,6 +676,32 @@ export function drawEnemyShape(ctx, type, s, color) {
       ctx.fill();
       break;
     }
+    case 'bug': { // orange oval body with two little legs/mandibles leading
+      ctx.beginPath();
+      ctx.ellipse(0, -s * 0.08, s * 0.4, s * 0.46, 0, 0, Math.PI * 2);
+      ctx.fill();
+      for (const side of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(side * s * 0.12, s * 0.3);
+        ctx.lineTo(side * s * 0.32, s * 0.6);
+        ctx.lineTo(side * s * 0.34, s * 0.28);
+        ctx.closePath();
+        ctx.fill();
+      }
+      break;
+    }
+    case 'stinger': { // 4-pointed star with concave sides
+      const r = s * 0.62, inner = s * 0.18;
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = (Math.PI / 4) * i + Math.PI / 4;   // points on the diagonals, X-shaped
+        const rad = i % 2 === 0 ? r : inner;
+        ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rad, Math.sin(a) * rad);
+      }
+      ctx.closePath();
+      ctx.fill();
+      break;
+    }
   }
 }
 

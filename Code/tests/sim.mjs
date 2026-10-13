@@ -315,5 +315,74 @@ check('starting budgets never shrink across levels',
     t4.weapon.damage === TOWERS.compressor.tier4.damage && t4.maxHealth === TOWERS.compressor.tier4.health);
 }
 
+// --- Milestone 2 Phase 2B: Bug (tower hunter) + Stinger (detour raider) --------
+{
+  for (const c of grid.cells.values()) { c.blocker = false; c.tower = null; }
+  field.recompute();
+  const D = LEVELS[0].enemyDelta;
+  const spawn = grid.spawns[0];
+
+  // Bug: hunts a far tower (well outside Virus scan range), never walks to base
+  const far = [...grid.cells.values()]
+    .filter(c => !c.exit && !c.spawn)
+    .sort((a, b) => Math.hypot(b.x - spawn.x, b.y - spawn.y) - Math.hypot(a.x - spawn.x, a.y - spawn.y))[0];
+  const prey = new Tower('vault', far);
+  far.tower = prey;
+  field.recompute();
+  const bug = new Enemy('bug', spawn, field, grid, D);
+  let leaked = false;
+  for (let i = 0; i < 600 && prey.alive; i++) {   // 0.05s steps, 30s
+    bug.update(0.05, grid, [prey]);
+    if (bug.reachedBase) leaked = true;
+  }
+  const farDist = Math.hypot(far.x - spawn.x, far.y - spawn.y) / cellPx(grid);
+  check('Bug hunts a tower far beyond Virus scan range', farDist > ENEMIES.virus.attack.scanRange && prey.health < prey.maxHealth);
+  check('Bug ignores the base while towers stand', !leaked);
+  check('Bug drains its tower to destruction', !prey.alive);
+  far.tower = null;
+  field.recompute();
+  // ... then, with no towers left, it heads for the base
+  for (let i = 0; i < 1200 && bug.alive; i++) bug.update(0.05, grid, [prey]);
+  check('Bug falls back to the base once no towers remain', bug.reachedBase);
+
+  // Bug retargets at random across towers
+  const cells = [...grid.cells.values()].filter(c => !c.exit && !c.spawn && c.r >= 3 && c.r <= 6);
+  const picks = new Set();
+  const ts = cells.slice(0, 4).map(c => { const t = new Tower('vault', c); c.tower = t; return t; });
+  field.recompute();
+  for (let i = 0; i < 40; i++) {
+    const b = new Enemy('bug', spawn, field, grid, D);
+    b.update(0.01, grid, ts);
+    picks.add(b.attackTarget?.id);
+  }
+  check('Bug picks its tower at random', picks.size >= 3);
+  for (const c of cells.slice(0, 4)) c.tower = null;
+  field.recompute();
+
+  // Stinger: detours off the optimal route, still always reaches the base
+  const optimal = smoothPath(field.waypointsFrom(spawn)).total;
+  let longer = 0, offPath = true, reached = 0;
+  const onPath = new Set();
+  for (let c = spawn; c; c = field.next.get(c.key)) onPath.add(c.key);
+  for (let i = 0; i < 20; i++) {
+    const st = new Enemy('stinger', spawn, field, grid, D);
+    if (!st.detourCell || onPath.has(st.detourCell.key)) offPath = false;
+    if (st.path.total > optimal * 1.05) longer++;
+    for (let k = 0; k < 2000 && st.alive; k++) st.update(0.05, grid, []);
+    if (st.reachedBase) reached++;
+  }
+  check('Stinger detours via a cell off the optimal route', offPath);
+  check('Stinger routes are longer than optimal', longer >= 15);
+  check('Stinger always reaches the base', reached === 20);
+  check('Stinger spawns in packs of 2–4', ENEMIES.stinger.pack.min === 2 && ENEMIES.stinger.pack.max === 4);
+
+  // a mid-route path rebuild (tower placed / CRASH) keeps the same detour
+  const st2 = new Enemy('stinger', spawn, field, grid, D);
+  const keep = st2.detourCell;
+  for (let k = 0; k < 10; k++) st2.update(0.05, grid, []);
+  st2.buildPath(field, grid);
+  check('Stinger keeps its detour through a path rebuild', st2.detourCell === keep && st2.detourAt < Infinity);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

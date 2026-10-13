@@ -233,6 +233,29 @@ export const ENEMIES = {
     pack: { min: 5, max: 8 },
     color: '#ffd9c4', size: 0.26,
   },
+  // --- M2 Phase 2B (first pass — playtest + iterate) ----------------------------
+  // Not in any wave roster yet (debug SPAWN only) — rosters land with M3's sim.
+  // Rewards follow the hand-tuned ~3× spec scale of the existing roster.
+  bug: {
+    name: 'Bug', ev: 30, health: 30, speed: SPEED.fast, reward: 30,
+    // hunter: ignores the base, flies straight at a random tower and drains it;
+    // retargets randomly when it dies. Only heads for the base once no towers remain.
+    hunter: true,
+    attack: { damage: 10, reload: 1.0 },
+    desc: 'Tower hunter. Picks a random tower and swarms it — ignores the base.',
+    color: '#ff8a1f', size: 0.30,
+  },
+  stinger: {
+    name: 'Stinger', ev: 350, health: 70, speed: SPEED.fast, reward: 90,
+    // detour: routes via a random off-path cell partway down the board, then
+    // takes the optimal path to the base. min/max = fraction of the start
+    // cell's distance-to-exit where the detour cell may sit; extraSteps = how
+    // many cells longer than the optimal route the detour must be (at least).
+    detour: { min: 0.25, max: 0.8, extraSteps: 2 },
+    pack: { min: 2, max: 4 },
+    desc: 'Fast raider. Packs of 2–4 taking unpredictable routes.',
+    color: '#ff7a2e', size: 0.36,
+  },
 };
 
 // ---------------------------------------------------------------------------

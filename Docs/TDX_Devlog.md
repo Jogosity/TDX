@@ -3,6 +3,33 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 12 — 2026-10-13 — Phase 2B: Bug + Stinger (first pass)
+
+Session opened with admin: Mac mini infra (server command needs the full iCloud path; phone via LAN IP works), and a GitHub Desktop duplicate-clone cleanup — **one working copy only**, the iCloud `05_TDX` (rule added to QuickStart). Jogo restructured the roadmap: M2 phases renumbered (2A towers ✅, 2B enemies, 3A/3B on hold, 4 integration); new **M4 "Disc Drive" — Narrative and Content**; Re-engagement → M5 Elm; Onboarding → M6 Fortran. Unit art now specced in `Assets/Tower_Designs.png`. Plan after 2B: hold content, go to **M3 difficulty**.
+
+### Bug (Enemy 6) — tower hunter
+- `hunter: true` + `attack {10 dmg / 1.0s}`: on spawn picks a **random tower anywhere** (Vaults count), flies straight at it like Virus, drains it; retargets at random when it dies. With no towers left it walks the normal path and costs a life. New towers pull it back into hunting.
+- 30 EV / 30 hp / fast / **reward 30** (spec 10 × the ~3× hand-tune scale, Jogo approved). Art: orange oval with two leading legs.
+- Virus close-in/drain logic extracted to `Enemy.closeInAndDrain()`, shared by both.
+
+### Stinger (Enemy 7) — detour raider
+- `detour: { min 0.25, max 0.8, extraSteps 2 }`: on spawn picks a random cell 25–80% of the way to the exit whose route costs **≥2 extra steps** over optimal (hex boards have many equally-short routes, so "off the BFS path" alone wasn't a real detour — the first test caught it). Tight boards settle for the longest detour available. Then optimal path to base.
+- Detour persists through path rebuilds (tower placed / CRASH) until passed. New `PathField.routeBetween()` + `distancesFrom()`.
+- 350 EV / 70 hp / fast / packs 2–4 / **reward 90**. Art: orange 4-point star (X).
+
+### Integration
+- Debug SPAWN tab + main-menu Enemies screen pick both up automatically. **Not in any wave roster yet** — that lands at the start of M3, where the sim tunes rosters anyway.
+
+### Tests
+56 → **66 checks**: Bug hunts beyond Virus scan range, ignores base while towers stand, kills its tower, falls back to base, random target choice; Stinger detour off-route, routes longer than optimal, always reaches base, pack 2–4, detour survives rebuild. 66/66, stable across 6 repeated runs (randomised behaviours). Smoke-played at 375×812: Bugs swarm Threaders, Stingers fan out wide, no console errors.
+
+### Playtest asks
+- Bug: random target means Bugs often cross the whole board — is that fun, or should it prefer nearer towers?
+- Stinger: is a 2-step detour visibly "non-optimal" enough? (`extraSteps` in config)
+
+**Next: playtest 2B, then M3 "Cobol" — difficulty simulator.**
+
+---
 ## Session 11 — 2026-10-12 — Phase B1: Pulse + Compressor (first pass)
 
 Run remotely on Jogo's Mac mini. Config read as source of truth (no hand-edits since S10).
