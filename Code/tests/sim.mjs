@@ -359,6 +359,39 @@ check('starting budgets never shrink across levels',
   for (const c of cells.slice(0, 4)) c.tower = null;
   field.recompute();
 
+  // Bug walks open cells only: never crosses a blocker on the way to its tower
+  {
+    const target = far;
+    const lineCells = [...grid.cells.values()].filter(c => {
+      if (c.spawn || c.exit || c === target) return false;
+      // cells close to the straight spawn→target line
+      const vx = target.x - spawn.x, vy = target.y - spawn.y;
+      const t = ((c.x - spawn.x) * vx + (c.y - spawn.y) * vy) / (vx * vx + vy * vy);
+      if (t < 0.25 || t > 0.8) return false;
+      const px0 = spawn.x + vx * t, py0 = spawn.y + vy * t;
+      return Math.hypot(c.x - px0, c.y - py0) < grid.size;
+    });
+    for (const c of lineCells) { if (!field.wouldFirewall(c, [])) { c.blocker = true; field.recompute(); } }
+    const prey2 = new Tower('vault', target);
+    target.tower = prey2;
+    field.recompute();
+    const b = new Enemy('bug', spawn, field, grid, D);
+    let crossed = false;
+    for (let i = 0; i < 600 && prey2.health === prey2.maxHealth; i++) {
+      b.update(0.05, grid, [prey2]);
+      let near = null, nd = Infinity;
+      for (const c of grid.cells.values()) {
+        const d = Math.hypot(c.x - b.x, c.y - b.y);
+        if (d < nd) { nd = d; near = c; }
+      }
+      if (near.blocker) crossed = true;
+    }
+    check('Bug routes around blockers to reach its tower', !crossed && prey2.health < prey2.maxHealth);
+    for (const c of lineCells) c.blocker = false;
+    target.tower = null;
+    field.recompute();
+  }
+
   // Stinger: detours off the optimal route, still always reaches the base
   const optimal = smoothPath(field.waypointsFrom(spawn)).total;
   let longer = 0, offPath = true, reached = 0;

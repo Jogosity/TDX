@@ -355,6 +355,15 @@
     text-align: left;
   }
   .dbg-btn.danger { border-color: var(--red); color: var(--red); }
+  /* press feedback: brief bright flash so every tap visibly registers */
+  .dbg-btn.flash { animation: dbg-flash 0.35s ease-out; }
+  @keyframes dbg-flash {
+    0%   { background: var(--cyan); color: #05081f; box-shadow: 0 0 16px var(--cyan); }
+    100% { background: var(--panel); box-shadow: none; }
+  }
+  #debug-wallet { font-size: 13px; font-weight: 700; letter-spacing: 0.5px; display: flex; gap: 14px; }
+  #debug-wallet .w-tokens { color: var(--green); }
+  #debug-wallet .w-bits { color: var(--yellow); }
 
   #toast {
     position: absolute;
@@ -441,6 +450,7 @@
   <div id="debug-menu">
     <div id="debug-head">
       <h2>DEBUG</h2>
+      <div id="debug-wallet"></div>
       <button id="debug-close">✕</button>
     </div>
     <div id="debug-tabs"></div>

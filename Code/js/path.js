@@ -82,13 +82,16 @@ export class PathField {
 
   // Shortest open route between two cells (BFS over unoccupied cells).
   // Returns the cell list from `from` to `to` inclusive, or null if cut off.
-  routeBetween(from, to) {
+  routeBetween(from, to) { return this.routeToAny(from, new Set([to.key])); }
+
+  // Shortest open route from `from` to the nearest cell whose key is in goals.
+  routeToAny(from, goals) {
     const prev = new Map([[from.key, null]]);
     const queue = [from];
     let head = 0;
     while (head < queue.length) {
       const cur = queue[head++];
-      if (cur.key === to.key) {
+      if (goals.has(cur.key)) {
         const cells = [];
         for (let c = cur; c; c = prev.get(c.key)) cells.push(c);
         return cells.reverse();

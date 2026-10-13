@@ -306,7 +306,11 @@ export class Enemy {
     const start = { x: this.x, y: this.y };
     this.detourAt = Infinity;   // arc length where the detour cell is passed
     let wps;
-    if (cell && field.reachable(cell)) {
+    if (this.def.hunter && this.attackTarget?.alive && cell) {
+      // Bug: walk open cells (never over blockers/towers) to beside its target
+      const leg = this.huntLeg(cell, field, this.attackTarget);
+      wps = leg ? [start, ...leg.map(c => ({ x: c.x, y: c.y }))] : [start, start];
+    } else if (cell && field.reachable(cell)) {
       const leg = this.def.detour && !this.detourDone ? this.detourLeg(cell, field) : null;
       if (leg) {
         // start → detour cell (shortest open route) → optimal path to base
@@ -323,6 +327,24 @@ export class Enemy {
     // smoothPath emits 8 samples per waypoint segment — map index → arc length
     if (this.detourAt !== Infinity) this.detourAt = this.path.lens[this.detourAt * 8] ?? Infinity;
     this.dist = 0;
+  }
+
+  // Bug: open-cell route from `cell` to any free cell touching the tower.
+  huntLeg(cell, field, tower) {
+    const goals = new Set();
+    for (const n of field.grid.neighbors(tower.cell)) if (!n.occupied) goals.add(n.key);
+    return goals.size ? field.routeToAny(cell, goals) : null;
+  }
+
+  // Bug: choose a random tower it can actually walk to (null if none).
+  pickHuntTarget(towers, grid) {
+    const cell = this.currentCell(grid);
+    const pool = towers.filter(t => t.alive);
+    while (pool.length && cell) {
+      const t = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+      if (this.huntLeg(cell, this.field, t)) return t;
+    }
+    return null;
   }
 
   // Stinger: pick (or keep) a detour cell off the optimal route, partway to the
@@ -395,15 +417,32 @@ export class Enemy {
 
     // Bug-class behaviour: hunt a random tower anywhere on the board.
     // With no towers left, fall back to walking the path to the base.
+    // Walks open cells only (like any enemy) — never across blockers or towers.
     if (this.def.hunter) {
       if (this.attackTarget && !this.attackTarget.alive) this.attackTarget = null;
-      if (!this.attackTarget) {
-        const alive = towers.filter(t => t.alive);
-        this.attackTarget = alive.length ? alive[Math.floor(Math.random() * alive.length)] : null;
-        if (this.attackTarget) this.pathing = false;
+      // (while walking to base, re-scan for new towers every 0.5s)
+      this.huntScan = (this.huntScan ?? 0) - dt;
+      if (!this.attackTarget && (!this.pathing || this.huntScan <= 0)) {
+        this.huntScan = 0.5;
+        this.attackTarget = this.pickHuntTarget(towers, grid);
+        if (this.attackTarget || !this.pathing) {
+          this.pathing = !this.attackTarget;    // no reachable tower → head for base
+          this.buildPath(this.field, grid);
+        }
       }
-      if (this.attackTarget) { this.closeInAndDrain(dt, px); return; }
-      if (!this.pathing) { this.pathing = true; this.buildPath(this.field, grid); }
+      if (this.attackTarget) {
+        const t = this.attackTarget;
+        if (Math.hypot(t.x - this.x, t.y - this.y) <= px * 1.05) {
+          this.closeInAndDrain(dt, px);        // adjacent: hold and drain
+          return;
+        }
+        this.dist += this.def.speed * this.slow * px * dt;
+        const p = pointAt(this.path, this.dist);
+        this.x = p.x; this.y = p.y; this.angle = p.angle;
+        // route ended without contact (board changed) → re-plan next frame
+        if (this.dist >= this.path.total) this.attackTarget = null;
+        return;
+      }
     }
 
     // Virus-class behaviour: latch onto a nearby tower and drain it.

@@ -420,9 +420,23 @@ export class UI {
     const b = document.createElement('button');
     b.className = 'dbg-btn' + (danger ? ' danger' : '');
     b.textContent = label;
-    b.addEventListener('click', onTap);
+    b.addEventListener('click', () => {
+      b.classList.remove('flash');
+      void b.offsetWidth;            // restart the animation on rapid taps
+      b.classList.add('flash');
+      onTap();
+      this.refreshDebugWallet();
+    });
     parent.appendChild(b);
     return b;
+  }
+
+  // Debug header: the player's current Tokens and BITS, refreshed on every tap.
+  refreshDebugWallet() {
+    const el = document.getElementById('debug-wallet');
+    if (!el || !this.game.state) return;
+    el.innerHTML = `<span class="w-tokens">◼ ${this.game.state.tokens} TOKENS</span>`
+      + `<span class="w-bits">◆ ${this.game.save.bits} BITS</span>`;
   }
 
   pauseLabel() { return this.game.spawnPaused ? 'Resume wave spawning' : 'Pause wave spawning'; }
@@ -430,6 +444,7 @@ export class UI {
   showDebugMenu() {
     this.activeDebugTab = this.activeDebugTab ?? 0;
     this.renderDebugTabs();
+    this.refreshDebugWallet();
     this.el.debugMenu.classList.add('show');
   }
 

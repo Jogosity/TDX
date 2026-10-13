@@ -31,7 +31,14 @@ Session opened with admin: Mac mini infra (server command needs the full iCloud 
 - Bug health 30 → **90** (died too easily).
 - "Stinger won't debug-spawn" turned out to be **browser caching** of old JS under `python3 -m http.server`. New `Code/serve.py` sends `Cache-Control: no-store`; QuickStart now uses `python3 Code/serve.py`. Use it for all phone testing.
 
-**Next: one tweak round on the 4 new units, sign off M2 content, then M3 "Cobol" — difficulty simulator.**
+### Tweak round (Jogo's list)
+- **Debug buttons flash** cyan on every tap (restarts on rapid taps).
+- **Debug header wallet**: current Tokens + BITS beside the DEBUG title, refreshed on each tap.
+- **Bugs walk open cells only** — no more flying straight over blockers/towers. They BFS-route (`PathField.routeToAny`) to any free cell touching their random target, then hold and drain. Unreachable towers are skipped when picking; route re-plans when the board changes; with no reachable tower they take the base path (re-scanning for new towers every 0.5s). Lockouts stay walkable (enemy-owned by design). Virus still closes in directly.
+- Tests 66 → **67** (Bug routes around a blocker line to its tower). 67/67 ×5 runs.
+- Jogo's playtest read: the new units fill real gaps — the golden path is no longer predictable; both enemy types survive long enough to threaten without making the game unplayable.
+
+**Next: sign off M2 content, then M3 "Cobol" — difficulty simulator.**
 
 ---
 ## Session 11 — 2026-10-12 — Phase B1: Pulse + Compressor (first pass)
