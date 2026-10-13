@@ -54,7 +54,7 @@ New units land in small phases with playtest + iteration between each. No rushin
 - [x] **Phase 2B — Simple enemies**: ✱ S12: first pass landed (debug SPAWN only — wave rosters at M3 start, 66 checks) — awaiting playtest. Bug (Tower hunter - ignores base - details updated in TDX_Towers_and_Enemies) + Stinger (Fast base attacker, non-optimal route. Details updated in TDX_Towers_and_Enemies
 - [ ] **Phase 3A— (ON HOLD) New-system towers**: Tracer (laser-beam weapon class) + Overclock (adjacency damage-buff aura). Playtest, iterate.
 - [ ] **Phase 3B — (ON HOLD) Exotic enemies**: Cypher (teleport, untargetable while phased) + Bit Rot (contact damage aura; Limiter slows movement, never damage).
-- [ ] **Phase 4 — Integration + close**: BP regions (Tracer→L2, Compressor→L3, Pulse→L4, Overclock→L5), new enemies into L2–L5 rosters, tests per mechanic, bump to v1.02 Basic.
+- [ ] **Phase 4 — Integration + close**: ~~BP regions~~ ✅ S12 replaced by primary/secondary/tertiary BP slots (see devlog), new enemies into L2–L5 rosters, tests per mechanic, bump to v1.02 Basic.
 
 ## M3 — "Cobol" (v1.03) — Secure & Simulate
 Requires the M2 roster settled first — new units add too much noise to balance against a moving target.

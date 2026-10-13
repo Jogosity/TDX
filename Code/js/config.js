@@ -109,12 +109,16 @@ export const UPGRADE = {
 
 // ---------------------------------------------------------------------------
 // Collection (Core) — Retention Module 2.
-// Defeated enemies may drop a Blueprint for a still-locked tower from the
-// level's bpPool. Tap to collect; towers unlock instantly at their BP count
+// Defeated enemies may drop Blueprints for still-locked towers in the
+// level's bpPool slots. Tap to collect; towers unlock instantly at their BP count
 // (TOWERS[x].blueprints). Drops are drawn in the owning tower's colour.
 // ---------------------------------------------------------------------------
 export const BLUEPRINTS = {
-  dropChance: 0.08,   // per enemy kill
+  // Per-level drop slots (LEVELS[i].bpPool = { primary, secondary, tertiary }).
+  // Each kill rolls every slot independently; a slot whose tower is already
+  // unlocked drops nothing. Rule of thumb: a level's secondary becomes the next
+  // level's primary, tertiary → secondary — a guide, not a rigid structure.
+  dropRates: { primary: 0.15, secondary: 0.05, tertiary: 0.03 },  // per enemy kill
   lifetime: 10,       // seconds before an uncollected drop fades away
   tapRadius: 26,      // px — generous for thumbs
 };
@@ -177,8 +181,8 @@ export const TOWERS = {
     color: '#4ec9ff', glow: '#8fd0ff',
   },
   // --- M2 Phase B1 (first pass — playtest + iterate) -------------------------
-  // BP region locks land in Phase E (Pulse→L4, Compressor→L3); until then use
-  // Debug → ECONOMY → Unlock all towers to play them.
+  // BP drops: Compressor L2 tertiary → L3 secondary → L4 primary;
+  // Pulse L5 secondary (see LEVELS[i].bpPool).
   pulse: {
     name: 'Pulse', cost: 400, health: 150,
     weapon: 'pulseRifle',
@@ -291,7 +295,7 @@ export const LEVELS = [
     startTokens: 300,             // per-level starting budget (best-guess — tune freely)
     enemyDelta: { health: 1.0, damage: 1.0 },
     rewardBits: 3,
-    bpPool: ['vault'],            // region lock: Vault BPs only on Level 1
+    bpPool: { primary: 'vault', secondary: 'defrag', tertiary: 'ddos' },
     theme: {},                    // baseline blue
     waves: [
       { tev: 1200, mav: 600,  rtv: 300, unlocked: ['hack'],                                spawnInterval: 1.2 },
@@ -313,7 +317,7 @@ export const LEVELS = [
     startTokens: 340,
     enemyDelta: { health: 1.15, damage: 1.1 },
     rewardBits: 4,
-    bpPool: ['defrag'],           // region lock: Defrag BPs only on Level 2
+    bpPool: { primary: 'defrag', secondary: 'ddos', tertiary: 'compressor' },
     theme: { cellFill: '#0a1a36', cellLine: '#1d4a5e', blockerFill: '#122a44', blockerLine: '#2e6e86' },
     waves: genWaves(8, {
       tev0: 1800, tevGrowth: 1.22, mav0: 700, mavGrowth: 1.09,
@@ -330,7 +334,7 @@ export const LEVELS = [
     startTokens: 390,
     enemyDelta: { health: 1.3, damage: 1.2 },
     rewardBits: 5,
-    bpPool: ['ddos'],             // region lock: DDOS BPs only on Level 3
+    bpPool: { primary: 'ddos', secondary: 'compressor' },
     theme: { cellFill: '#0a1c30', cellLine: '#1a5a52', blockerFill: '#10304a', blockerLine: '#2e8a76' },
     waves: genWaves(9, {
       tev0: 2400, tevGrowth: 1.2, mav0: 800, mavGrowth: 1.09,
@@ -347,7 +351,7 @@ export const LEVELS = [
     startTokens: 450,
     enemyDelta: { health: 1.5, damage: 1.35 },
     rewardBits: 6,
-    bpPool: ['deleter'],          // region lock: Deleter BPs only on Level 4
+    bpPool: { primary: 'compressor', secondary: 'deleter' },
     theme: { cellFill: '#100f3e', cellLine: '#33308a', blockerFill: '#191856', blockerLine: '#4a48a8' },
     waves: genWaves(10, {
       tev0: 3000, tevGrowth: 1.2, mav0: 900, mavGrowth: 1.08,
@@ -364,7 +368,7 @@ export const LEVELS = [
     startTokens: 520,
     enemyDelta: { health: 1.75, damage: 1.5 },
     rewardBits: 8,
-    bpPool: [],                   // no new tower BPs here (roster grows next sprint)
+    bpPool: { primary: 'deleter', secondary: 'pulse' },
     theme: { cellFill: '#0e1a2a', cellLine: '#3a5a78', blockerFill: '#16283c', blockerLine: '#5a7e9e' },
     waves: genWaves(10, {
       tev0: 3600, tevGrowth: 1.2, mav0: 1000, mavGrowth: 1.08,

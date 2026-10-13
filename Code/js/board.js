@@ -1,6 +1,8 @@
 // TDX — board setup helpers (blockers, Lockout cells, extra entry points).
 // DOM-free so the headless sim can exercise every level layout.
 
+import { BLUEPRINTS } from './config.js';
+
 // Interior candidate cells: not spawn/exit, not top row, above the exit row.
 const interior = (grid) => [...grid.cells.values()].filter(c =>
   !c.spawn && !c.exit && c.r > 0 && c.r < grid.exits[0].r);
@@ -64,4 +66,16 @@ export function clearExtraSpawns(grid) {
   const extras = grid.spawns.slice(1);
   for (const c of extras) c.spawn = false;
   grid.spawns = grid.spawns.slice(0, 1);
+}
+
+// Blueprint drops for one kill: each bpPool slot (primary/secondary/tertiary)
+// rolls independently at its BLUEPRINTS.dropRates chance; slots whose tower is
+// already unlocked never drop. Returns the tower keys that dropped.
+export function rollBlueprints(bpPool, isUnlocked, rng = Math.random) {
+  const out = [];
+  for (const [slot, rate] of Object.entries(BLUEPRINTS.dropRates)) {
+    const tower = bpPool?.[slot];
+    if (tower && !isUnlocked(tower) && rng() < rate) out.push(tower);
+  }
+  return out;
 }

@@ -38,6 +38,23 @@ Session opened with admin: Mac mini infra (server command needs the full iCloud 
 - Tests 66 → **67** (Bug routes around a blocker line to its tower). 67/67 ×5 runs.
 - Jogo's playtest read: the new units fill real gaps — the golden path is no longer predictable; both enemy types survive long enough to threaten without making the game unplayable.
 
+### Blueprint drop slots (Jogo's design)
+Problem: one BP tower per level at a flat 8% → a level's whole collection loop finished mid-first-clear, then drops stopped forever; L5, Pulse and Compressor had none.
+- **Three slots per level**, each rolled independently per kill: **primary 15% · secondary 5% · tertiary 3%** (`BLUEPRINTS.dropRates`). A slot whose tower is unlocked drops nothing. Multi-drops from one kill fan out so each stays tappable.
+- **Promotion rule** (a guide, not rigid): secondary → next level's primary, tertiary → next level's secondary. L1/L2 get a tertiary to unlock the first towers sooner.
+
+```
+Level  Primary     Secondary   Tertiary
+L1     Vault       Defrag      DDOS
+L2     Defrag      DDOS        Compressor
+L3     DDOS        Compressor  —
+L4     Compressor  Deleter     —
+L5     Deleter     Pulse       —
+```
+- `LEVELS[i].bpPool` is now `{ primary, secondary, tertiary }`; roll logic is DOM-free `rollBlueprints()` in `board.js`. Jogo: err on too-quick unlocks for now.
+- Tests 67 → **74**: slot presence, rates, promotion rule, every lockable tower drops somewhere, observed rates over 40k rolls, unlocked never drop, independent slots.
+- Juicier pickups (magnet/counter/effects) parked for later.
+
 **Next: sign off M2 content, then M3 "Cobol" — difficulty simulator.**
 
 ---

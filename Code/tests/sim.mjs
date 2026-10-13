@@ -3,11 +3,11 @@ import { HexGrid } from '../js/hex.js';
 import { PathField, smoothPath } from '../js/path.js';
 import { Tower, cellPx } from '../js/entities.js';
 import { WaveController } from '../js/waves.js';
-import { LEVELS, WEAPONS, TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, PLAYER, VERSION } from '../js/config.js';
+import { LEVELS, WEAPONS, TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, PLAYER, VERSION, BLUEPRINTS } from '../js/config.js';
 import { Enemy } from '../js/entities.js';
 import { loadSave } from '../js/save.js';
 import { relocateBlockers, crashShuffle } from '../js/crash.js';
-import { placeBlockers, placeLockouts, placeExtraSpawns } from '../js/board.js';
+import { placeBlockers, placeLockouts, placeExtraSpawns, rollBlueprints } from '../js/board.js';
 
 let pass = 0, fail = 0;
 const check = (name, cond) => { cond ? pass++ : fail++; console.log(cond ? ' PASS' : ' FAIL', name); };
@@ -118,7 +118,7 @@ check('BP costs stay in the 10–20 spec range',
   TOWER_ORDER.filter(k => k !== 'threader').every(k =>
     TOWERS[k].blueprints >= 10 && TOWERS[k].blueprints <= 20));
 check('level bpPool only references real, lockable towers',
-  LEVELS.every(l => (l.bpPool || []).every(k => TOWERS[k] && TOWERS[k].blueprints > 0)));
+  LEVELS.every(l => Object.values(l.bpPool || {}).every(k => TOWERS[k] && TOWERS[k].blueprints > 0)));
 
 // --- save defaults + migration (headless: no localStorage) ---------------------
 {
@@ -231,9 +231,35 @@ check('level bpPool only references real, lockable towers',
 check('all wave defs are sane (0 < rtv < mav <= tev, valid rosters)', LEVELS.every(l =>
   l.waves.every(w => w.rtv > 0 && w.rtv < w.mav && w.mav <= w.tev &&
     w.unlocked.length > 0 && w.unlocked.every(k => ENEMIES[k]))));
-check('region-locked BP pools per spec',
-  LEVELS[0].bpPool.includes('vault') && LEVELS[1].bpPool.includes('defrag') &&
-  LEVELS[2].bpPool.includes('ddos') && LEVELS[3].bpPool.includes('deleter'));
+// --- Blueprint drop slots: primary / secondary / tertiary ----------------------
+check('every level has a primary BP slot',
+  LEVELS.every(l => typeof l.bpPool?.primary === 'string'));
+check('L1 and L2 carry a tertiary slot',
+  !!LEVELS[0].bpPool.tertiary && !!LEVELS[1].bpPool.tertiary);
+check('slot rates: primary 15%, secondary 5%, tertiary 3%',
+  BLUEPRINTS.dropRates.primary === 0.15 && BLUEPRINTS.dropRates.secondary === 0.05 &&
+  BLUEPRINTS.dropRates.tertiary === 0.03);
+check('BP promotion rule: secondary → next primary, tertiary → next secondary',
+  LEVELS.every((l, i) => i === 0 ||
+    (l.bpPool.primary === LEVELS[i - 1].bpPool.secondary &&
+     (!LEVELS[i - 1].bpPool.tertiary || l.bpPool.secondary === LEVELS[i - 1].bpPool.tertiary))));
+check('every lockable tray tower drops somewhere',
+  TOWER_ORDER.filter(k => TOWERS[k].blueprints > 0)
+    .every(k => LEVELS.some(l => Object.values(l.bpPool).includes(k))));
+{
+  // observed rates over many kills match the slot rates
+  const counts = {};
+  const N = 40000;
+  for (let i = 0; i < N; i++) for (const k of rollBlueprints(LEVELS[0].bpPool, () => false)) counts[k] = (counts[k] || 0) + 1;
+  const near = (k, r) => Math.abs((counts[k] || 0) / N - r) < 0.01;
+  check('drop rolls hit the configured rates per slot',
+    near('vault', 0.15) && near('defrag', 0.05) && near('ddos', 0.03));
+  const none = rollBlueprints(LEVELS[0].bpPool, () => true, () => 0);
+  check('unlocked towers never drop', none.length === 0);
+  const pOnly = rollBlueprints(LEVELS[0].bpPool, (k) => k !== 'vault', () => 0);
+  check('slots roll independently (others unlocked → primary still drops)',
+    pOnly.length === 1 && pOnly[0] === 'vault');
+}
 
 // --- Milestone 2 Stage A: version, per-level budgets, enemy delta -------------
 check('version has number + alphabetical codename',

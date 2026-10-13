@@ -3,7 +3,7 @@
 import { PLAYER, TOWERS, TOWER_ORDER, ENEMIES, LEVELS, UPGRADE, BLUEPRINTS, CRASH } from './config.js';
 import { loadSave, writeSave, clearSave } from './save.js';
 import { crashShuffle } from './crash.js';
-import { placeBlockers, placeLockouts, placeExtraSpawns } from './board.js';
+import { placeBlockers, placeLockouts, placeExtraSpawns, rollBlueprints } from './board.js';
 import { HexGrid } from './hex.js';
 import { PathField } from './path.js';
 import { Tower, Enemy, cellPx } from './entities.js';
@@ -228,13 +228,14 @@ class Game {
 
   bpCount(type) { return this.save.blueprints[type] || 0; }
 
-  // A drop belongs to a random still-locked tower from this level's bpPool.
+  // Each of the level's bpPool slots rolls independently (see BLUEPRINTS).
+  // Multiple drops from one kill fan out slightly so each stays tappable.
   rollBlueprint(x, y) {
-    const pool = (this.state.level.bpPool || []).filter(k => !this.isTowerUnlocked(k));
-    if (pool.length === 0) return;                 // everything here is unlocked
-    if (Math.random() >= BLUEPRINTS.dropChance) return;
-    const tower = pool[Math.floor(Math.random() * pool.length)];
-    this.state.drops.push({ x, y, age: 0, tower, color: TOWERS[tower].color });
+    const towers = rollBlueprints(this.state.level.bpPool, (k) => this.isTowerUnlocked(k));
+    towers.forEach((tower, i) => {
+      const a = (Math.PI * 2 * i) / towers.length, off = towers.length > 1 ? 14 : 0;
+      this.state.drops.push({ x: x + Math.cos(a) * off, y: y + Math.sin(a) * off, age: 0, tower, color: TOWERS[tower].color });
+    });
   }
 
   collectDropAt(x, y) {
