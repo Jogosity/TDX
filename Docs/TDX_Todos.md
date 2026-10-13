@@ -45,23 +45,24 @@ Phase 3
 
 The game is intended as a 360° demonstration of game craft — each milestone should be a complete, presentable exhibit, not just a feature dump. Version bumps only when a milestone's full feature set has landed.
 
-## M2 — "Basic" (v1.02) — Tower & Enemy Expansion — IN PROGRESS
+## M2 — "Basic" (v1.02) — Tower & Enemy Expansion — ✅ COMPLETE (S12, 2026-10-13)
 New units land in small phases with playtest + iteration between each. No rushing units to "done" — they mature across phases.
 
 - [x] **Phase 1 — Tweaks** ✅ S9 (version display, per-level budgets, delta verify + Level Select display)
 - [x] **Phase 1 — GitHub repo** ✅ S10: local repo at project root (initial commit tagged v1.01-altair, stray Code/sim.mjs removed, backup procedure in QuickStart) → published private to github.com/Jogosity/TDX via GitHub Desktop. CLOSED
-- [x] **Phase 2A — Familiar-weapon towers**: Pulse (burst rifle — mostly config) + Compressor (pump shotgun — multi-pellet cone). Playtest, iterate. ✱ S11: first pass landed (both towers, double-stack tray, debug spawn pause, 56 checks) — awaiting playtest
-- [x] **Phase 2B — Simple enemies**: ✱ S12: first pass landed (debug SPAWN only — wave rosters at M3 start, 66 checks) — awaiting playtest. Bug (Tower hunter - ignores base - details updated in TDX_Towers_and_Enemies) + Stinger (Fast base attacker, non-optimal route. Details updated in TDX_Towers_and_Enemies
-- [ ] **Phase 3A— (ON HOLD) New-system towers**: Tracer (laser-beam weapon class) + Overclock (adjacency damage-buff aura). Playtest, iterate.
-- [ ] **Phase 3B — (ON HOLD) Exotic enemies**: Cypher (teleport, untargetable while phased) + Bit Rot (contact damage aura; Limiter slows movement, never damage).
-- [ ] **Phase 4 — Integration + close**: ~~BP regions~~ ✅ S12 replaced by primary/secondary/tertiary BP slots (see devlog), new enemies into L2–L5 rosters, tests per mechanic, bump to v1.02 Basic.
+- [x] **Phase 2A — Familiar-weapon towers** ✅ S11: Pulse (3-round burst rifle) + Compressor (45° pump shotgun), double-stack tray, debug spawn pause.
+- [x] **Phase 2B — Simple enemies** ✅ S12: Bug (random tower hunter, walks open cells, ignores base) + Stinger (packs of 2–4, detour route). Playtested + one tweak round (Bug hp ×3, debug flash + wallet, Bug routing).
+- [x] **Phase 4 — Integration + close** ✅ S12: BP regions replaced by primary/secondary/tertiary BP drop slots (15/5/3%, promotion rule); tests per mechanic (74 checks); bumped to **v1.02 Basic**.
+- ➜ Moved out: new enemies into L2–L5 wave rosters → **M3** (the sim tunes rosters anyway). Phases 3A/3B → **Content backlog (on hold)** below.
 
 ## M3 — "Cobol" (v1.03) — Secure & Simulate
 Requires the M2 roster settled first — new units add too much noise to balance against a moving target.
 
+- [ ] Add Bug + Stinger (and Pulse/Compressor in play) to the L1–L5 wave rosters — first, so the sim balances the real roster.
 - [ ] Grow `tests/sim.mjs` into the headless difficulty simulator (tower DPS vs real pathing, batch config sweeps, leak/spike reports).
 - [ ] Full balance pass: all 5 levels × full roster; replace genWaves scaffolds with tuned waves.
-- [ ] Sim-answerable parked questions: Limiter rebalance/return, crash cost-cap, per-level budget tuning.
+- [ ] Sim-answerable parked questions: Limiter rebalance/return, crash cost-cap, per-level budget tuning, BP drop rates (currently err-on-quick).
+- [ ] Juicy Blueprint pickup FX (magnet pull, counter, bigger collect effect) — carried from M2 sign-off.
 
 
 ## M4 — "Disc Drive" (v1.04) — Narrative and Content
@@ -88,6 +89,13 @@ Last of the main beats: onboarding teaches the *final* systems and depends on tu
 - [ ] FTUE / tutorial + new-player difficulty on-ramp.
 - [ ] Sound.
 - [ ] Polish backlog: lateral map asymmetry, effect variants, remaining small items.
+
+
+## Content backlog — ON HOLD (no milestone yet)
+Specced in TDX_Towers_and_Enemies.md. If any return after M3, re-run the difficulty sim with them in.
+- [ ] Tracer (laser-beam weapon class) + Overclock (adjacency damage-buff aura).
+- [ ] Cypher (teleport, untargetable while phased) + Bit Rot (contact damage aura; Limiter slows movement, never damage).
+- [ ] Turtle (super-heavy tank).
 
 
 *End of doc*

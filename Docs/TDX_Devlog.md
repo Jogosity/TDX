@@ -3,6 +3,22 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+# ✅ MILESTONE 2 COMPLETE — v1.02 "Basic" — 2026-10-13
+
+Signed off by Jogo at the end of Session 12. Shipped across Sessions 9–12:
+
+- **Tweaks** — version display (now v1.02 — BASIC), per-level starting budgets, enemy delta verified + shown on Level Select.
+- **Backup** — private GitHub repo (github.com/Jogosity/TDX), Backup Procedure, one-working-copy rule (iCloud `05_TDX`), `push.followTags` so milestone tags ride along with Desktop pushes.
+- **Towers** — Pulse (3-round burst rifle) and Compressor (45° pump-shotgun cone, new aimed-pellet weapon class); burst/reload fix; two-row tray.
+- **Enemies** — Bug (random tower hunter, walks open cells, ignores the base until no towers remain) and Stinger (packs of 2–4 on detour routes). Golden path no longer predictable (Jogo's playtest).
+- **Blueprints** — primary/secondary/tertiary drop slots per level (15/5/3%) with a promotion rule; every lockable tower now drops somewhere; far more pickups.
+- **Tooling** — debug spawn pause, button flash + Tokens/BITS header; `Code/serve.py` no-cache dev server; `tests/run.html` browser test runner (no Node on the Mac mini). Tests 48 → **74**.
+
+**Carried forward:** new enemies into wave rosters → M3 (first task). Juicy BP pickup FX → M3. Tracer, Overclock, Cypher, Bit Rot, Turtle → Content backlog (on hold).
+
+**Roadmap now:** M3 "Cobol" — Secure & Simulate (difficulty sim + balance) → M4 "Disc Drive" — Narrative & Content → M5 "Elm" — Re-engagement → M6 "Fortran" — Onboarding & Presentation.
+
+---
 ## Session 12 — 2026-10-13 — Phase 2B: Bug + Stinger (first pass)
 
 Session opened with admin: Mac mini infra (server command needs the full iCloud path; phone via LAN IP works), and a GitHub Desktop duplicate-clone cleanup — **one working copy only**, the iCloud `05_TDX` (rule added to QuickStart). Jogo restructured the roadmap: M2 phases renumbered (2A towers ✅, 2B enemies, 3A/3B on hold, 4 integration); new **M4 "Disc Drive" — Narrative and Content**; Re-engagement → M5 Elm; Onboarding → M6 Fortran. Unit art now specced in `Assets/Tower_Designs.png`. Plan after 2B: hold content, go to **M3 difficulty**.
@@ -55,7 +71,7 @@ L5     Deleter     Pulse       —
 - Tests 67 → **74**: slot presence, rates, promotion rule, every lockable tower drops somewhere, observed rates over 40k rolls, unlocked never drop, independent slots.
 - Juicier pickups (magnet/counter/effects) parked for later.
 
-**Next: sign off M2 content, then M3 "Cobol" — difficulty simulator.**
+**M2 signed off — v1.02 Basic, tagged `v1.02-basic`. Next: M3 "Cobol".**
 
 ---
 ## Session 11 — 2026-10-12 — Phase B1: Pulse + Compressor (first pass)

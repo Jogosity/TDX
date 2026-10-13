@@ -82,7 +82,7 @@ A major document describes all of the 5 most important Retention Patterns here: 
  - More Enemy Entry points on later levels - 2 on Level 2 and 3. Up to 3 on Level 4 and 5.
 	 - At least 1 enemy entry point will be anchored somewhere along the top edge of the map. 2nd and 3rd entry Points can be anywhere on the top 5 rows of cells
  - Lockouts and the 2nd/3rd Entry point can all be moved during a crash.
- - Divide towers into Per level unlock
+ - Divide towers into Per level unlock (✅ superseded at M2 close by per-level primary/secondary/tertiary BP drop slots — see TDX_Devlog Session 12 / config `LEVELS[i].bpPool`)
 	- [ ] Vault BPs only on Level 1
 	- [ ] Defrag BPs only available  on Level 2
 	- [ ] DDOS BP only available on Level 3

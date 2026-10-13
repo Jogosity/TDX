@@ -4,22 +4,22 @@ Paste the prompt below into a fresh session (with the JogoHome folder connected)
 
 ---
 
-We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestone 1 is complete** (core battle loop + Retention Modules 1–3). **Milestone 2 ("Basic" — Tower & Enemy Expansion, phased) is in progress**: Stage A (tweaks) and Phase B0 (GitHub repo, private at github.com/Jogosity/TDX) are done. The full M2–M5 roadmap lives at the bottom of TDX_Todos.md.
+We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestones 1 (v1.01 Altair) and 2 (v1.02 Basic — Tower & Enemy Expansion) are complete.** Next is **M3 "Cobol" — Secure & Simulate** (difficulty simulator + balance). The full M3–M6 roadmap lives at the bottom of TDX_Todos.md; the repo is private at github.com/Jogosity/TDX.
 
 Before doing anything else, read these files in `1_projects/05_TDX/`:
-1. `Docs/TDX_Devlog.md` — session history and decisions. Read the MILESTONE 1 COMPLETE summary and the newest session entry first.
-2. `Docs/TDX_Todos.md` — the Milestone 2 objectives for this session.
+1. `Docs/TDX_Devlog.md` — session history and decisions. Read the MILESTONE 2 COMPLETE summary and the newest session entry first.
+2. `Docs/TDX_Todos.md` — the milestone roadmap (M3 objectives) at the bottom.
 3. `Docs/TDX_Retention_Modules.md` — retention module designs and their current status.
 4. `Docs/TDX_Initial_Design.md` — the original design doc (reference).
 5. `Code/js/config.js` — all balance and level data. I may have hand-edited this since the last session; treat it as the current source of truth.
 
 The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (74 checks passing as of M2 Phase 2B + BP slots; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
 
-The project is a git repo (root of `05_TDX/`) — commit at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap (M2–M5, phased) is at the bottom of `TDX_Todos.md`.
+The project is a git repo (root of `05_TDX/`) — commit at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap (M3–M6) is at the bottom of `TDX_Todos.md`.
 
-Where we left off (Session 12): Phase 2A towers (Pulse, Compressor) and 2B enemies (Bug, Stinger) landed as first passes, 66/66 tests green. Content is now on hold; next is M3 "Cobol" — the difficulty simulator. New units are specced in `Docs/TDX_Towers_and_Enemies.md` — they land in small phases with playtest + iteration between each; don't rush units to "done". Parked for later milestones (see roadmap): difficulty sim (M3, needs the roster settled first), Re-engagement modules (M4), onboarding/sound/polish (M5).
+Where we left off (Session 12): M2 signed off and tagged v1.02-basic, 74/74 tests green. Content is on hold (Tracer, Overclock, Cypher, Bit Rot, Turtle in the backlog). M3's first task: put Bug + Stinger into the level wave rosters, then grow the sim. Later milestones: Narrative & Content (M4), Re-engagement (M5), Onboarding & Presentation (M6).
 
-Today: [state the phase from the Milestones section of TDX_Todos.md — next up: M3 Cobol, difficulty simulator]
+Today: [state the phase from the Milestones section of TDX_Todos.md — next up: M3 Cobol — wave rosters, then the difficulty simulator]
 
 Update the devlog and commit to git at the end of the session.
 
