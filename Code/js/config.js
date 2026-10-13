@@ -237,7 +237,7 @@ export const ENEMIES = {
   // Not in any wave roster yet (debug SPAWN only) — rosters land with M3's sim.
   // Rewards follow the hand-tuned ~3× spec scale of the existing roster.
   bug: {
-    name: 'Bug', ev: 30, health: 30, speed: SPEED.fast, reward: 30,
+    name: 'Bug', ev: 30, health: 90, speed: SPEED.fast, reward: 30,
     // hunter: ignores the base, flies straight at a random tower and drains it;
     // retargets randomly when it dies. Only heads for the base once no towers remain.
     hunter: true,
