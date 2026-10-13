@@ -27,7 +27,11 @@ Session opened with admin: Mac mini infra (server command needs the full iCloud 
 - Bug: random target means Bugs often cross the whole board — is that fun, or should it prefer nearer towers?
 - Stinger: is a 2-step detour visibly "non-optimal" enough? (`extraSteps` in config)
 
-**Next: playtest 2B, then M3 "Cobol" — difficulty simulator.**
+### Playtest round 1 (same day)
+- Bug health 30 → **90** (died too easily).
+- "Stinger won't debug-spawn" turned out to be **browser caching** of old JS under `python3 -m http.server`. New `Code/serve.py` sends `Cache-Control: no-store`; QuickStart now uses `python3 Code/serve.py`. Use it for all phone testing.
+
+**Next: one tweak round on the 4 new units, sign off M2 content, then M3 "Cobol" — difficulty simulator.**
 
 ---
 ## Session 11 — 2026-10-12 — Phase B1: Pulse + Compressor (first pass)
