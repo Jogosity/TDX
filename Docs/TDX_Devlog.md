@@ -3,6 +3,32 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 13 — 2026-10-14 — M3 "Cobol" kicks off: Difficulty Management + the Ledger
+
+Jogo's framing: TDX is a portfolio piece for game craft *and* AI operation. M3 ("Difficulty Management", Jogo's term) is the central thesis: tool chains and methodology matter as much as results. Plan, try approaches, make mistakes, roll back. Not in scope: player-facing difficulty modes or adaptive difficulty. Thesis: ~80% of difficulty is the basic numbers (enemy inflow, enemy power, player resource inflow, tower power); layout is the rest.
+
+### Agreed plan (`Docs/TDX_M3_Difficulty_Plan.md`, working notes)
+1. **Ledger**: pure maths + visuals in the browser, reading `config.js` live. Visual first (Jogo is an artist/designer).
+2. **Sim**: grow `tests/sim.mjs` into headless bot-player runs; checks the Ledger and measures layout. ~90% of validation; Jogo hand-tests a few tiers.
+3. **Tuning loop**: target pressure curve per level (start with Claude's idea and see), sweeps, one git branch per experiment.
+Plus a running experiment log (hypothesis → change → result → verdict) in the plan doc.
+
+### Tooling
+- **Node installed on the Mac mini** (v24.21.0). `node tests/sim.mjs` from Code/ → 74/74.
+- **Ledger v1** at `Code/tools/ledger/` (`ledger.js` = DOM-free maths, Node-importable; `index.html` = zero-dependency SVG charts). Open via `python3 Code/serve.py` → http://localhost:8000/tools/ledger/
+  - Campaign pressure (all 48 waves; throughput + tank pressure; 1.0 = leak line), per-level tiles, per-level inflow-vs-firepower chart, tower value (DPS per 100 Tokens, T1 vs T4; damage per enemy pass), enemy value table, what-if sliders + model-assumption sliders.
+  - Tower DPS follows entities.js firing exactly (clip/burst/reload). Enemy inflow replays the waves.js picks 400× per wave (seeded).
+
+### Findings (E1 — ledger predictions, not yet sim-checked)
+- Every level peaks at wave 1, then decays to ~0.15. L2–L5 W1 is a wall (~2.0). Matches "too easy".
+- Cause: Tokens compound (towers persist), enemy HP grows only ~1.2× per wave.
+- Threader 20 DPS/100 Tokens vs Pulse 10, Compressor 6, rest 2–3. Upgrades ~4× worse value than building more.
+- HP per EV ranges 0.2 (Stinger) to 4.0 (Crack). Crack drives most HP from L1 W3.
+
+### Where we stopped
+Jogo walked through the Ledger (level charts, campaign chart). **Next: agree the target pressure curve, then tuning experiments; Bug + Stinger into rosters; Sim v1.** No game code changed this session.
+
+---
 # ✅ MILESTONE 2 COMPLETE — v1.02 "Basic" — 2026-10-13
 
 Signed off by Jogo at the end of Session 12. Shipped across Sessions 9–12:

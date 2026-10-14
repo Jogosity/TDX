@@ -17,9 +17,9 @@ The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dep
 
 The project is a git repo (root of `05_TDX/`) — commit at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap (M3–M6) is at the bottom of `TDX_Todos.md`.
 
-Where we left off (Session 12): M2 signed off and tagged v1.02-basic, 74/74 tests green. Content is on hold (Tracer, Overclock, Cypher, Bit Rot, Turtle in the backlog). M3's first task: put Bug + Stinger into the level wave rosters, then grow the sim. Later milestones: Narrative & Content (M4), Re-engagement (M5), Onboarding & Presentation (M6).
+Where we left off (Session 13): M3 "Cobol" (Difficulty Management) is underway. Read `Docs/TDX_M3_Difficulty_Plan.md` (plan + experiment log) and the Session 13 devlog entry. Node is installed on the Mac (v24). Ledger v1 lives at `Code/tools/ledger/` (open http://localhost:8000/tools/ledger/ while `python3 Code/serve.py` runs). Next: agree the target pressure curve with Jogo, then tuning experiments (one git branch each), Bug + Stinger into rosters, Sim v1.
 
-Today: [state the phase from the Milestones section of TDX_Todos.md — next up: M3 Cobol — wave rosters, then the difficulty simulator]
+Today: [state the step from the plan's Order of work]
 
 Update the devlog and commit to git at the end of the session.
 
