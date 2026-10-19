@@ -17,7 +17,7 @@ The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dep
 
 The project is a git repo (root of `05_TDX/`) — commit at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap (M3–M6) is at the bottom of `TDX_Todos.md`.
 
-Where we left off (Session 13): M3 "Cobol" (Difficulty Management) is underway. Read `Docs/TDX_M3_Difficulty_Plan.md` (plan + experiment log) and the Session 13 devlog entry. Node is installed on the Mac (v24). Ledger v1 lives at `Code/tools/ledger/` (open http://localhost:8000/tools/ledger/ while `python3 Code/serve.py` runs). Next: agree the target pressure curve with Jogo, then tuning experiments (one git branch each), Bug + Stinger into rosters, Sim v1.
+Where we left off (Session 14): M3 "Cobol" (Difficulty Management) is underway, working on main. Read `Docs/TDX_M3_Difficulty_Plan.md` (plan + experiment log E1–E5) and the Session 14 devlog entry. Ledger v2 at `Code/tools/ledger/` (open http://localhost:8000/tools/ledger/ while `python3 Code/serve.py` runs) has the target curve, fill panel and Threat EV. Enemy EVs now follow Threat EV (Virus held at 300); wave 1 of every level is Hack + Slice, spawned 1.5× further apart, and Jogo's playtest was the best yet. Next: Sim v1 to measure the Virus drain (the ledger can't see tower damage), then Bug into rosters and the TEV growth curve / economy.
 
 Today: [state the step from the plan's Order of work]
 

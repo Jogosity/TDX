@@ -206,6 +206,13 @@ export const TOWER_ORDER = ['threader', 'vault', 'ddos', 'defrag', 'deleter', 'p
 
 // ---------------------------------------------------------------------------
 // Enemies. EV = Enemy Value (wave budget weight). reward = Tokens on kill.
+// EV = Threat EV (M3 E3, 2026-10-19): HP × speed, scaled so Hack = 100,
+// rounded to 10 — the firepower an enemy demands to kill in one pass.
+// Abilities (Virus drain, Bug hunting, Stinger detour) not priced in yet —
+// except Virus, held at its hand-set 300 (stats say 150; its tower drain
+// made it lethal at 150 in Jogo's playtest).
+// Previous hand-set EVs: hack 100, crack 150, virus 300, worm 200,
+// slice 30, bug 30, stinger 350.
 // attack: only present on tower-attacking enemies (Virus).
 // pack: spawns in groups.
 // ---------------------------------------------------------------------------
@@ -216,7 +223,7 @@ export const ENEMIES = {
     color: '#ff4fae', size: 0.36,
   },
   crack: {
-    name: 'Crack', ev: 150, health: 600, speed: SPEED.low, reward: 35,
+    name: 'Crack', ev: 360, health: 600, speed: SPEED.low, reward: 35,
     desc: 'Slow tank. Soaks a full clip and keeps coming.',
     color: '#ff3131', size: 0.46,
   },
@@ -227,12 +234,12 @@ export const ENEMIES = {
     color: '#ff6a4f', size: 0.40,
   },
   worm: {
-    name: 'Worm', ev: 200, health: 350, speed: SPEED.medium * 1.7, reward: 60,
+    name: 'Worm', ev: 600, health: 350, speed: SPEED.medium * 1.7, reward: 60,
     desc: 'Fast and heavy. Punishes thin defences.',
     color: '#ffa03c', size: 0.40,
   },
   slice: {
-    name: 'Slice', ev: 30, health: 30, speed: SPEED.fast, reward: 14,
+    name: 'Slice', ev: 60, health: 30, speed: SPEED.fast, reward: 14,
     desc: 'Pack runner. Cheap, fast, arrives in groups.',
     pack: { min: 5, max: 8 },
     color: '#ffd9c4', size: 0.26,
@@ -241,7 +248,7 @@ export const ENEMIES = {
   // Not in any wave roster yet (debug SPAWN only) — rosters land with M3's sim.
   // Rewards follow the hand-tuned ~3× spec scale of the existing roster.
   bug: {
-    name: 'Bug', ev: 30, health: 90, speed: SPEED.fast, reward: 30,
+    name: 'Bug', ev: 170, health: 90, speed: SPEED.fast, reward: 30,
     // hunter: ignores the base, flies straight at a random tower and drains it;
     // retargets randomly when it dies. Only heads for the base once no towers remain.
     hunter: true,
@@ -250,7 +257,7 @@ export const ENEMIES = {
     color: '#ff8a1f', size: 0.30,
   },
   stinger: {
-    name: 'Stinger', ev: 350, health: 70, speed: SPEED.fast, reward: 90,
+    name: 'Stinger', ev: 130, health: 70, speed: SPEED.fast, reward: 90,
     // detour: routes via a random off-path cell partway down the board, then
     // takes the optimal path to the base. min/max = fraction of the start
     // cell's distance-to-exit where the detour cell may sit; extraSteps = how
@@ -273,15 +280,22 @@ export const ENEMIES = {
 // ---------------------------------------------------------------------------
 const ALL = ['hack', 'slice', 'crack', 'worm', 'virus'];
 
+// Wave 1 cold-start (M3 E5): every level opens with light enemies only,
+// spawned further apart, so the opening Tokens can get a defence up before
+// the tanks (Worm, Crack) arrive in wave 2. Applies to L1 and genWaves.
+const OPENING_ROSTER = ['hack', 'slice'];
+const OPENING_SPREAD = 1.5;       // wave 1 spawnInterval multiplier
+
 const genWaves = (count, { tev0, tevGrowth, mav0, mavGrowth, interval0, intervalStep, roster }) =>
   Array.from({ length: count }, (_, i) => {
     const mav = Math.round((mav0 * Math.pow(mavGrowth, i)) / 10) * 10;
+    const interval = Math.max(0.5, +(interval0 - intervalStep * i).toFixed(2));
     return {
       tev: Math.round((tev0 * Math.pow(tevGrowth, i)) / 100) * 100,
       mav,
       rtv: Math.round((mav * 0.5) / 10) * 10,
-      unlocked: roster(i),
-      spawnInterval: Math.max(0.5, +(interval0 - intervalStep * i).toFixed(2)),
+      unlocked: i === 0 ? OPENING_ROSTER : roster(i),
+      spawnInterval: i === 0 ? +(interval * OPENING_SPREAD).toFixed(2) : interval,
     };
   });
 
@@ -298,7 +312,7 @@ export const LEVELS = [
     bpPool: { primary: 'vault', secondary: 'defrag', tertiary: 'ddos' },
     theme: {},                    // baseline blue
     waves: [
-      { tev: 1200, mav: 600,  rtv: 300, unlocked: ['hack'],                                spawnInterval: 1.2 },
+      { tev: 1200, mav: 600,  rtv: 300, unlocked: OPENING_ROSTER,                          spawnInterval: 1.8 },  // was [hack], 1.2 (×1.5)
       { tev: 1600, mav: 700,  rtv: 360, unlocked: ['hack', 'slice'],                       spawnInterval: 1.1 },
       { tev: 2000, mav: 800,  rtv: 400, unlocked: ['hack', 'slice', 'crack'],              spawnInterval: 1.0 },
       { tev: 2600, mav: 900,  rtv: 440, unlocked: ['hack', 'slice', 'crack'],              spawnInterval: 0.9 },

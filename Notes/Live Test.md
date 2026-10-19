@@ -1,38 +1,28 @@
 
 #### Web Test
 
-This is a two-minute Terminal job, and you only need one command. The game itself is just files — the server is only needed because browsers block modular JavaScript when opened straight from a file.
+**Start the Session**
+1. Start a Terminal
+2. Run this command
+This runs the game server and the ledger server
 
-Here's the walkthrough:
+cd ~/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/JogoHome/1_projects/05_TDX && python3 Code/serve.py
 
-1. Open **Terminal** (press `Cmd+Space`, type "Terminal", hit Enter).
-2. Paste this in and press Enter (it's one long line — the quotes matter because your folder path has spaces):
-
-**Use this on my MacBook Pro**
-
-cd "/Users/Jogosity/Library/Mobile Documents/iCloud~md~obsidian/Documents/JogoHome/1_projects/05_TDX/Code" && python3 -m http.server 8000
+Wait for `TDX serving ... on http://localhost:8000`, then leave that window open.
 
 
-Use this on my Mac Mini
-cd ~/Library/Mobile\ cd ~/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/JogoHome/1_projects/05_TDX/Code && python3 -m http.server 8000
+**Run the Game and Tools (Desktop)**
+To run the game and the ledger themselves, open both in your browser, in separate tabs:
 
-3. You should see `Serving HTTP on :: port 8000`. That means it's running.\
-4. Open your browser and go to **[http://localhost:8000](http://localhost:8000)** — the game should load. Since it's designed portrait-first, narrow your browser window to a tall phone-ish shape for the intended look.
-5. When you're done playing, click back into Terminal and press `Ctrl+C` to stop the server. (Closing the Terminal window also kills it — that's fine.)
-
-
-#### Mobile Test
-To try it on your phone later: with the server running, type `ipconfig getifaddr en0` in a second Terminal window to get your Mac's local address, then visit `http://<that-address>:8000` on your phone (same Wi-Fi).
-
-192.168.4.29
+- Game: **[http://localhost:8000/](http://localhost:8000/)**
+- Ledger: **[http://localhost:8000/tools/ledger/](http://localhost:8000/tools/ledger/)**
 
 
-http://192.168.4.29:8000
-
-Updated 
-[http://192.168.4.20:8000](http://192.168.4.20:8000)
+**Run the Game (mobile)** 
+On your phone (optional): use the Mac’s LAN address in place of localhost, the same way you playtest. For example, [http://192.168.x.x:8000/](http://192.168.x.x:8000/) for the game.
 
 
+**Finish up**
+When you're done, click the Terminal window and press Ctrl+C.
 
-
-
+If Terminal says the address is already in use, the server from a previous session is still running, so just open the tabs.

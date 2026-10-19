@@ -80,6 +80,7 @@
   details summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
   .notes { color: var(--ink-2); font-size: 13px; }
   .notes li { margin-bottom: 4px; }
+  code { font: 12px ui-monospace, Menlo, monospace; color: var(--ink-2); }
   .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; }
 </style>
 </head>
@@ -107,7 +108,7 @@
   <main>
     <section class="panel">
       <h2>Campaign pressure</h2>
-      <p class="sub">Every wave of every level, left to right. Above 1.0 the defence can't keep up and enemies leak. Each level starts fresh with its own Tokens.</p>
+      <p class="sub">Every wave of every level, left to right. Above 1.0 the defence can't keep up and enemies leak. Each level starts fresh with its own Tokens. The dashed line is the target curve (edit it in <code>tools/ledger/target.js</code>).</p>
       <div class="legend" id="campLegend"></div>
       <div class="chart" id="campaign"></div>
     </section>
@@ -120,6 +121,10 @@
       <div class="tabs" id="lvlTabs"></div>
       <div class="legend" id="lvlLegend"></div>
       <div class="chart" id="level"></div>
+      <h2 style="margin-top:18px">Fill</h2>
+      <p class="sub">How fast the field fills to MAV (the cap on enemy EV alive at once) if nothing dies, against how long your firepower takes to clear a full field. When clearing takes longer than filling, the field piles up: that's the opening punch.</p>
+      <div class="legend" id="fillLegend"></div>
+      <div class="chart" id="fill"></div>
       <details style="margin-top:10px"><summary>Wave numbers</summary><div class="scroll" id="waveTable"></div></details>
     </section>
 
@@ -135,8 +140,10 @@
 
     <section class="panel">
       <h2>Enemy value</h2>
-      <p class="sub">EV is the wave-budget price of an enemy. HP per EV shows how much toughness each point of budget buys; Tokens per 100 HP is what the player earns for chewing through it.</p>
-      <div class="scroll" id="enemyTable"></div>
+      <p class="sub">EV is the wave-budget price of an enemy. Threat EV is what its stats say it should cost: HP × speed, scaled so Hack stays at 100 (killing an enemy in one pass needs DPS ≈ HP × speed ÷ reach). Abilities aren't in the formula yet; the sim will measure them.</p>
+      <div class="legend" id="evLegend"></div>
+      <div class="chart" id="evChart"></div>
+      <div class="scroll" id="enemyTable" style="margin-top:12px"></div>
     </section>
 
     <section class="panel notes">
@@ -147,6 +154,9 @@
         <li><b>Player Tokens</b> are the level's start plus every kill reward from earlier waves, as if every enemy died and every Token went into the build tower at Tier 1.</li>
         <li><b>Throughput pressure</b> = enemy HP per second ÷ total DPS. HP arrives over the spawn time plus one walk down the board.</li>
         <li><b>Tank pressure</b> = the toughest enemy's HP ÷ the damage it soaks crossing the defence (total DPS × time in range). Fast enemies spend less time in range, so it uses HP × speed to pick the toughest.</li>
+        <li><b>Target curve</b> lives in <code>tools/ledger/target.js</code>: per level a start and end pressure, a straight climb between, and a dip on the wave after the middle one. The game never reads it. Each tile's "off target" is the average distance from the curve.</li>
+        <li><b>Fill</b>: time to fill = MAV ÷ EV spawned per second. Full-field HP = the HP that MAV's worth of this wave's mix carries. Time to clear = full-field HP ÷ your DPS at that wave. A wave whose whole budget is below MAV never fills.</li>
+        <li><b>Threat EV</b> = HP × speed × (Hack EV ÷ Hack HP × speed). Price ratio = EV ÷ Threat EV: below 1 is underpriced (more threat than the budget charges), above 1 overpriced. Tokens per 100 threat shows how generously each enemy pays for the trouble it causes.</li>
         <li><b>Not modelled yet:</b> board layout beyond row count, CRASH, Virus and Bug damage to towers, overkill and targeting waste, unlock order, selling. These are the sim's job.</li>
       </ul>
     </section>
@@ -156,7 +166,7 @@
 
 <script type="module">
 import * as C from '../../js/config.js';
-import { computeLedger, towerTable, DEFAULT_KNOBS, DEFAULT_ASSUMPTIONS } from './ledger.js';
+import { computeLedger, towerTable, enemyThreat, DEFAULT_KNOBS, DEFAULT_ASSUMPTIONS } from './ledger.js';
 
 const SERIES = ['--s1', '--s2', '--s3', '--s4', '--s5', '--s6', '--s7'];
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -272,7 +282,7 @@ function drawCampaign() {
   const W = 1000, H = 300, m = { l: 40, r: 14, t: 14, b: 36 };
   const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Pressure per wave across all levels' }, host);
   const cap = 3;
-  const yMax = Math.min(cap, niceMax(Math.max(1.2, ...rows.map(r => Math.min(cap, r.pressure)))));
+  const yMax = Math.min(cap, niceMax(Math.max(1.2, ...rows.map(r => Math.min(cap, Math.max(r.pressure, r.target))))));
   const n = rows.length;
   const x = i => m.l + ((i + 0.5) / n) * (W - m.l - m.r);
   const y = v => H - m.b - (Math.min(v, yMax) / yMax) * (H - m.t - m.b);
@@ -290,6 +300,14 @@ function drawCampaign() {
   yAxis(svg, m.l, W - m.r, y, yMax, 0, v => v.toFixed(1));
   el('line', { x1: m.l, x2: W - m.r, y1: y(1), y2: y(1), stroke: css('--critical'), 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }, svg);
   el('text', { x: W - m.r - 4, y: y(1) - 6, 'text-anchor': 'end', fill: '#ff8a80' }, svg).textContent = 'Break point: leaks above here';
+  {
+    let off = 0;
+    for (const l of ledger) {
+      const d = l.waves.map((r, j) => `${j ? 'L' : 'M'}${x(off + j).toFixed(1)},${y(r.target).toFixed(1)}`).join('');
+      el('path', { d, fill: 'none', stroke: css('--ink-2'), 'stroke-width': 2, 'stroke-dasharray': '6 5', 'stroke-linejoin': 'round', opacity: 0.85 }, svg);
+      off += l.waves.length;
+    }
+  }
   const lines = [['throughput', '--s1', 'Throughput pressure'], ['tank', '--s2', 'Tank pressure']];
   for (const [key, col] of lines) {
     let off = 0;
@@ -313,6 +331,7 @@ function drawCampaign() {
     showTip(ev, `Level ${r.level + 1}, wave ${r.wave + 1}`, [
       [css('--s1'), 'Throughput', fmt(r.throughput, 2)],
       [css('--s2'), `Tank (${C.ENEMIES[r.tankUnit?.key]?.name ?? '–'})`, fmt(r.tank, 2)],
+      [css('--ink-2'), 'Target', fmt(r.target, 2)],
       [null, 'Tokens available', fmt(r.tokens)],
       [null, 'Enemy HP in wave', fmt(r.hp)],
     ]);
@@ -322,7 +341,7 @@ function drawCampaign() {
     const p = svg.getBoundingClientRect();
     const sx = ((ev.clientX - p.left) / p.width) * W;
     const i = Math.max(0, Math.min(n - 1, Math.floor(((sx - m.l) / (W - m.l - m.r)) * n)));
-    level = rows[i].level; drawLevel(); drawTiles();
+    level = rows[i].level; drawLevel(); drawFill(); drawTiles();
   });
 }
 
@@ -335,9 +354,10 @@ function drawTiles() {
     return `<div class="tile" data-l="${li}" style="${li === level ? 'border-color:var(--accent)' : ''}">
       <div class="t">L${li + 1} · ${l.name.split(': ')[1] ?? l.name}</div>
       <div class="v ${peak.pressure > 1 ? 'hot' : ''}">${fmt(peak.pressure, 2)}</div>
-      <div class="d">peak at W${peak.wave + 1} · ends ${fmt(last.pressure, 2)}</div></div>`;
+      <div class="d">peak at W${peak.wave + 1} · ends ${fmt(last.pressure, 2)}</div>
+      <div class="d">off target by ${fmt(l.gap, 2)} avg</div></div>`;
   }).join('');
-  host.querySelectorAll('.tile').forEach(t => t.addEventListener('click', () => { level = +t.dataset.l; drawLevel(); drawTiles(); }));
+  host.querySelectorAll('.tile').forEach(t => t.addEventListener('click', () => { level = +t.dataset.l; drawLevel(); drawFill(); drawTiles(); }));
 }
 
 // ---------------------------------------------------------------- level chart
@@ -346,7 +366,7 @@ function drawLevel() {
   document.getElementById('lvlTitle').textContent = L.name;
   const tabs = document.getElementById('lvlTabs');
   tabs.innerHTML = ledger.map((l, li) => `<button aria-pressed="${li === level}" data-l="${li}">L${li + 1}</button>`).join('');
-  tabs.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { level = +b.dataset.l; drawLevel(); drawTiles(); }));
+  tabs.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { level = +b.dataset.l; drawLevel(); drawFill(); drawTiles(); }));
 
   const present = ENEMY_KEYS.filter(k => L.waves.some(w => w.byType[k]?.count > 0));
   const tower = C.TOWERS[assume.buildTower].name;
@@ -396,12 +416,52 @@ function drawLevel() {
   // table
   document.getElementById('waveTable').innerHTML = `<table><thead><tr>
     <th>Wave</th><th>TEV</th><th>Enemies</th><th>Enemy HP</th><th>Arrives over (s)</th><th>HP/s</th>
-    <th>Tokens</th><th>Towers</th><th>DPS</th><th>Throughput</th><th>Tank</th><th>Toughest</th><th>Tokens earned</th></tr></thead><tbody>
+    <th>Tokens</th><th>Towers</th><th>DPS</th><th>Throughput</th><th>Tank</th><th>Target</th><th>Toughest</th><th>MAV</th><th>Fill (s)</th><th>Full-field HP</th><th>Clear (s)</th><th>Tokens earned</th></tr></thead><tbody>
     ${L.waves.map(w => `<tr><td>W${w.wave + 1}</td><td>${fmt(w.tev)}</td><td>${fmt(w.count, 1)}</td><td>${fmt(w.hp)}</td>
       <td>${fmt(w.window)}</td><td>${fmt(w.inflow)}</td><td>${fmt(w.tokens)}</td><td>${fmt(w.towers, 1)}</td><td>${fmt(w.dps)}</td>
       <td class="${w.throughput > 1 ? 'hot' : ''}">${fmt(w.throughput, 2)}</td><td class="${w.tank > 1 ? 'hot' : ''}">${fmt(w.tank, 2)}</td>
-      <td>${C.ENEMIES[w.tankUnit?.key]?.name ?? '–'}</td><td>${fmt(w.reward)}</td></tr>`).join('')}
+      <td>${fmt(w.target, 2)}</td><td>${C.ENEMIES[w.tankUnit?.key]?.name ?? '–'}</td><td>${fmt(w.mav)}</td>
+      <td>${w.fillTime == null ? 'never' : fmt(w.fillTime, 1)}</td><td>${fmt(w.fullHp)}</td>
+      <td class="${w.fillTime != null && w.clearTime > w.fillTime ? 'hot' : ''}">${fmt(w.clearTime, 1)}</td><td>${fmt(w.reward)}</td></tr>`).join('')}
     </tbody></table>`;
+}
+
+// ---------------------------------------------------------------- fill chart
+// Grouped bars per wave, both in seconds: time to fill MAV vs time to clear it.
+function drawFill() {
+  const L = ledger[level];
+  const host = document.getElementById('fill'); host.innerHTML = '';
+  const W = 1000, H = 240, m = { l: 48, r: 14, t: 14, b: 30 };
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Time to fill MAV and time to clear a full field per wave' }, host);
+  const n = L.waves.length;
+  const vals = L.waves.flatMap(w => [w.fillTime ?? 0, Number.isFinite(w.clearTime) ? w.clearTime : 0]);
+  const yMax = niceMax(Math.max(5, ...vals) * 1.05);
+  const band = (W - m.l - m.r) / n, bw = Math.min(26, band * 0.3);
+  const x = i => m.l + (i + 0.5) * band;
+  const y = v => H - m.b - (Math.min(v, yMax) / yMax) * (H - m.t - m.b);
+  yAxis(svg, m.l, W - m.r, y, yMax, 4, v => fmt(v));
+  el('text', { x: m.l, y: m.t - 2 }, svg).textContent = 'seconds';
+  const bar = (cx, v, col) => {
+    if (!(v > 0)) return;
+    const h = Math.max(1, y(0) - y(v)), xx = cx - bw / 2, yy = y(0) - h, r = Math.min(4, h);
+    el('path', { d: `M${xx},${yy + h}V${yy + r}Q${xx},${yy} ${xx + r},${yy}H${xx + bw - r}Q${xx + bw},${yy} ${xx + bw},${yy + r}V${yy + h}Z`, fill: css(col) }, svg);
+  };
+  L.waves.forEach((w, i) => {
+    bar(x(i) - bw / 2 - 1, w.fillTime, '--s3');
+    bar(x(i) + bw / 2 + 1, w.clearTime, '--s5');
+    if (w.fillTime == null) el('text', { x: x(i) - bw / 2 - 1, y: y(0) - 6, 'text-anchor': 'middle' }, svg).textContent = '—';
+    el('text', { x: x(i), y: H - 10, 'text-anchor': 'middle' }, svg).textContent = `W${i + 1}`;
+    const hit = el('rect', { x: x(i) - band / 2, y: m.t, width: band, height: H - m.t - m.b, fill: 'transparent' }, svg);
+    hit.addEventListener('mousemove', ev => showTip(ev, `Wave ${i + 1}`, [
+      [css('--s3'), 'Time to fill MAV', w.fillTime == null ? 'never fills' : `${fmt(w.fillTime, 1)} s`],
+      [css('--s5'), 'Time to clear a full field', `${fmt(w.clearTime, 1)} s`],
+      [null, 'MAV', fmt(w.mav)],
+      [null, 'Full-field HP', fmt(w.fullHp)],
+      [null, 'EV spawned per second', fmt(w.evRate)],
+      [null, 'Your DPS', fmt(w.dps)],
+    ]));
+    hit.addEventListener('mouseleave', hideTip);
+  });
 }
 
 // ---------------------------------------------------------------- tower charts
@@ -439,27 +499,69 @@ function drawTowerChart(id, metric, unit) {
 }
 
 // ---------------------------------------------------------------- enemy table
+function drawEvChart(threat) {
+  const host = document.getElementById('evChart'); host.innerHTML = '';
+  const rowH = 34, W = 1000, m = { l: 96, r: 90, t: 6, b: 22 };
+  const H = m.t + m.b + rowH * threat.length;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Current EV against Threat EV per enemy' }, host);
+  const xMax = niceMax(Math.max(...threat.flatMap(t => [t.ev, t.threatEv])) * 1.05);
+  const x = v => m.l + (v / xMax) * (W - m.l - m.r);
+  const nt = ticksFor(xMax);
+  for (let i = 0; i <= nt; i++) {
+    const v = (xMax * i) / nt;
+    el('line', { x1: x(v), x2: x(v), y1: m.t, y2: H - m.b, class: i ? 'grid' : 'axis' }, svg);
+    el('text', { x: x(v), y: H - 6, 'text-anchor': 'middle' }, svg).textContent = fmt(v);
+  }
+  threat.forEach((t, i) => {
+    const y0 = m.t + i * rowH;
+    el('text', { x: m.l - 8, y: y0 + rowH / 2 + 4, 'text-anchor': 'end', class: 'lbl' }, svg).textContent = t.name;
+    [[t.ev, '--s1', 0], [t.threatEv, '--s4', 1]].forEach(([v, col, k]) => {
+      const bh = 11, yy = y0 + 5 + k * (bh + 2);
+      const w = Math.max(1, x(v) - m.l);
+      el('path', { d: `M${m.l},${yy}H${m.l + w - 3}Q${m.l + w},${yy} ${m.l + w},${yy + 3}V${yy + bh - 3}Q${m.l + w},${yy + bh} ${m.l + w - 3},${yy + bh}H${m.l}Z`, fill: css(col) }, svg);
+      el('text', { x: m.l + w + 6, y: yy + 9.5, class: 'lbl' }, svg).textContent = fmt(v) + (k === 1 && t.abilities.length ? ' + ?' : '');
+    });
+    const hit = el('rect', { x: 0, y: y0, width: W, height: rowH, fill: 'transparent' }, svg);
+    hit.addEventListener('mousemove', ev => showTip(ev, t.name, [
+      [css('--s1'), 'Current EV', fmt(t.ev)],
+      [css('--s4'), 'Threat EV (stats only)', fmt(t.threatEv)],
+      [null, 'Price ratio', `×${fmt(t.priceRatio, 2)} ${t.priceRatio < 0.9 ? '(underpriced)' : t.priceRatio > 1.1 ? '(overpriced)' : ''}`],
+      [null, 'Abilities (sim to measure)', t.abilities.join(', ') || 'none'],
+    ]));
+    hit.addEventListener('mouseleave', hideTip);
+  });
+}
+
 function drawEnemies() {
+  const threat = enemyThreat(C);
+  const T = Object.fromEntries(threat.map(t => [t.key, t]));
+  legend('evLegend', [[css('--s1'), 'Current EV'], [css('--s4'), 'Threat EV (HP × speed); "+ ?" = abilities still to measure']]);
+  drawEvChart(threat);
   const rows = ENEMY_KEYS.map(k => {
-    const e = C.ENEMIES[k];
+    const e = C.ENEMIES[k], t = T[k];
+    const ratioCls = t.priceRatio < 0.67 || t.priceRatio > 1.5 ? 'hot' : '';
     const inRoster = C.LEVELS.some(l => l.waves.some(w => w.unlocked.includes(k)));
     return `<tr><td><span class="swatch" style="background:${enemyColor(k)}"></span>${e.name}${inRoster ? '' : ' <span style="color:var(--muted)">(not in any wave)</span>'}</td>
       <td>${e.ev}</td><td>${e.health}</td><td>${fmt(e.health / e.ev, 2)}</td><td>${fmt(e.speed, 2)}</td>
-      <td>${e.reward}</td><td>${fmt((e.reward / e.health) * 100, 1)}</td><td>${e.pack ? `${e.pack.min}–${e.pack.max}` : '–'}</td></tr>`;
+      <td>${fmt(t.threatEv)}</td><td class="${ratioCls}">×${fmt(t.priceRatio, 2)}</td>
+      <td>${e.reward}</td><td>${fmt((e.reward / e.health) * 100, 1)}</td><td>${fmt(t.rewardPer100, 1)}</td>
+      <td>${t.abilities.join(', ') || '–'}</td><td>${e.pack ? `${e.pack.min}–${e.pack.max}` : '–'}</td></tr>`;
   }).join('');
   document.getElementById('enemyTable').innerHTML = `<table><thead><tr><th>Enemy</th><th>EV</th><th>HP</th><th>HP per EV</th>
-    <th>Speed (cells/s)</th><th>Reward</th><th>Tokens per 100 HP</th><th>Pack</th></tr></thead><tbody>${rows}</tbody></table>`;
+    <th>Speed (cells/s)</th><th>Threat EV</th><th>Price ratio</th><th>Reward</th><th>Tokens per 100 HP</th><th>Tokens per 100 threat</th>
+    <th>Abilities (sim to measure)</th><th>Pack</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // ---------------------------------------------------------------- main
 function update() {
   ledger = computeLedger(C, knobs, assume);
   towers = towerTable(C, knobs, assume);
-  drawCampaign(); drawTiles(); drawLevel();
+  drawCampaign(); drawTiles(); drawLevel(); drawFill();
   drawTowerChart('towers', 'dpsPer100', 'DPS per 100 Tokens');
   drawTowerChart('towersPass', 'passPer100', 'Damage per pass per 100 Tokens');
 }
-legend('campLegend', [[css('--s1'), 'Throughput pressure', true], [css('--s2'), 'Tank pressure', true]]);
+legend('campLegend', [[css('--s1'), 'Throughput pressure', true], [css('--s2'), 'Tank pressure', true], [css('--ink-2'), 'Target', true]]);
+legend('fillLegend', [[css('--s3'), 'Time to fill MAV'], [css('--s5'), 'Time to clear a full field']]);
 legend('towLegend', [[css('--s1'), 'Tier 1'], [css('--s7'), 'Tier 4 (fully upgraded)']]);
 buildControls();
 drawEnemies();

@@ -10,6 +10,11 @@
 //   Throughput pressure = enemy HP arriving per second ÷ the player's total DPS.
 //   Tank pressure       = toughest enemy's HP ÷ damage it soaks crossing the
 //                         defence (total DPS × time in range).
+//
+// v2 adds: the target curve (target.js), fill (how fast the field reaches MAV
+// and how long a full field takes to clear) and Threat EV (HP × speed).
+
+import { targetCurve } from './target.js';
 
 // ---------------------------------------------------------------------------
 // Knobs (global what-ifs, never saved) and assumptions (model guesses the
@@ -160,7 +165,14 @@ export function waveLedger(cfg, level, wave, knobs, a, rand) {
     const score = hpOf(k) * E[k].speed;
     if (!tank || score > tank.score) tank = { key: k, hp: hpOf(k), speed: E[k].speed, score };
   }
-  return { byType, hp, reward, count, spawnTime: time, tank };
+  // Fill: how fast EV lands on the field, and what a full field (MAV) carries.
+  let ev = 0;
+  for (const k of Object.keys(mean)) ev += mean[k] * E[k].ev;
+  const evRate = time > 0 ? ev / time : 0;              // EV spawned per second
+  const fills = ev >= wave.mav;                          // a small wave may never reach MAV
+  const fillTime = fills && evRate > 0 ? wave.mav / evRate : null;
+  const fullHp = ev > 0 ? Math.min(ev, wave.mav) * (hp / ev) : 0;  // HP on the field at MAV
+  return { byType, hp, reward, count, spawnTime: time, tank, ev, evRate, fillTime, fullHp };
 }
 
 // ---------------------------------------------------------------------------
@@ -172,6 +184,7 @@ export function computeLedger(cfg, knobs = DEFAULT_KNOBS, a = DEFAULT_ASSUMPTION
   return cfg.LEVELS.map((level, li) => {
     const pathLen = level.grid.rowWidths.length * a.mazeFactor;   // nominal route, cells
     let tokens = (level.startTokens ?? cfg.PLAYER.startTokens) * knobs.startTokens;
+    const targets = targetCurve(li, level.waves.length, a.target);
     const waves = level.waves.map((wave, wi) => {
       const w = waveLedger(cfg, level, wave, knobs, a, rand);
       const towers = tokens / tower.cost;                // fractional — a smooth "firepower"
@@ -188,10 +201,36 @@ export function computeLedger(cfg, knobs = DEFAULT_KNOBS, a = DEFAULT_ASSUMPTION
         tokens, towers, dps, inflow, window, throughput, tank: tankP,
         pressure: Math.max(throughput, tankP),
         tev: wave.tev * knobs.waveSize, mav: wave.mav, spawnInterval: wave.spawnInterval,
+        clearTime: dps > 0 ? w.fullHp / dps : Infinity,   // seconds to clear a full field
+        target: targets[wi],
       };
       tokens += w.reward;                                 // assumes every enemy is killed
       return row;
     });
-    return { index: li, name: level.name, delta: level.enemyDelta, pathLen, waves };
+    const gap = waves.reduce((sum, w) => sum + Math.abs(w.pressure - w.target), 0) / waves.length;
+    return { index: li, name: level.name, delta: level.enemyDelta, pathLen, waves, gap };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Threat EV — what an enemy should cost from its stats alone.
+// To kill an enemy during one pass you need DPS ≈ HP × speed ÷ reach, and
+// reach is the same for every enemy, so threat ∝ HP × speed. Scaled so the
+// reference enemy (Hack) = its current EV. Abilities (tower damage, hunting,
+// detours) aren't in the formula: the sim measures what they add.
+// ---------------------------------------------------------------------------
+export function enemyThreat(cfg, ref = 'hack') {
+  const E = cfg.ENEMIES, r = E[ref];
+  const unit = r.ev / (r.health * r.speed);
+  return Object.keys(E).map(key => {
+    const e = E[key];
+    const threatEv = e.health * e.speed * unit;
+    const abilities = [e.hunter && 'hunts towers', !e.hunter && e.attack && 'drains towers', e.detour && 'detours'].filter(Boolean);
+    return {
+      key, name: e.name, ev: e.ev, threatEv,
+      priceRatio: e.ev / threatEv,             // <1 underpriced, >1 overpriced
+      rewardPer100: (e.reward / threatEv) * 100,
+      abilities,
+    };
   });
 }

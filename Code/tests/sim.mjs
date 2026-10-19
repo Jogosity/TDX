@@ -53,7 +53,7 @@ while (t < 600 && !(wc.done && enemies.length === 0)) {
   for (let i = enemies.length-1; i>=0; i--) if (!enemies[i].alive) enemies.splice(i,1);
 }
 console.log(`  wave8: kills=${kills} peak=${peak}/${wdef.mav} time=${t.toFixed(0)}s`);
-check('wave budget fully spent', wc.budgetLeft < 30);
+check('wave budget fully spent', wc.budgetLeft < wc.cheapestEV());
 check('active EV never exceeded MAV', peak <= wdef.mav);
 check('MAV halt occurred', halted);
 check('RTV resume occurred', resumed);

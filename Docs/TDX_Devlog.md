@@ -3,6 +3,31 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 14 — 2026-10-19 — Ledger v2, Threat EV, wave 1 fix: "best game by a long way"
+
+Housekeeping: iCloud connection checked, game + Ledger servers running, Jogo's Live Test note updated. Decision: **keep working on main** for now (nothing risky yet). Full detail in the plan's experiment log (E2–E5).
+
+### Ledger v2 (E2)
+- **Target curve** (`tools/ledger/target.js`, ledger-only): per level start 0.5 → end 0.85…0.95 (L1→L5), straight climb, −0.1 dip after the middle wave. Tiles show "off target by".
+- **Fill panel** (Jogo's Fill Rate idea): time to fill MAV vs time to clear a full field, per wave.
+- **Threat EV** = HP × speed (Hack = 100) and an EV vs Threat EV chart: Crack, Worm, Bug underpriced; Virus, Stinger overpriced (before abilities).
+
+### Balance changes (`config.js`)
+- **E3 — EVs → Threat EV:** Hack 100, Crack 360, Worm 600, Slice 60, Bug 170, Stinger 130. Old values in a comment above ENEMIES. Test "wave budget fully spent" now uses `cheapestEV()` (was hard-coded `< 30`).
+- **E4 — Virus back to 300 EV:** at 150 it came in large numbers and its drain was lethal. Jogo loves the unit; HP and damage unchanged.
+- **E5 — Wave 1 cold-start:** `OPENING_ROSTER = ['hack','slice']` and `OPENING_SPREAD = 1.5` (spawn interval) on wave 1 of every level. Spreading alone didn't help L3–L5 (wave 1 was tank-bound by one Worm). Ledger wave 1 pressure 0.69–1.81 → 0.44–0.79; Worm and Crack now arrive in wave 2.
+- Tests 74/74.
+
+### Playtest (Jogo, L1–L3)
+"The best game I have had by a long long way… very very intense." The difficulty twist is the **Virus drain**: real-time strategy, react fast to Virus attacks, use Vaults to soak damage and protect Threaders and DDOS towers, or as a distraction. This is the intended direction (Bug units are ready for it).
+
+### What we learned
+The ledger assumes towers never take damage, so its late-wave "too easy" (end pressure ~0.2) is a firepower-only reading. Difficulty has two layers: the numbers (ledger) and the drain (real-time, needs the sim).
+
+### Next
+**Sim v1 measures the Virus drain** (tower HP and DPS lost per Virus, with and without a Vault) → ledger "firepower after drain" line. Then Bug into rosters, TEV growth curve / economy. Sync note: the Virus revert and plan E4/E5 hadn't reached the Mac on first write; fixed and verified this session.
+
+---
 ## Session 13 — 2026-10-14 — M3 "Cobol" kicks off: Difficulty Management + the Ledger
 
 Jogo's framing: TDX is a portfolio piece for game craft *and* AI operation. M3 ("Difficulty Management", Jogo's term) is the central thesis: tool chains and methodology matter as much as results. Plan, try approaches, make mistakes, roll back. Not in scope: player-facing difficulty modes or adaptive difficulty. Thesis: ~80% of difficulty is the basic numbers (enemy inflow, enemy power, player resource inflow, tower power); layout is the rest.
