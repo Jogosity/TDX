@@ -55,12 +55,14 @@ New units land in small phases with playtest + iteration between each. No rushin
 - [x] **Phase 4 — Integration + close** ✅ S12: BP regions replaced by primary/secondary/tertiary BP drop slots (15/5/3%, promotion rule); tests per mechanic (74 checks); bumped to **v1.02 Basic**.
 - ➜ Moved out: new enemies into L2–L5 wave rosters → **M3** (the sim tunes rosters anyway). Phases 3A/3B → **Content backlog (on hold)** below.
 
-## M3 — "Cobol" (v1.03) — Secure & Simulate
+## M3 — "Cobol" (v1.03) — Secure & Simulate — ✅ COMPLETE (S15, 2026-10-21)
 Requires the M2 roster settled first — new units add too much noise to balance against a moving target.
 
 - [x] Grow `tests/sim.mjs` into the headless difficulty simulator (tower DPS vs real pathing, batch config sweeps, leak/spike reports).
-- [x] Full balance pass: all 5 levels × full roster; replace genWaves scaffolds with tuned waves.
-- [x] Sim-answerable parked questions: Limiter rebalance/return, crash cost-cap, per-level budget tuning, BP drop rates (currently err-on-quick).
+- [x] Full balance pass: all 5 levels, method built (Ledger + Sim + tuning loop, E1–E14 in `TDX_M3_Difficulty_Plan.md`). L1–L4 play slightly easy, L5 slightly hard.
+- ➜ Moved to **M5**: replace the L2–L5 `genWaves` scaffolds with hand-tuned waves.
+- [x] Sim-answerable parked questions: per-level budget tuning (wave 1 fix, E7). Limiter → content backlog.
+- ➜ Moved to **M5**: CRASH cost-cap and BP drop rates (not yet measured).
 - [x] Bugs - Fix the 4s Spawn Cooldown - ensure system is working
 
 
@@ -71,42 +73,39 @@ Jogo to do all the creative. (lots of design to be done for this MS)
 - [ ] Create a .MD file to allow easy management of the text and image assets
 - [ ] Define the characters and factions 
 - [ ] Write the characters and they dialogue
-- [ ] Game features - Add Bug + Stinger (and Pulse/Compressor in play) to the L1–L5 wave rosters.
+- [ ] Game features - Add Bug + Stinger (and Pulse/Compressor in play) to the L1–L5 wave rosters. Then a quick Sim + Ledger check so M4 doesn't undo M3's balance.
+- [ ] UX - Warning when towers are under attack (Virus drain especially). From M6.
+- [ ] UX - Clear message when a new tower has been unlocked. From M6.
 
 
 
 ## M5 - "Elm" (v1.05) - Balance and Expansion
 - [ ] Return to formal balance management
+- [ ] Replace the L2–L5 `genWaves` scaffolds with hand-tuned waves; CRASH cost-cap and BP drop rates (from M3).
+- [ ] Work through the "M4 ideas" list at the end of `TDX_M3_Difficulty_Plan.md`: L5's early Virus count, unit EVs (Worms rare, Hacks uncommon), Defrag as an anti-virus tower, targeting rules, Virus behaviour, tower value (DDOS, Compressor, Pulse), the Ledger's Virus spiral, L3 layout.
 - [ ] Look at ebb and flow within waves - perhaps using flow rate and "invisible" sub waves during a single wave.
 - [ ] Add another 5 levels - experiment with size/shape and play length - eg. much higher TEV
 - [ ] Expand on Tower Upgrade system - consider "abilities" as an upgrade as well as just firepower. Eg. Threaders can become more defensive of neighbours. DDOs can look for concentrated packs. If this doesn't work, purely numeric boosts is always a solid fallback.
 
 
-## M6 — "Fortran" (v1.06) — QoL
-
-- [ ] Juicy Blueprint pickup FX (bigger collect effect) — carried from M2 sign-off.
-- [ ] Add warning UX when towers are under attack
-- [ ] Add clear UX when a new tower has been unlocked
-
-
-
-## M7 — "Goto" (v1.07) — Onboarding & Presentation
+## M6 — "Fortran" (v1.06) — Onboarding & Presentation
 Last of the main beats: onboarding teaches the *final* systems and depends on tuned difficulty.
 
 - [ ] FTUE / tutorial + new-player difficulty on-ramp.
 - [ ] Sound.
 - [ ] Polish backlog: lateral map asymmetry, effect variants, remaining small items.
+- [ ] Juicy Blueprint pickup FX (bigger collect effect), carried from M2 sign-off via the old M6.
 
 
 
-## M8 - "Hypercard" (v1.08) - Publishing to Github Pages
+## M7 - "Goto" (v1.07) - Publishing to Github Pages
 - [ ] Set up a Github page
 - [ ] Get TDX deployed to that page automatically
 - [ ] Add my custom domain (punkarcade.net) to the site. Yes. I do own this!
 
 
 
-## M9 — "Int" (v1.09) — Re-engagement
+## M8 — "Hypercard" (v1.08) — Re-engagement
 After the sim: quest/login rewards feed the economy, so they tune against a balanced game.
 
 - [ ] Finish the Daily Quests design in the design doc (still cut off at "Eg.").
