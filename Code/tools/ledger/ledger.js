@@ -13,6 +13,13 @@
 //
 // v2 adds: the target curve (target.js), fill (how fast the field reaches MAV
 // and how long a full field takes to clear) and Threat EV (HP × speed).
+// v3 adds (M3 E7, from Sim v1): burst pressure = a full field (MAV) of HP ÷
+// the damage the defence deals while it crosses the board, with firepower
+// split across entry points. Throughput is an average; burst is the peak —
+// it's what wave 1 on short, multi-entry boards (L3) actually feels like.
+// v4 adds (M3 E10): the Virus tax — Tokens of towers each Virus costs the
+// player (drained towers + Vaults to stop it), measured by Sim v1's reactive
+// bot. Half is charged against the wave it arrives in, all of it afterwards.
 
 import { targetCurve } from './target.js';
 
@@ -34,6 +41,9 @@ export const DEFAULT_ASSUMPTIONS = {
   pelletHit: { scatterShot: 0.25, pumpShotgun: 0.6 },  // share of pellets that land
   pathOffset: 1,            // cells between a tower and the enemy route (towers sit beside it)
   mazeFactor: 1,            // >1 = player's building stretches the route / time in range
+  virusTax: 110,            // Tokens lost per Virus (sim E13, damage 10: 50–150 by level, ~115 averaged; was 200 at damage 15, E10)
+  entrySplit: 0.5,          // burst: 0 = towers cover every route, 1 = each entry needs its own towers
+                            // (0.5 matched Sim v1's wave 1 leak ranking across L1–L5)
   samples: 400,             // Monte Carlo rolls per wave (enemy picks are random)
   seed: 1234,
 };
@@ -119,10 +129,14 @@ export function rollWave(cfg, wave, knobs, rand) {
   const cheapest = Math.min(...wave.unlocked.map(k => E[k].ev));
   const counts = {};
   let time = 0, events = 0;
+  const last = {};                                     // spawnCooldown, as waves.js
+  const cooling = k => E[k].spawnCooldown > 0 && last[k] !== undefined && time - last[k] < E[k].spawnCooldown;
   while (budget >= cheapest) {
     const headroom = Math.min(budget, wave.mav);
-    const pool = wave.unlocked.filter(k => E[k].ev <= headroom);
-    if (!pool.length) break;
+    const affordable = wave.unlocked.filter(k => E[k].ev <= headroom);
+    if (!affordable.length) break;
+    const pool = affordable.filter(k => !cooling(k));
+    if (!pool.length) { time += 0.3; continue; }      // only cooling types fit: wait, like the game
     const key = pool[Math.floor(rand() * pool.length)];
     const def = E[key];
     let n = 1;
@@ -131,6 +145,7 @@ export function rollWave(cfg, wave, knobs, rand) {
       n = Math.min(want, Math.floor(budget / def.ev));
     }
     counts[key] = (counts[key] ?? 0) + n;
+    last[key] = time;
     budget -= def.ev * n;
     time += wave.spawnInterval + PACK_GAP * (n - 1);
     events++;
@@ -187,7 +202,9 @@ export function computeLedger(cfg, knobs = DEFAULT_KNOBS, a = DEFAULT_ASSUMPTION
     const targets = targetCurve(li, level.waves.length, a.target);
     const waves = level.waves.map((wave, wi) => {
       const w = waveLedger(cfg, level, wave, knobs, a, rand);
-      const towers = tokens / tower.cost;                // fractional — a smooth "firepower"
+      const viruses = w.byType.virus?.count ?? 0;
+      const tax = viruses * a.virusTax;                  // Tokens of towers the drain costs this wave
+      const towers = Math.max(0, tokens - tax / 2) / tower.cost;   // fractional — a smooth "firepower"
       const dps = towers * tower.dps;
       const traverse = pathLen / cfg.SPEED.medium;
       const window = w.spawnTime + traverse;              // seconds the wave's HP arrives over
@@ -195,16 +212,22 @@ export function computeLedger(cfg, knobs = DEFAULT_KNOBS, a = DEFAULT_ASSUMPTION
       const throughput = dps > 0 ? inflow / dps : Infinity;
       const soak = w.tank ? dps * (tower.reach / w.tank.speed) : 0;   // damage one tank takes
       const tankP = w.tank ? (soak > 0 ? w.tank.hp / soak : Infinity) : 0;
+      // burst: a full field crossing the board at its HP-weighted speed
+      let hpSpeed = 0;
+      for (const k in w.byType) hpSpeed += w.byType[k].hp * cfg.ENEMIES[k].speed;
+      const crossTime = w.hp > 0 ? pathLen / (hpSpeed / w.hp) : Infinity;
+      const split = Math.pow(level.spawns ?? 1, a.entrySplit);
+      const burst = dps > 0 ? (w.fullHp * split) / (dps * crossTime) : Infinity;
       const row = {
         ...w, tankUnit: w.tank,
         level: li, wave: wi, label: `L${li + 1}·W${wi + 1}`,
-        tokens, towers, dps, inflow, window, throughput, tank: tankP,
-        pressure: Math.max(throughput, tankP),
+        tokens, towers, dps, inflow, window, throughput, tank: tankP, burst, crossTime, viruses, tax,
+        pressure: Math.max(throughput, tankP, burst),
         tev: wave.tev * knobs.waveSize, mav: wave.mav, spawnInterval: wave.spawnInterval,
         clearTime: dps > 0 ? w.fullHp / dps : Infinity,   // seconds to clear a full field
         target: targets[wi],
       };
-      tokens += w.reward;                                 // assumes every enemy is killed
+      tokens += w.reward - tax;                           // assumes every enemy is killed
       return row;
     });
     const gap = waves.reduce((sum, w) => sum + Math.abs(w.pressure - w.target), 0) / waves.length;

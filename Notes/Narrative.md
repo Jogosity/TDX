@@ -1,0 +1,33 @@
+
+The enemies are invasive agents attacking important memory cores and literally stealing memories.
+
+Each level run picks a character from a pool.
+Each level selects a set of memories to defend.
+
+At the start of the run the player is shown the picture of the character you are protecting and a a short bio.
+
+At the end of the run you are told what memories have been lost.
+
+
+At level one the memories are presented as saved data, documents and photographs
+By level 3 it is becoming more clear that you are hacking peoples actual minds and removing those memories. Changing them forever.
+
+
+MVP Scaffold
+5 characters - name and avatar
+5 bios
+5 memories per character
+
+
+Phase 2
+10 chars
+10 bios
+5 memories per character
+
+
+Phase 3
+10 chars
+20 bios
+10 memories per character
+
+

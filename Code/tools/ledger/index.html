@@ -55,7 +55,17 @@
   .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
   .tile:hover { border-color: var(--axis); }
   .tile .t { color: var(--muted); font-size: 12px; }
-  .tile .v { font-size: 22px; font-weight: 600; margin-top: 2px; }
+  .tile .v { font-size: 18px; font-weight: 600; margin-top: 2px; }
+  .tile .v.easy { color: #7fb6ff; } .tile .v.ok { color: #5fd35f; } .tile .v.hard { color: #ff8a80; }
+  .tile svg { display: block; width: 100%; height: 34px; margin: 4px 0 2px; }
+  .tile .shaped { color: var(--accent); font-size: 11px; }
+  .knob .note { grid-column: 1 / -1; color: var(--muted); font-size: 11.5px; margin-top: -2px; }
+  .toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); cursor: pointer; margin-bottom: 8px; }
+  .toggle input { accent-color: var(--accent); }
+  .recipe { background: var(--surface-2); border-radius: 6px; padding: 8px 10px; font-size: 12px; color: var(--ink-2); margin: 4px 0 10px; }
+  .recipe code { color: var(--ink); }
+  aside details > summary { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .tile .d { color: var(--ink-2); font-size: 12px; }
   .chart { position: relative; width: 100%; }
   .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -93,39 +103,48 @@
 <div class="layout">
   <aside>
     <div class="panel">
-      <h2>What-if knobs</h2>
-      <p class="sub">Scale the live config without editing it. Nothing is saved.</p>
-      <div id="knobs"></div>
-      <button id="reset">Reset all</button>
+      <h2>Shaping dials</h2>
+      <p class="sub" id="shapeSub">Preview changes to one level's waves before putting them in config.js. Pick the level with the tabs or the Level summary. Nothing is saved.</p>
+      <div id="shape"></div>
+      <div class="recipe" id="recipe"></div>
+      <div class="row"><button id="resetLevel">Reset this level</button><button id="resetAll">Reset all levels</button></div>
     </div>
     <div class="panel">
-      <h2>Model assumptions</h2>
-      <p class="sub">Guesses the sim will replace with measurements.</p>
-      <div id="assume"></div>
+      <details id="calib">
+        <summary>Calibration</summary>
+        <p class="sub" style="margin-top:6px">Guesses the ledger makes about how a player plays. The sim measures them where it can (shown under each). You shouldn't need to touch these.</p>
+        <div id="assume"></div>
+        <button id="resetCalib">Reset calibration</button>
+      </details>
     </div>
   </aside>
 
   <main>
     <section class="panel">
       <h2>Campaign pressure</h2>
-      <p class="sub">Every wave of every level, left to right. Above 1.0 the defence can't keep up and enemies leak. Each level starts fresh with its own Tokens. The dashed line is the target curve (edit it in <code>tools/ledger/target.js</code>).</p>
+      <p class="sub">Every wave of every level, left to right. Pressure is how hard the wave pushes against the firepower your Tokens can buy, with the Virus tax taken off. Above 1.0 the defence can't keep up and enemies leak. The dashed line is the target curve (edit it in <code>tools/ledger/target.js</code>). Shaded columns are waves with Viruses: the darker, the more of them.</p>
+      <label class="toggle"><input type="checkbox" id="showParts"> Show the parts (throughput, tank, burst)</label>
       <div class="legend" id="campLegend"></div>
       <div class="chart" id="campaign"></div>
     </section>
 
-    <div class="tiles" id="tiles"></div>
+    <section class="panel">
+      <h2>Level summary</h2>
+      <p class="sub">One card per level: its pressure (solid) against the target (dashed), and a verdict. Click a card to look at that level below and shape it.</p>
+      <div class="tiles" id="tiles"></div>
+    </section>
 
     <section class="panel">
-      <h2 id="lvlTitle">Level</h2>
-      <p class="sub">Bars: enemy HP arriving per second, by enemy. Line: the player's firepower if every Token so far went into the build tower. Bars above the line mean pressure above 1.0.</p>
+      <h2>Enemy arrivals</h2>
+      <p class="sub"><b id="lvlTitle" style="color:var(--ink)">Level</b>. Bars: enemy HP arriving per second, by enemy. Line: the player's firepower if every Token so far went into the build tower, after the Virus tax. Bars above the line mean pressure above 1.0.</p>
       <div class="tabs" id="lvlTabs"></div>
       <div class="legend" id="lvlLegend"></div>
       <div class="chart" id="level"></div>
-      <h2 style="margin-top:18px">Fill</h2>
+      <h2 style="margin-top:18px">Fill rate</h2>
       <p class="sub">How fast the field fills to MAV (the cap on enemy EV alive at once) if nothing dies, against how long your firepower takes to clear a full field. When clearing takes longer than filling, the field piles up: that's the opening punch.</p>
       <div class="legend" id="fillLegend"></div>
       <div class="chart" id="fill"></div>
-      <details style="margin-top:10px"><summary>Wave numbers</summary><div class="scroll" id="waveTable"></div></details>
+      <details style="margin-top:10px"><summary>Wave table</summary><div class="scroll" id="waveTable"></div></details>
     </section>
 
     <section class="panel">
@@ -133,7 +152,7 @@
       <p class="sub">Damage per second for every 100 Tokens spent, at Tier 1 and fully upgraded to Tier 4 (upgrade costs included).</p>
       <div class="legend" id="towLegend"></div>
       <div class="chart" id="towers"></div>
-      <h2 style="margin-top:18px">Damage per enemy pass</h2>
+      <h3 style="margin:18px 0 2px;font-size:13.5px">Damage per enemy pass</h3>
       <p class="sub">Damage one medium-speed enemy takes walking through a tower's range, per 100 Tokens. Range matters here, which is where long reach pays off.</p>
       <div class="chart" id="towersPass"></div>
     </section>
@@ -152,12 +171,18 @@
         <li><b>Tower DPS</b> follows the game's firing code exactly: one clip unit per trigger pull (a whole burst), reload after the clip's last pull, no cooldown during reload.</li>
         <li><b>Enemy inflow</b> replays the wave spawner's random picks 400 times per wave and averages them. It treats the field as empty, so MAV never throttles spawning; in real play MAV only slows things when you're already behind.</li>
         <li><b>Player Tokens</b> are the level's start plus every kill reward from earlier waves, as if every enemy died and every Token went into the build tower at Tier 1.</li>
+        <li><b>Pressure</b> = the worst of three parts (tick "Show the parts" to see them): throughput, tank and burst, all measured against firepower after the Virus tax.</li>
         <li><b>Throughput pressure</b> = enemy HP per second ÷ total DPS. HP arrives over the spawn time plus one walk down the board.</li>
-        <li><b>Tank pressure</b> = the toughest enemy's HP ÷ the damage it soaks crossing the defence (total DPS × time in range). Fast enemies spend less time in range, so it uses HP × speed to pick the toughest.</li>
-        <li><b>Target curve</b> lives in <code>tools/ledger/target.js</code>: per level a start and end pressure, a straight climb between, and a dip on the wave after the middle one. The game never reads it. Each tile's "off target" is the average distance from the curve.</li>
+        <li><b>Tank pressure</b> = can the single toughest enemy (Crack or Worm) walk through? Its HP ÷ the damage it soaks crossing one tower's reach with every tower on it. It spikes the wave a new tank first appears. Tanks aren't what makes TDX hard, so it's only shown with the parts.</li>
+        <li><b>Burst pressure</b> = a full field of enemies (MAV) ÷ the damage your towers deal while it crosses the board. More entry points split your towers across routes (the "Entry split" assumption). Throughput is the average; burst is the peak, which is what a cold start on a short board feels like.</li>
+        <li><b>Virus tax</b> = Tokens of towers each Virus costs you: towers it drains plus the Vaults you build to stop it. Measured by the sim's reactive bot (about 110 per Virus at damage 10). Half is taken off your firepower in the wave it arrives, all of it from the next wave on.</li>
+        <li><b>Target curve</b> lives in <code>tools/ledger/target.js</code>: per level a start and end pressure, a straight climb between, and a dip on the wave after the middle one. The game never reads it.</li>
+        <li><b>Level summary verdict</b>: the level's average pressure minus the target's average. More than 0.1 below = <i>Too easy</i>, more than 0.1 above = <i>Too hard</i>, otherwise <i>On target</i>. "Off by" is the average distance from the curve, wave by wave, so a level can be on target on average but the wrong shape.</li>
+        <li><b>Shaping dials</b> change one level's waves in the ledger only: <i>Virus first wave</i> moves where Viruses join the roster (they stay in every wave after); <i>Last wave size</i> ramps TEV from ×1 at wave 1 up to that at the last wave; <i>Start Tokens</i> and <i>Wave 1 cap</i> (MAV) scale those values. The box under the dials says what to change in config.js to make it real.</li>
+        <li><b>Calibration</b>: how the ledger models a player. Build tower, grenade and pellet hit rates, tower distance and maze factor are hand guesses; Virus tax and Entry split were measured with the sim (E13, E7).</li>
         <li><b>Fill</b>: time to fill = MAV ÷ EV spawned per second. Full-field HP = the HP that MAV's worth of this wave's mix carries. Time to clear = full-field HP ÷ your DPS at that wave. A wave whose whole budget is below MAV never fills.</li>
         <li><b>Threat EV</b> = HP × speed × (Hack EV ÷ Hack HP × speed). Price ratio = EV ÷ Threat EV: below 1 is underpriced (more threat than the budget charges), above 1 overpriced. Tokens per 100 threat shows how generously each enemy pays for the trouble it causes.</li>
-        <li><b>Not modelled yet:</b> board layout beyond row count, CRASH, Virus and Bug damage to towers, overkill and targeting waste, unlock order, selling. These are the sim's job.</li>
+        <li><b>Not modelled:</b> board layout beyond row count and entry points, CRASH, the Virus spiral (the tax is flat; losing towers compounds in play), Bug damage, overkill and targeting waste, unlock order, selling. These are the sim's job (<code>tools/sim/</code>).</li>
       </ul>
     </section>
   </main>
@@ -174,57 +199,126 @@ const ENEMY_KEYS = Object.keys(C.ENEMIES);
 const enemyColor = k => css(SERIES[ENEMY_KEYS.indexOf(k) % SERIES.length]);
 const fmt = (n, d = 0) => Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d }) : '∞';
 
-const knobs = { ...DEFAULT_KNOBS };
 const assume = structuredClone(DEFAULT_ASSUMPTIONS);
+const shaping = {};   // per level index: { virusFrom, growth, tokens, cap } — ledger preview only
 let level = 0;
 let ledger, towers;
 
 document.getElementById('src').textContent =
   `Difficulty maths from config.js (v${C.VERSION.number} ${C.VERSION.codename}). Edit the config, then reload this page.`;
 
+// ---------------------------------------------------------------- shaping
+// The config's own values for a level, as the dials' starting point.
+function baseShape(li) {
+  const L = C.LEVELS[li], n = L.waves.length;
+  const first = L.waves.findIndex(w => w.unlocked.includes('virus'));
+  return { virusFrom: first < 0 ? n + 1 : first + 1, growth: 1, tokens: 1, cap: 1 };
+}
+const shapeOf = li => ({ ...baseShape(li), ...shaping[li] });
+const isShaped = li => {
+  const b = baseShape(li), s = shapeOf(li);
+  return Object.keys(b).some(k => b[k] !== s[k]);
+};
+// Config with the shaping applied to cloned levels. Nothing touches C itself.
+function buildCfg() {
+  const LEVELS = C.LEVELS.map((L, li) => {
+    if (!isShaped(li)) return L;
+    const s = shapeOf(li), n = L.waves.length;
+    const waves = L.waves.map((w, i) => {
+      let unlocked = w.unlocked.filter(k => k !== 'virus');
+      if (i + 1 >= s.virusFrom) unlocked = [...unlocked, 'virus'];
+      const ramp = n > 1 ? 1 + (s.growth - 1) * i / (n - 1) : s.growth;
+      const out = { ...w, unlocked, tev: w.tev * ramp };
+      if (i === 0) { out.mav = w.mav * s.cap; out.rtv = w.rtv * s.cap; }
+      return out;
+    });
+    return { ...L, waves, startTokens: (L.startTokens ?? C.PLAYER.startTokens) * s.tokens };
+  });
+  return { ...C, LEVELS };
+}
+// Plain-language list of what to change in config.js to make the preview real.
+function recipe(li) {
+  const L = C.LEVELS[li], n = L.waves.length, b = baseShape(li), s = shapeOf(li), out = [];
+  const wv = v => v > n ? 'no wave' : `W${v}`;
+  if (s.virusFrom !== b.virusFrom) {
+    if (s.virusFrom < b.virusFrom) out.push(`Add <code>'virus'</code> to <code>unlocked</code> in W${s.virusFrom}${Math.min(b.virusFrom, n + 1) - 1 > s.virusFrom ? `–W${Math.min(b.virusFrom, n + 1) - 1}` : ''}.`);
+    else out.push(`Remove <code>'virus'</code> from <code>unlocked</code> in W${b.virusFrom}${Math.min(s.virusFrom, n + 1) - 1 > b.virusFrom ? `–W${Math.min(s.virusFrom, n + 1) - 1}` : ''}.`);
+    out[out.length - 1] += ` (Viruses from ${wv(b.virusFrom)} → ${wv(s.virusFrom)})`;
+  }
+  if (s.growth !== 1) {
+    const last = L.waves[n - 1].tev;
+    out.push(`Scale <code>tev</code> up a ramp: W1 ×1 to W${n} ×${s.growth.toFixed(2)} (W${n}: ${fmt(last)} → ${fmt(last * s.growth)}).`);
+  }
+  if (s.tokens !== 1) {
+    const t = L.startTokens ?? C.PLAYER.startTokens;
+    out.push(`<code>startTokens</code>: ${fmt(t)} → ${fmt(t * s.tokens)}.`);
+  }
+  if (s.cap !== 1) {
+    const w = L.waves[0];
+    out.push(`W1 <code>mav</code>: ${fmt(w.mav)} → ${fmt(w.mav * s.cap)}, <code>rtv</code>: ${fmt(w.rtv)} → ${fmt(w.rtv * s.cap)}.`);
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------- controls
-const KNOB_DEFS = [
-  ['enemyHp', 'Enemy HP', 0.25, 3, 0.05],
-  ['waveSize', 'Wave size (TEV)', 0.25, 3, 0.05],
-  ['rewards', 'Kill rewards', 0, 3, 0.05],
-  ['startTokens', 'Starting Tokens', 0.25, 3, 0.05],
-  ['towerDamage', 'Tower damage', 0.25, 3, 0.05],
-];
-function slider(host, label, value, min, max, step, show, onInput) {
+function slider(host, label, value, min, max, step, show, onInput, note) {
   const wrap = document.createElement('div');
   wrap.className = 'knob';
-  wrap.innerHTML = `<label>${label}</label><output></output><input type="range" min="${min}" max="${max}" step="${step}">`;
+  wrap.innerHTML = `<label>${label}</label><output></output><input type="range" min="${min}" max="${max}" step="${step}">${note ? `<span class="note">${note}</span>` : ''}`;
   const input = wrap.querySelector('input'), out = wrap.querySelector('output');
   input.value = value; out.textContent = show(value);
   input.addEventListener('input', () => { const v = +input.value; out.textContent = show(v); onInput(v); });
   host.appendChild(wrap);
   return input;
 }
-function buildControls() {
-  const k = document.getElementById('knobs'); k.innerHTML = '';
-  for (const [key, label, min, max, step] of KNOB_DEFS)
-    slider(k, label, knobs[key], min, max, step, v => `×${v.toFixed(2)}`, v => { knobs[key] = v; update(); });
-
+function buildShaping() {
+  const L = C.LEVELS[level], n = L.waves.length, s = shapeOf(level);
+  document.getElementById('shapeSub').innerHTML =
+    `Preview changes to <b style="color:var(--ink)">L${level + 1} · ${L.name.split(': ')[1] ?? L.name}</b> before putting them in config.js. Pick the level with the tabs or the Level summary. Nothing is saved.`;
+  const host = document.getElementById('shape'); host.innerHTML = '';
+  const set = (key, v) => { shaping[level] = { ...shaping[level], [key]: v }; update(); showRecipe(); };
+  slider(host, 'Virus first wave', s.virusFrom, 1, n + 1, 1, v => v > n ? 'none' : `W${v}`, v => set('virusFrom', v),
+    'The biggest lever: where the drain starts.');
+  slider(host, 'Last wave size', s.growth, 0.5, 2, 0.05, v => `×${v.toFixed(2)}`, v => set('growth', v),
+    'TEV ramps from ×1 at W1 to this at the last wave.');
+  const base = L.startTokens ?? C.PLAYER.startTokens;
+  slider(host, 'Start Tokens', s.tokens, 0.5, 2, 0.05, v => `${fmt(base * v)}`, v => set('tokens', v));
+  slider(host, 'Wave 1 cap (MAV)', s.cap, 0.25, 2, 0.05, v => `${fmt(L.waves[0].mav * v)}`, v => set('cap', v),
+    'How many enemies can be on the field at once in the opening wave.');
+  showRecipe();
+}
+function showRecipe() {
+  const r = recipe(level);
+  document.getElementById('recipe').innerHTML = r.length
+    ? `<b style="color:var(--ink)">To make this real in config.js</b><br>${r.join('<br>')}`
+    : 'No changes yet. Move a dial to preview it.';
+}
+function buildCalibration() {
   const a = document.getElementById('assume'); a.innerHTML = '';
   const sel = document.createElement('div');
   sel.className = 'knob';
-  sel.innerHTML = `<label>Build tower</label><output></output><select></select>`;
+  sel.innerHTML = `<label>Build tower</label><output></output><select></select><span class="note">Guess: the tower every Token goes into.</span>`;
   const s = sel.querySelector('select');
   for (const key of C.TOWER_ORDER) if (C.TOWERS[key].weapon)
     s.add(new Option(`${C.TOWERS[key].name} (${C.TOWERS[key].cost} Tokens)`, key, false, key === assume.buildTower));
   s.addEventListener('change', () => { assume.buildTower = s.value; update(); });
   a.appendChild(sel);
-  slider(a, 'Grenade targets hit', assume.splashTargets, 1, 4, 0.1, v => v.toFixed(1), v => { assume.splashTargets = v; update(); });
-  slider(a, 'Defrag pellets landing', assume.pelletHit.scatterShot, 0.05, 1, 0.05, v => `${Math.round(v * 100)}%`, v => { assume.pelletHit.scatterShot = v; update(); });
-  slider(a, 'Compressor pellets landing', assume.pelletHit.pumpShotgun, 0.05, 1, 0.05, v => `${Math.round(v * 100)}%`, v => { assume.pelletHit.pumpShotgun = v; update(); });
-  slider(a, 'Tower distance from route', assume.pathOffset, 0, 2, 0.1, v => `${v.toFixed(1)} cells`, v => { assume.pathOffset = v; update(); });
-  slider(a, 'Maze factor', assume.mazeFactor, 1, 3, 0.1, v => `×${v.toFixed(1)}`, v => { assume.mazeFactor = v; update(); });
+  slider(a, 'Grenade targets hit', assume.splashTargets, 1, 4, 0.1, v => v.toFixed(1), v => { assume.splashTargets = v; update(); }, 'Guess. DDOS grenades only.');
+  slider(a, 'Defrag pellets landing', assume.pelletHit.scatterShot, 0.05, 1, 0.05, v => `${Math.round(v * 100)}%`, v => { assume.pelletHit.scatterShot = v; update(); }, 'Guess.');
+  slider(a, 'Compressor pellets landing', assume.pelletHit.pumpShotgun, 0.05, 1, 0.05, v => `${Math.round(v * 100)}%`, v => { assume.pelletHit.pumpShotgun = v; update(); }, 'Guess.');
+  slider(a, 'Tower distance from route', assume.pathOffset, 0, 2, 0.1, v => `${v.toFixed(1)} cells`, v => { assume.pathOffset = v; update(); }, 'Guess.');
+  slider(a, 'Maze factor', assume.mazeFactor, 1, 3, 0.1, v => `×${v.toFixed(1)}`, v => { assume.mazeFactor = v; update(); }, 'Guess: how much longer the route is than the rows.');
+  slider(a, 'Virus tax (Tokens per Virus)', assume.virusTax, 0, 400, 10, v => fmt(v), v => { assume.virusTax = v; update(); }, 'Sim E13: 50–150 by level (Virus damage 10).');
+  slider(a, 'Entry split (burst)', assume.entrySplit, 0, 1, 0.05, v => v.toFixed(2), v => { assume.entrySplit = v; update(); }, 'Sim E7: matched the wave 1 leak ranking.');
 }
-document.getElementById('reset').addEventListener('click', () => {
-  Object.assign(knobs, DEFAULT_KNOBS);
+document.getElementById('resetLevel').addEventListener('click', () => { delete shaping[level]; buildShaping(); update(); });
+document.getElementById('resetAll').addEventListener('click', () => { for (const k in shaping) delete shaping[k]; buildShaping(); update(); });
+document.getElementById('resetCalib').addEventListener('click', () => {
   Object.assign(assume, structuredClone(DEFAULT_ASSUMPTIONS));
-  buildControls(); update();
+  buildCalibration(); update();
 });
+document.getElementById('showParts').addEventListener('change', () => drawCampaign());
+function setLevel(li) { level = li; buildShaping(); drawTiles(); drawLevel(); drawFill(); }
 
 // ---------------------------------------------------------------- tooltip
 const tip = document.getElementById('tip');
@@ -278,86 +372,112 @@ function legend(id, items) {
 // ---------------------------------------------------------------- campaign chart
 function drawCampaign() {
   const host = document.getElementById('campaign'); host.innerHTML = '';
+  const parts = document.getElementById('showParts').checked;
   const rows = ledger.flatMap(l => l.waves);
   const W = 1000, H = 300, m = { l: 40, r: 14, t: 14, b: 36 };
   const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Pressure per wave across all levels' }, host);
   const cap = 3;
-  const yMax = Math.min(cap, niceMax(Math.max(1.2, ...rows.map(r => Math.min(cap, Math.max(r.pressure, r.target))))));
+  const peakOf = r => parts ? Math.max(r.pressure, r.target, r.throughput, r.tank, r.burst) : Math.max(r.pressure, r.target);
+  const yMax = Math.min(cap, niceMax(Math.max(1.2, ...rows.map(r => Math.min(cap, peakOf(r))))));
   const n = rows.length;
-  const x = i => m.l + ((i + 0.5) / n) * (W - m.l - m.r);
+  const colW = (W - m.l - m.r) / n;
+  const x = i => m.l + (i + 0.5) * colW;
   const y = v => H - m.b - (Math.min(v, yMax) / yMax) * (H - m.t - m.b);
   // level bands
   let i0 = 0;
   ledger.forEach((l, li) => {
-    const xa = m.l + (i0 / n) * (W - m.l - m.r), xb = m.l + ((i0 + l.waves.length) / n) * (W - m.l - m.r);
+    const xa = m.l + i0 * colW, xb = m.l + (i0 + l.waves.length) * colW;
     if (li % 2 === 0) el('rect', { x: xa, y: m.t, width: xb - xa, height: H - m.t - m.b, fill: 'rgba(255,255,255,0.025)' }, svg);
     const t = el('text', { x: (xa + xb) / 2, y: H - 8, 'text-anchor': 'middle', class: 'lbl' }, svg);
-    t.textContent = `L${li + 1}`;
+    t.textContent = `L${li + 1}${isShaped(li) ? ' (shaped)' : ''}`;
     i0 += l.waves.length;
+  });
+  // Virus columns: darker = more Viruses
+  const vMax = Math.max(1, ...rows.map(r => r.viruses));
+  const vCol = enemyColor('virus');
+  rows.forEach((r, i) => {
+    if (r.viruses > 0.05) el('rect', { x: m.l + i * colW + 1, y: m.t, width: colW - 2, height: H - m.t - m.b, fill: vCol, 'fill-opacity': 0.08 + 0.22 * r.viruses / vMax }, svg);
   });
   // leak zone
   el('rect', { x: m.l, y: m.t, width: W - m.l - m.r, height: y(1) - m.t, fill: css('--critical'), 'fill-opacity': 0.07 }, svg);
   yAxis(svg, m.l, W - m.r, y, yMax, 0, v => v.toFixed(1));
   el('line', { x1: m.l, x2: W - m.r, y1: y(1), y2: y(1), stroke: css('--critical'), 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }, svg);
   el('text', { x: W - m.r - 4, y: y(1) - 6, 'text-anchor': 'end', fill: '#ff8a80' }, svg).textContent = 'Break point: leaks above here';
-  {
-    let off = 0;
-    for (const l of ledger) {
-      const d = l.waves.map((r, j) => `${j ? 'L' : 'M'}${x(off + j).toFixed(1)},${y(r.target).toFixed(1)}`).join('');
-      el('path', { d, fill: 'none', stroke: css('--ink-2'), 'stroke-width': 2, 'stroke-dasharray': '6 5', 'stroke-linejoin': 'round', opacity: 0.85 }, svg);
-      off += l.waves.length;
-    }
-  }
-  const lines = [['throughput', '--s1', 'Throughput pressure'], ['tank', '--s2', 'Tank pressure']];
-  for (const [key, col] of lines) {
+  const path = (key, attrs) => {
     let off = 0;
     for (const l of ledger) {   // separate segment per level — they don't connect
       const d = l.waves.map((r, j) => `${j ? 'L' : 'M'}${x(off + j).toFixed(1)},${y(r[key]).toFixed(1)}`).join('');
-      el('path', { d, fill: 'none', stroke: css(col), 'stroke-width': 2, 'stroke-linejoin': 'round' }, svg);
+      el('path', { d, fill: 'none', 'stroke-linejoin': 'round', ...attrs }, svg);
       off += l.waves.length;
     }
-  }
+  };
+  path('target', { stroke: css('--ink-2'), 'stroke-width': 2, 'stroke-dasharray': '6 5', opacity: 0.85 });
+  const PARTS = [['throughput', '--s1', 'Throughput'], ['tank', '--s4', 'Tank'], ['burst', '--s2', 'Burst']];
+  if (parts) for (const [key, col] of PARTS) path(key, { stroke: css(col), 'stroke-width': 1.5, opacity: 0.9 });
+  path('pressure', { stroke: css('--accent'), 'stroke-width': 3 });
+  legend('campLegend', [
+    [css('--accent'), 'Pressure', true], [css('--ink-2'), 'Target', true],
+    ...(parts ? PARTS.map(([, col, label]) => [css(col), label, true]) : []),
+    [vCol, 'Waves with Viruses'],
+  ]);
   // hover
   const cross = el('line', { y1: m.t, y2: H - m.b, stroke: css('--axis'), 'stroke-width': 1, visibility: 'hidden' }, svg);
-  const dots = lines.map(([, col]) => el('circle', { r: 4.5, fill: css(col), stroke: css('--surface'), 'stroke-width': 2, visibility: 'hidden' }, svg));
-  const hit = el('rect', { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: 'transparent' }, svg);
-  hit.addEventListener('mousemove', ev => {
+  const dot = el('circle', { r: 5, fill: css('--accent'), stroke: css('--surface'), 'stroke-width': 2, visibility: 'hidden' }, svg);
+  const hit = el('rect', { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: 'transparent', style: 'cursor:pointer' }, svg);
+  const idx = ev => {
     const p = svg.getBoundingClientRect();
     const sx = ((ev.clientX - p.left) / p.width) * W;
-    const i = Math.max(0, Math.min(n - 1, Math.floor(((sx - m.l) / (W - m.l - m.r)) * n)));
-    const r = rows[i];
+    return Math.max(0, Math.min(n - 1, Math.floor((sx - m.l) / colW)));
+  };
+  hit.addEventListener('mousemove', ev => {
+    const i = idx(ev), r = rows[i];
     cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
-    lines.forEach(([key], k) => { dots[k].setAttribute('cx', x(i)); dots[k].setAttribute('cy', y(r[key])); dots[k].setAttribute('visibility', 'visible'); });
+    dot.setAttribute('cx', x(i)); dot.setAttribute('cy', y(r.pressure)); dot.setAttribute('visibility', 'visible');
     showTip(ev, `Level ${r.level + 1}, wave ${r.wave + 1}`, [
-      [css('--s1'), 'Throughput', fmt(r.throughput, 2)],
-      [css('--s2'), `Tank (${C.ENEMIES[r.tankUnit?.key]?.name ?? '–'})`, fmt(r.tank, 2)],
+      [css('--accent'), 'Pressure', fmt(r.pressure, 2)],
       [css('--ink-2'), 'Target', fmt(r.target, 2)],
+      [vCol, 'Viruses', r.viruses ? fmt(r.viruses, 1) : '–'],
+      [null, 'Virus tax', r.tax ? `${fmt(r.tax)} Tokens` : '–'],
+      [css('--s1'), 'Throughput', fmt(r.throughput, 2)],
+      [css('--s4'), `Tank (${C.ENEMIES[r.tankUnit?.key]?.name ?? '–'})`, fmt(r.tank, 2)],
+      [css('--s2'), 'Burst', fmt(r.burst, 2)],
       [null, 'Tokens available', fmt(r.tokens)],
-      [null, 'Enemy HP in wave', fmt(r.hp)],
     ]);
   });
-  hit.addEventListener('mouseleave', () => { hideTip(); cross.setAttribute('visibility', 'hidden'); dots.forEach(d => d.setAttribute('visibility', 'hidden')); });
-  hit.addEventListener('click', ev => {
-    const p = svg.getBoundingClientRect();
-    const sx = ((ev.clientX - p.left) / p.width) * W;
-    const i = Math.max(0, Math.min(n - 1, Math.floor(((sx - m.l) / (W - m.l - m.r)) * n)));
-    level = rows[i].level; drawLevel(); drawFill(); drawTiles();
-  });
+  hit.addEventListener('mouseleave', () => { hideTip(); cross.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); });
+  hit.addEventListener('click', ev => setLevel(rows[idx(ev)].level));
 }
 
-// ---------------------------------------------------------------- level tiles
+// ---------------------------------------------------------------- level summary
+// Verdict from the mean signed distance to the target: ±0.1 counts as on target.
+function verdict(l) {
+  const d = l.waves.reduce((s, w) => s + (w.pressure - w.target), 0) / l.waves.length;
+  return d < -0.1 ? ['easy', 'Too easy', d] : d > 0.1 ? ['hard', 'Too hard', d] : ['ok', 'On target', d];
+}
+function spark(l) {
+  const W = 120, H = 34, n = l.waves.length;
+  const top = Math.max(1, ...l.waves.map(w => Math.max(w.pressure, w.target)));
+  const x = i => n > 1 ? 2 + (i / (n - 1)) * (W - 4) : W / 2;
+  const y = v => H - 2 - (Math.min(v, top) / top) * (H - 4);
+  const d = key => l.waves.map((w, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(w[key]).toFixed(1)}`).join('');
+  const one = top > 1 ? `<line x1="0" x2="${W}" y1="${y(1)}" y2="${y(1)}" stroke="${css('--critical')}" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>` : '';
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${one}
+    <path d="${d('target')}" fill="none" stroke="${css('--ink-2')}" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>
+    <path d="${d('pressure')}" fill="none" stroke="${css('--accent')}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
 function drawTiles() {
   const host = document.getElementById('tiles');
   host.innerHTML = ledger.map((l, li) => {
     const peak = l.waves.reduce((a, b) => (b.pressure > a.pressure ? b : a));
-    const last = l.waves[l.waves.length - 1];
+    const [cls, label] = verdict(l);
     return `<div class="tile" data-l="${li}" style="${li === level ? 'border-color:var(--accent)' : ''}">
       <div class="t">L${li + 1} · ${l.name.split(': ')[1] ?? l.name}</div>
-      <div class="v ${peak.pressure > 1 ? 'hot' : ''}">${fmt(peak.pressure, 2)}</div>
-      <div class="d">peak at W${peak.wave + 1} · ends ${fmt(last.pressure, 2)}</div>
-      <div class="d">off target by ${fmt(l.gap, 2)} avg</div></div>`;
+      <div class="v ${cls}">${label}</div>
+      ${spark(l)}
+      <div class="d">off by ${fmt(l.gap, 2)} avg · hardest W${peak.wave + 1} ${fmt(peak.pressure, 2)}</div>
+      ${isShaped(li) ? '<div class="shaped">shaped preview</div>' : ''}</div>`;
   }).join('');
-  host.querySelectorAll('.tile').forEach(t => t.addEventListener('click', () => { level = +t.dataset.l; drawLevel(); drawFill(); drawTiles(); }));
+  host.querySelectorAll('.tile').forEach(t => t.addEventListener('click', () => setLevel(+t.dataset.l)));
 }
 
 // ---------------------------------------------------------------- level chart
@@ -366,7 +486,7 @@ function drawLevel() {
   document.getElementById('lvlTitle').textContent = L.name;
   const tabs = document.getElementById('lvlTabs');
   tabs.innerHTML = ledger.map((l, li) => `<button aria-pressed="${li === level}" data-l="${li}">L${li + 1}</button>`).join('');
-  tabs.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { level = +b.dataset.l; drawLevel(); drawFill(); drawTiles(); }));
+  tabs.querySelectorAll('button').forEach(b => b.addEventListener('click', () => setLevel(+b.dataset.l)));
 
   const present = ENEMY_KEYS.filter(k => L.waves.some(w => w.byType[k]?.count > 0));
   const tower = C.TOWERS[assume.buildTower].name;
@@ -416,10 +536,10 @@ function drawLevel() {
   // table
   document.getElementById('waveTable').innerHTML = `<table><thead><tr>
     <th>Wave</th><th>TEV</th><th>Enemies</th><th>Enemy HP</th><th>Arrives over (s)</th><th>HP/s</th>
-    <th>Tokens</th><th>Towers</th><th>DPS</th><th>Throughput</th><th>Tank</th><th>Target</th><th>Toughest</th><th>MAV</th><th>Fill (s)</th><th>Full-field HP</th><th>Clear (s)</th><th>Tokens earned</th></tr></thead><tbody>
+    <th>Tokens</th><th>Virus tax</th><th>Towers</th><th>DPS</th><th>Throughput</th><th>Tank</th><th>Burst</th><th>Target</th><th>Toughest</th><th>MAV</th><th>Fill (s)</th><th>Full-field HP</th><th>Clear (s)</th><th>Tokens earned</th></tr></thead><tbody>
     ${L.waves.map(w => `<tr><td>W${w.wave + 1}</td><td>${fmt(w.tev)}</td><td>${fmt(w.count, 1)}</td><td>${fmt(w.hp)}</td>
-      <td>${fmt(w.window)}</td><td>${fmt(w.inflow)}</td><td>${fmt(w.tokens)}</td><td>${fmt(w.towers, 1)}</td><td>${fmt(w.dps)}</td>
-      <td class="${w.throughput > 1 ? 'hot' : ''}">${fmt(w.throughput, 2)}</td><td class="${w.tank > 1 ? 'hot' : ''}">${fmt(w.tank, 2)}</td>
+      <td>${fmt(w.window)}</td><td>${fmt(w.inflow)}</td><td>${fmt(w.tokens)}</td><td>${w.tax ? '−' + fmt(w.tax) : '–'}</td><td>${fmt(w.towers, 1)}</td><td>${fmt(w.dps)}</td>
+      <td class="${w.throughput > 1 ? 'hot' : ''}">${fmt(w.throughput, 2)}</td><td class="${w.tank > 1 ? 'hot' : ''}">${fmt(w.tank, 2)}</td><td class="${w.burst > 1 ? 'hot' : ''}">${fmt(w.burst, 2)}</td>
       <td>${fmt(w.target, 2)}</td><td>${C.ENEMIES[w.tankUnit?.key]?.name ?? '–'}</td><td>${fmt(w.mav)}</td>
       <td>${w.fillTime == null ? 'never' : fmt(w.fillTime, 1)}</td><td>${fmt(w.fullHp)}</td>
       <td class="${w.fillTime != null && w.clearTime > w.fillTime ? 'hot' : ''}">${fmt(w.clearTime, 1)}</td><td>${fmt(w.reward)}</td></tr>`).join('')}
@@ -554,16 +674,16 @@ function drawEnemies() {
 
 // ---------------------------------------------------------------- main
 function update() {
-  ledger = computeLedger(C, knobs, assume);
-  towers = towerTable(C, knobs, assume);
+  ledger = computeLedger(buildCfg(), DEFAULT_KNOBS, assume);
+  towers = towerTable(C, DEFAULT_KNOBS, assume);
   drawCampaign(); drawTiles(); drawLevel(); drawFill();
   drawTowerChart('towers', 'dpsPer100', 'DPS per 100 Tokens');
   drawTowerChart('towersPass', 'passPer100', 'Damage per pass per 100 Tokens');
 }
-legend('campLegend', [[css('--s1'), 'Throughput pressure', true], [css('--s2'), 'Tank pressure', true], [css('--ink-2'), 'Target', true]]);
 legend('fillLegend', [[css('--s3'), 'Time to fill MAV'], [css('--s5'), 'Time to clear a full field']]);
 legend('towLegend', [[css('--s1'), 'Tier 1'], [css('--s7'), 'Tier 4 (fully upgraded)']]);
-buildControls();
+buildShaping();
+buildCalibration();
 drawEnemies();
 update();
 </script>

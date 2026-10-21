@@ -7,7 +7,7 @@ export const SPEED = { low: 0.45, medium: 0.75, fast: 1.4 };
 // Elm, Fortran, Goto, Hypercard, Int, Java, Kernel, ...). The number/codename
 // only bumps when a milestone's FULL feature set has landed.
 // Milestone 1 → v1.01 Altair. Milestone 2 → v1.02 Basic. M3 closes as v1.03 Cobol.
-export const VERSION = { number: '1.02', codename: 'Basic' };
+export const VERSION = { number: '1.03', codename: 'Cobol' };
 
 export const PLAYER = {
   startTokens: 300,   // fallback only — per-level budgets live in LEVELS[i].startTokens
@@ -229,7 +229,8 @@ export const ENEMIES = {
   },
   virus: {
     name: 'Virus', ev: 300, health: 150, speed: SPEED.medium, reward: 40,
-    attack: { damage: 15, reload: 0.8, scanRange: 2.5 },
+    attack: { damage: 10, reload: 0.8, scanRange: 2.5 },   // was 15 (M3 E13)
+    spawnCooldown: 4,   // min seconds between Virus spawns (M3 E11: stops stacked Viruses)
     desc: 'Tower hunter. Latches on nearby and drains towers down.',
     color: '#ff6a4f', size: 0.40,
   },
@@ -285,10 +286,12 @@ const ALL = ['hack', 'slice', 'crack', 'worm', 'virus'];
 // the tanks (Worm, Crack) arrive in wave 2. Applies to L1 and genWaves.
 const OPENING_ROSTER = ['hack', 'slice'];
 const OPENING_SPREAD = 1.5;       // wave 1 spawnInterval multiplier
+const OPENING_MAV = 0.5;          // wave 1 MAV (and RTV) multiplier — M3 E7: fewer on the
+                                  // board at once, same enemies and Tokens in total
 
 const genWaves = (count, { tev0, tevGrowth, mav0, mavGrowth, interval0, intervalStep, roster }) =>
   Array.from({ length: count }, (_, i) => {
-    const mav = Math.round((mav0 * Math.pow(mavGrowth, i)) / 10) * 10;
+    const mav = Math.round((mav0 * Math.pow(mavGrowth, i) * (i === 0 ? OPENING_MAV : 1)) / 10) * 10;
     const interval = Math.max(0.5, +(interval0 - intervalStep * i).toFixed(2));
     return {
       tev: Math.round((tev0 * Math.pow(tevGrowth, i)) / 100) * 100,
@@ -312,7 +315,7 @@ export const LEVELS = [
     bpPool: { primary: 'vault', secondary: 'defrag', tertiary: 'ddos' },
     theme: {},                    // baseline blue
     waves: [
-      { tev: 1200, mav: 600,  rtv: 300, unlocked: OPENING_ROSTER,                          spawnInterval: 1.8 },  // was [hack], 1.2 (×1.5)
+      { tev: 1200, mav: 600 * OPENING_MAV, rtv: 300 * OPENING_MAV, unlocked: OPENING_ROSTER,                          spawnInterval: 1.8 },  // was [hack], 1.2 (×1.5)
       { tev: 1600, mav: 700,  rtv: 360, unlocked: ['hack', 'slice'],                       spawnInterval: 1.1 },
       { tev: 2000, mav: 800,  rtv: 400, unlocked: ['hack', 'slice', 'crack'],              spawnInterval: 1.0 },
       { tev: 2600, mav: 900,  rtv: 440, unlocked: ['hack', 'slice', 'crack'],              spawnInterval: 0.9 },

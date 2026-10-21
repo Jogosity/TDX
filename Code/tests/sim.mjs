@@ -59,6 +59,37 @@ check('MAV halt occurred', halted);
 check('RTV resume occurred', resumed);
 check('wave terminates', t < 600);
 
+// Spawn cooldown (M3 E11): two Viruses never spawn closer than ENEMIES.virus.spawnCooldown
+{
+  const vdef = { tev: 6000, mav: 3000, rtv: 1500, unlocked: ['virus', 'hack'], spawnInterval: 0.5 };
+  const list = [];
+  const vc = new WaveController(vdef, grid, field, LEVELS[0].enemyDelta);
+  const times = [];
+  let seen = 0;
+  for (let vt = 0; vt < 120 && !vc.done; vt += 0.1) {
+    vc.update(0.1, list);
+    for (; seen < list.length; seen++) if (list[seen].type === 'virus') times.push(vc.clock);
+    for (const e of list) e.alive = false;      // keep the field empty so MAV never blocks
+  }
+  const gaps = times.slice(1).map((x, i) => x - times[i]);
+  check('Virus spawns respect spawnCooldown', times.length >= 3 && gaps.every(g => g >= ENEMIES.virus.spawnCooldown - 1e-6));
+}
+
+// Virus spread (M3 E14): a second Virus prefers a tower nobody is draining
+{
+  const px = cellPx(grid);
+  const a = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[0].enemyDelta);
+  const b = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[0].enemyDelta);
+  const fake = (dx) => ({ alive: true, x: a.x + dx * px, y: a.y, damage() {} });
+  const near = fake(1), far = fake(1.8);
+  a.update(0.01, grid, [near, far]);
+  b.update(0.01, grid, [near, far]);
+  check('second Virus picks an undrained tower', a.attackTarget === near && b.attackTarget === far);
+  const c = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[0].enemyDelta);
+  c.update(0.01, grid, [near]);
+  check('Virus still stacks when every tower in range is taken', c.attackTarget === near);
+}
+
 // --- scatterShot (Defrag): radial ring of pellets, dead at range edge --------
 {
   const cell = [...grid.cells.values()].find(c => !c.occupied && c.r === 5);

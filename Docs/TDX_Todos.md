@@ -58,11 +58,10 @@ New units land in small phases with playtest + iteration between each. No rushin
 ## M3 — "Cobol" (v1.03) — Secure & Simulate
 Requires the M2 roster settled first — new units add too much noise to balance against a moving target.
 
-- [ ] Add Bug + Stinger (and Pulse/Compressor in play) to the L1–L5 wave rosters — first, so the sim balances the real roster.
-- [ ] Grow `tests/sim.mjs` into the headless difficulty simulator (tower DPS vs real pathing, batch config sweeps, leak/spike reports).
-- [ ] Full balance pass: all 5 levels × full roster; replace genWaves scaffolds with tuned waves.
-- [ ] Sim-answerable parked questions: Limiter rebalance/return, crash cost-cap, per-level budget tuning, BP drop rates (currently err-on-quick).
-- [ ] Juicy Blueprint pickup FX (magnet pull, counter, bigger collect effect) — carried from M2 sign-off.
+- [x] Grow `tests/sim.mjs` into the headless difficulty simulator (tower DPS vs real pathing, batch config sweeps, leak/spike reports).
+- [x] Full balance pass: all 5 levels × full roster; replace genWaves scaffolds with tuned waves.
+- [x] Sim-answerable parked questions: Limiter rebalance/return, crash cost-cap, per-level budget tuning, BP drop rates (currently err-on-quick).
+- [x] Bugs - Fix the 4s Spawn Cooldown - ensure system is working
 
 
 ## M4 — "Disc Drive" (v1.04) — Narrative and Content
@@ -72,8 +71,42 @@ Jogo to do all the creative. (lots of design to be done for this MS)
 - [ ] Create a .MD file to allow easy management of the text and image assets
 - [ ] Define the characters and factions 
 - [ ] Write the characters and they dialogue
+- [ ] Game features - Add Bug + Stinger (and Pulse/Compressor in play) to the L1–L5 wave rosters.
 
-## M5 — "Elm" (v1.05) — Re-engagement
+
+
+## M5 - "Elm" (v1.05) - Balance and Expansion
+- [ ] Return to formal balance management
+- [ ] Look at ebb and flow within waves - perhaps using flow rate and "invisible" sub waves during a single wave.
+- [ ] Add another 5 levels - experiment with size/shape and play length - eg. much higher TEV
+- [ ] Expand on Tower Upgrade system - consider "abilities" as an upgrade as well as just firepower. Eg. Threaders can become more defensive of neighbours. DDOs can look for concentrated packs. If this doesn't work, purely numeric boosts is always a solid fallback.
+
+
+## M6 — "Fortran" (v1.06) — QoL
+
+- [ ] Juicy Blueprint pickup FX (bigger collect effect) — carried from M2 sign-off.
+- [ ] Add warning UX when towers are under attack
+- [ ] Add clear UX when a new tower has been unlocked
+
+
+
+## M7 — "Goto" (v1.07) — Onboarding & Presentation
+Last of the main beats: onboarding teaches the *final* systems and depends on tuned difficulty.
+
+- [ ] FTUE / tutorial + new-player difficulty on-ramp.
+- [ ] Sound.
+- [ ] Polish backlog: lateral map asymmetry, effect variants, remaining small items.
+
+
+
+## M8 - "Hypercard" (v1.08) - Publishing to Github Pages
+- [ ] Set up a Github page
+- [ ] Get TDX deployed to that page automatically
+- [ ] Add my custom domain (punkarcade.net) to the site. Yes. I do own this!
+
+
+
+## M9 — "Int" (v1.09) — Re-engagement
 After the sim: quest/login rewards feed the economy, so they tune against a balanced game.
 
 - [ ] Finish the Daily Quests design in the design doc (still cut off at "Eg.").
@@ -82,18 +115,10 @@ After the sim: quest/login rewards feed the economy, so they tune against a bala
 
 
 
-
-## M6 — "Fortran" (v1.06) — Onboarding & Presentation
-Last of the main beats: onboarding teaches the *final* systems and depends on tuned difficulty.
-
-- [ ] FTUE / tutorial + new-player difficulty on-ramp.
-- [ ] Sound.
-- [ ] Polish backlog: lateral map asymmetry, effect variants, remaining small items.
-
-
 ## Content backlog — ON HOLD (no milestone yet)
 Specced in TDX_Towers_and_Enemies.md. If any return after M3, re-run the difficulty sim with them in.
 - [ ] Tracer (laser-beam weapon class) + Overclock (adjacency damage-buff aura).
+- [ ] Limiter (Tower that slows enemies)
 - [ ] Cypher (teleport, untargetable while phased) + Bit Rot (contact damage aura; Limiter slows movement, never damage).
 - [ ] Turtle (super-heavy tank).
 

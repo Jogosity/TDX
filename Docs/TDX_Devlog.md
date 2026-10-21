@@ -3,6 +3,48 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+# ✅ MILESTONE 3 COMPLETE — v1.03 "Cobol" — 2026-10-21
+
+Banked by Jogo after the Session 15 playtest. M3 was Difficulty Management, and it was about **method as much as results**. Full record: `Docs/TDX_M3_Difficulty_Plan.md` (experiments E1–E14).
+
+- **The Ledger** (`Code/tools/ledger/`, v5): difficulty maths in the browser, read live from `config.js`. Sections: Shaping dials, Calibration, Campaign pressure, Level summary, Enemy arrivals, Fill rate, Wave table, Tower value, Enemy value, How the ledger works.
+- **The Sim** (`Code/tools/sim/`): headless games using the real game modules, with greedy, live and reactive bots, a killing-ground option and a DDOS standoff option. Run `node tools/sim/run.mjs [seeds]` from `Code/`.
+- **The tuning loop**: target curves, then experiments: EVs to Threat EV, wave 1 cold-start fix, Virus tax measured, Virus spawn cooldown, Virus damage 15 → 10, Viruses spread across towers.
+- **Result**: L1–L4 play slightly easy, L5 slightly hard. Jogo: "We don't feel far away. The methodology feels right." He'd rather land slightly easy than slightly hard.
+- Tests: 77/77.
+
+Carried forward (M4/M5 lists and the plan's M4 ideas): L5's early Virus count, unit EVs once the last units are in (Worms rare, Hacks uncommon), Threader self-defence, ebb and flow within a wave, the Ledger's missing Virus spiral, L3's layout, Bug + Stinger in rosters, tower value (DDOS, Compressor, Pulse), Defrag as an anti-virus tower.
+
+---
+## Session 15 — 2026-10-20 → 21 — Sim v1, the Virus drain, Ledger v5, M3 banked
+
+Full detail in the plan, E6–E14.
+
+### Sim v1 (E6–E9)
+- Headless loop mirroring `game.js` `update()`, seeded, using the real modules. Lives can go negative so every wave is measured; `lostAtWave` records the real game over.
+- Bots: `greedy`, `live`, `reactive`. The reactive bot builds a Vault beside a latched Virus, keeps a picket Vault, and rebuilds drained towers. Options: killing ground near the base, DDOS standoff.
+- Findings: the Virus drain is the difficulty. Play collapses into a Vault-and-Threader loop. "First" targeting ignores a latched Virus. Killing-ground and DDOS tests didn't beat Threader spam.
+
+### Balance changes (`config.js`, `waves.js`, `entities.js`)
+- **E7:** wave 1 MAV ×0.5 (`OPENING_MAV`). L3 W1 leaks in the sim fell from 9.8 to 1.7.
+- **E11:** per-enemy `spawnCooldown` (generic; Virus = 4 s), enforced in `WaveController`.
+- **E13:** Virus damage 15 → 10.
+- **E14:** a Virus prefers a tower no other Virus is draining, which cuts stacking from 14–19% to 2%. The cooldown itself was working (smallest gap 4.00 s over ~1,000 spawns); stacking came from later Viruses catching up with a latched one.
+- `VERSION` → **1.03 Cobol**.
+
+### Ledger v3–v5 (E7, E10, E12)
+- Burst pressure (full field vs damage while crossing), split by entry points.
+- Virus tax: Tokens of towers lost per Virus, measured by the sim. Now 110 at damage 10 (E13).
+- v5, from Jogo's review (`Docs/TDX_Ledger_Review.md`): one Pressure line plus target with Virus shading, Shaping dials per level (they write the config recipe), Level summary verdicts, collapsed Calibration, every section named.
+
+### Playtests
+- After E11: failed L3 to Virus attrition. Decision: no more small value changes until the Ledger review.
+- After E13/E14: L1–L4 a bit easy, L5 too hard (many early Viruses), Viruses/Cracks/Slices dominate, little ebb and flow. **M3 banked.**
+
+### Next
+**M4 "Disc Drive"**, Narrative and Content (see `TDX_Todos.md`). Jogo wants a break from charts and numbers.
+
+---
 ## Session 14 — 2026-10-19 — Ledger v2, Threat EV, wave 1 fix: "best game by a long way"
 
 Housekeeping: iCloud connection checked, game + Ledger servers running, Jogo's Live Test note updated. Decision: **keep working on main** for now (nothing risky yet). Full detail in the plan's experiment log (E2–E5).

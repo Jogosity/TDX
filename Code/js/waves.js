@@ -22,6 +22,15 @@ export class WaveController {
     this.spawnTimer = WAVE_START_DELAY;
     this.pendingPack = [];       // queued pack members (Slice groups)
     this.done = false;           // budget fully spent
+    this.clock = 0;              // seconds since the wave started
+    this.lastSpawn = {};         // enemy key → clock time of its last spawn
+  }
+
+  // ENEMIES[k].spawnCooldown: minimum seconds between two spawns of that type
+  // (stops Viruses arriving back to back and stacking on one tower).
+  onCooldown(key) {
+    const cd = ENEMIES[key].spawnCooldown;
+    return cd > 0 && this.lastSpawn[key] !== undefined && this.clock - this.lastSpawn[key] < cd;
   }
 
   activeValue(enemies) {
@@ -36,6 +45,7 @@ export class WaveController {
   }
 
   update(dt, enemies) {
+    this.clock += dt;
     if (this.done) return;
     this.spawnTimer -= dt;
     if (this.spawnTimer > 0) return;
@@ -65,7 +75,7 @@ export class WaveController {
 
     // pick an affordable enemy type: within remaining TEV and MAV headroom
     const headroom = Math.min(this.budgetLeft, this.def.mav - active);
-    const pool = this.def.unlocked.filter(k => ENEMIES[k].ev <= headroom);
+    const pool = this.def.unlocked.filter(k => ENEMIES[k].ev <= headroom && !this.onCooldown(k));
     if (pool.length === 0) {
       if (this.budgetLeft < this.cheapestEV()) this.done = true;
       this.spawnTimer = 0.3;
@@ -94,6 +104,7 @@ export class WaveController {
     const spawns = this.grid.spawns;
     const cell = spawns[Math.floor(Math.random() * spawns.length)];
     enemies.push(new Enemy(key, cell, this.field, this.grid, this.delta));
+    this.lastSpawn[key] = this.clock;
     this.budgetLeft -= ENEMIES[key].ev;
   }
 }

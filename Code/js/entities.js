@@ -449,13 +449,19 @@ export class Enemy {
     else if (this.def.attack) {
       if (this.attackTarget && !this.attackTarget.alive) this.attackTarget = null;
       if (!this.attackTarget) {
-        let best = null, bestD = this.def.attack.scanRange * px;
+        // Prefer a tower no other Virus is draining, so two don't stack into
+        // what looks like one (M3 E14). Falls back to a taken tower if that's all in range.
+        let free = null, freeD = this.def.attack.scanRange * px;
+        let any = null, anyD = freeD;
         for (const t of towers) {
           if (!t.alive) continue;
           const d = Math.hypot(t.x - this.x, t.y - this.y);
-          if (d < bestD) { bestD = d; best = t; }
+          if (d < anyD) { anyD = d; any = t; }
+          const taken = t.drainer && t.drainer !== this && t.drainer.alive && t.drainer.attackTarget === t;
+          if (!taken && d < freeD) { freeD = d; free = t; }
         }
-        this.attackTarget = best;
+        this.attackTarget = free ?? any;
+        if (free) free.drainer = this;
       }
       if (this.attackTarget) { this.closeInAndDrain(dt, px); return; }
     }

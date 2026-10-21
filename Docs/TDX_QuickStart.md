@@ -4,20 +4,20 @@ Paste the prompt below into a fresh session (with the JogoHome folder connected)
 
 ---
 
-We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestones 1 (v1.01 Altair) and 2 (v1.02 Basic — Tower & Enemy Expansion) are complete.** Next is **M3 "Cobol" — Secure & Simulate** (difficulty simulator + balance). The full M3–M6 roadmap lives at the bottom of TDX_Todos.md; the repo is private at github.com/Jogosity/TDX.
+We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestones 1 (v1.01 Altair), 2 (v1.02 Basic — Tower & Enemy Expansion) and 3 (v1.03 Cobol — Difficulty Management) are complete.** Next is **M4 "Disc Drive" — Narrative and Content**. The full roadmap lives at the bottom of TDX_Todos.md; the repo is private at github.com/Jogosity/TDX.
 
 Before doing anything else, read these files in `1_projects/05_TDX/`:
-1. `Docs/TDX_Devlog.md` — session history and decisions. Read the MILESTONE 2 COMPLETE summary and the newest session entry first.
+1. `Docs/TDX_Devlog.md` — session history and decisions. Read the MILESTONE 3 COMPLETE summary and the newest session entry first.
 2. `Docs/TDX_Todos.md` — the milestone roadmap (M3 objectives) at the bottom.
 3. `Docs/TDX_Retention_Modules.md` — retention module designs and their current status.
 4. `Docs/TDX_Initial_Design.md` — the original design doc (reference).
 5. `Code/js/config.js` — all balance and level data. I may have hand-edited this since the last session; treat it as the current source of truth.
 
-The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (74 checks passing as of M2 Phase 2B + BP slots; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
+The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (77 checks passing as of M3 close; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
 
 The project is a git repo (root of `05_TDX/`) — commit at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap (M3–M6) is at the bottom of `TDX_Todos.md`.
 
-Where we left off (Session 14): M3 "Cobol" (Difficulty Management) is underway, working on main. Read `Docs/TDX_M3_Difficulty_Plan.md` (plan + experiment log E1–E5) and the Session 14 devlog entry. Ledger v2 at `Code/tools/ledger/` (open http://localhost:8000/tools/ledger/ while `python3 Code/serve.py` runs) has the target curve, fill panel and Threat EV. Enemy EVs now follow Threat EV (Virus held at 300); wave 1 of every level is Hack + Slice, spawned 1.5× further apart, and Jogo's playtest was the best yet. Next: Sim v1 to measure the Virus drain (the ledger can't see tower damage), then Bug into rosters and the TEV growth curve / economy.
+Where we left off (Session 15): **M3 "Cobol" is banked as v1.03.** Read the MILESTONE 3 COMPLETE summary in the devlog. The balance tools stay in the repo for later passes: the Ledger at `Code/tools/ledger/` (open http://localhost:8000/tools/ledger/ while `python3 Code/serve.py` runs) and the Sim (`node tools/sim/run.mjs [seeds]` from Code/). The plan's experiment log (`Docs/TDX_M3_Difficulty_Plan.md`, E1–E14) and its M4 ideas list carry the open balance questions. Next is M4: narrative and content, where Jogo leads the creative.
 
 Today: [state the step from the plan's Order of work]
 
