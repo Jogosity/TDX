@@ -10,6 +10,8 @@ import { Tower, Enemy, cellPx } from './entities.js';
 import { WaveController } from './waves.js';
 import { Renderer, makeConfetti } from './render.js';
 import { UI } from './ui.js';
+import { Story } from './story.js';
+import { loadNarrative, rollRun, memoriesLost } from './narrative.js';
 
 class Game {
   constructor() {
@@ -48,6 +50,13 @@ class Game {
     this.pendingCrash = null;                    // seconds until a scheduled crash lands
     this.wavesToCrash = this.rollCrashInterval();
     this.ui = new UI(this);
+    this.story = new Story();
+    this.run = null;                             // this run's archive + memories (M4)
+    this.narrativeReady = loadNarrative().then((c) => {
+      this.narrative = c;
+      if (c.warnings.length) console.warn('TDX narrative:', c.warnings);
+      return c;
+    });
 
     window.addEventListener('resize', () => this.layout());
 
@@ -250,7 +259,7 @@ class Game {
         this.state.effects.push({ kind: 'death', x: d.x, y: d.y, color: d.color, t: 0, dur: 0.4 });
         if (n >= def.blueprints && !this.isTowerUnlocked(d.tower)) {
           this.save.towersUnlocked.push(d.tower);   // instant unlock, mid-game
-          this.ui.toast(`${def.name.toUpperCase()} UNLOCKED`);
+          this.ui.towerUnlocked(d.tower);
         } else {
           this.ui.toast(`${def.name} Blueprint (${n}/${def.blueprints})`);
         }
@@ -301,6 +310,15 @@ class Game {
 
   debugQuitToMenu() { window.location.reload(); } // boot lands on the main menu
 
+  // Show the Result screen for the current level without playing it.
+  async debugPreviewResult(win, lives) {
+    const content = await this.narrativeReady;
+    this.run ??= rollRun(content, this.state.levelIndex + 1);
+    this.state.lives = lives;
+    this.state.phase = win ? 'levelComplete' : 'gameOver';
+    this.endLevel(win, '(debug preview)');
+  }
+
   debugSpawnEnemy(type) {
     if (!ENEMIES[type]) return;
     const spawns = this.grid.spawns;
@@ -331,7 +349,25 @@ class Game {
 
   // --- flow ------------------------------------------------------------------
   // PLAY uses the latest unlocked level; Level Select passes an index.
-  startRun(levelIndex = this.latestLevelIndex()) {
+  // M4 flow: Level Data → Archive Record → battlefield. Back steps out again.
+  // A screen with no content in the .md is skipped.
+  async startRun(levelIndex = this.latestLevelIndex()) {
+    const content = await this.narrativeReady;
+    const levelNo = levelIndex + 1;
+    this.run = rollRun(content, levelNo);
+    const wallet = { tokens: LEVELS[levelIndex].startTokens ?? PLAYER.startTokens, bits: this.save.bits };
+    const text = content.levels[levelNo];
+    const go = () => { this.story.hide(); this.beginLevel(levelIndex); };
+    const toLevel = () => (text
+      ? this.story.showLevelData(text, { wallet, onBack: () => this.story.hide(), onContinue: toArchive })
+      : toArchive());
+    const toArchive = () => (this.run
+      ? this.story.showArchive(this.run, content.strings, { wallet, onBack: text ? toLevel : () => this.story.hide(), onStart: go })
+      : go());
+    toLevel();
+  }
+
+  beginLevel(levelIndex) {
     this.initLevel(levelIndex);
     this.ui.hideMainMenu();
     this.ui.refresh();
@@ -373,7 +409,7 @@ class Game {
       writeSave(this.save);
       s.bits = this.save.bits;
       this.ui.refresh();
-      this.ui.showBanner('LEVEL COMPLETE', `The repo held. +${s.level.rewardBits} BITS earned.${unlockNote}`, 'MAIN MENU');
+      this.endLevel(true, `+${s.level.rewardBits} BITS earned.${unlockNote}`);
     } else {
       s.phase = 'build';
       this.ui.refresh();
@@ -383,7 +419,30 @@ class Game {
 
   gameOver() {
     this.state.phase = 'gameOver';
-    this.ui.showBanner('REPO BREACHED', 'All memory cores stolen. The system has fallen.', 'MAIN MENU');
+    this.endLevel(false, '');
+  }
+
+  // End of a level (M4): hold on the board, verdict over it, then the Result
+  // screen slides on. Timings in story.js TIMING.
+  endLevel(win, note) {
+    this.ui.hideBanner();
+    this.ui.clearSelection();
+    this.selectTower(null);
+    this.ui.hideUpgradeMenu();
+    this.story.showVerdict(win, this.narrative.strings, () => this.showResult(win, note));
+  }
+
+  // Level Result (M4): memories lost scale with Cores lost; a loss takes all.
+  showResult(win, note) {
+    const s = this.state;
+    const run = this.run;
+    const shown = run ? run.lossOrder.length : 0;
+    const lostN = win ? memoriesLost(s.maxLives - s.lives, s.maxLives, shown) : shown;
+    this.story.showResult(
+      { win, lives: Math.max(0, s.lives), maxLives: s.maxLives, run, lost: run ? run.lossOrder.slice(0, lostN) : [], note },
+      this.narrative.strings,
+      { wallet: { tokens: s.tokens, bits: this.save.bits }, onContinue: () => window.location.reload() },
+    );
   }
 
   // --- CRASH -----------------------------------------------------------------
@@ -437,6 +496,9 @@ class Game {
     for (const fx of s.effects) fx.t += dt;
     s.effects = s.effects.filter(fx => fx.t < fx.dur);
 
+    // level over (M4): the board holds still under the verdict and Result screen
+    if (s.phase === 'levelComplete' || s.phase === 'gameOver') return;
+
     // blueprint drops fade whether or not a wave is running
     for (const d of s.drops) d.age += dt;
     s.drops = s.drops.filter(d => d.age < BLUEPRINTS.lifetime);
@@ -480,6 +542,10 @@ class Game {
     for (const e of s.enemies) if (e.alive) e.update(dt, this.grid, s.towers);
     for (const p of s.projectiles) p.update(dt, s.enemies, s.effects);
 
+    // under-attack warning (M4): any tower being drained right now
+    const hit = s.towers.find(t => t.attackedFor > 0);
+    if (hit) this.ui.attackWarning(hit.attackedBy);
+
     // towers destroyed by Virus attacks
     const destroyed = s.towers.filter(t => !t.alive);
     if (destroyed.length > 0) {
@@ -519,4 +585,4 @@ class Game {
   }
 }
 
-new Game();
+window.tdx = new Game();   // console handle for testing (tdx.state, tdx.ui …)

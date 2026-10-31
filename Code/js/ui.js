@@ -3,6 +3,8 @@
 import { TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, LEVELS, VERSION } from './config.js';
 import { drawTowerShape, drawEnemyShape } from './render.js';
 
+const ALERT_REARM = 6;   // seconds before another under-attack warning can show
+
 export class UI {
   constructor(game) {
     this.game = game;
@@ -24,6 +26,9 @@ export class UI {
       umTiers: document.getElementById('um-tiers'),
       umClose: document.getElementById('um-close'),
       toast: document.getElementById('toast'),
+      alert: document.getElementById('alert-strip'),
+      alertTitle: document.getElementById('alert-title'),
+      alertText: document.getElementById('alert-text'),
       cogBtn: document.getElementById('cog-btn'),
       debugMenu: document.getElementById('debug-menu'),
       debugTabs: document.getElementById('debug-tabs'),
@@ -139,7 +144,7 @@ export class UI {
     this.el.cogBtn.addEventListener('click', () => this.showDebugMenu());
     this.el.mmCog.addEventListener('click', () => this.showDebugMenu());
     this.el.debugClose.addEventListener('click', () => this.hideDebugMenu());
-    this.el.mmPlay.addEventListener('click', () => this.game.startRun());
+    this.el.mmPlay.addEventListener('click', () => this.showMenuScreen('mm-levels'));   // M4: PLAY → Level Select
     this.el.mmTowersBtn.addEventListener('click', () => this.showMenuScreen('mm-towers'));
     this.el.mmEnemiesBtn.addEventListener('click', () => this.showMenuScreen('mm-enemies'));
     this.el.mmLevelsBtn.addEventListener('click', () => this.showMenuScreen('mm-levels'));
@@ -403,6 +408,24 @@ export class UI {
         },
       },
       {
+        label: 'STORY',
+        build: (el) => {
+          const c = this.game.narrative;
+          const info = document.createElement('div');
+          info.className = 'dbg-note';
+          if (!c) info.textContent = 'Narrative still loading…';
+          else {
+            const names = Object.values(c.archives).filter(a => a.name && a.core.length).map(a => a.name);
+            info.textContent = `Archives ready: ${names.length ? names.join(', ') : 'none'}.\n`
+              + (c.warnings.length ? `Problems in TDX_Narrative.md:\n• ${c.warnings.join('\n• ')}` : 'No problems in TDX_Narrative.md.');
+          }
+          el.appendChild(info);
+          this.dbgButton(el, 'Preview Level Result: win, 10/15', () => { this.hideDebugMenu(); this.game.debugPreviewResult(true, 10); });
+          this.dbgButton(el, 'Preview Level Result: win, 1/15', () => { this.hideDebugMenu(); this.game.debugPreviewResult(true, 1); });
+          this.dbgButton(el, 'Preview Level Result: loss', () => { this.hideDebugMenu(); this.game.debugPreviewResult(false, 0); });
+        },
+      },
+      {
         label: 'SPAWN',
         build: (el) => {
           for (const key of Object.keys(ENEMIES)) {
@@ -462,6 +485,34 @@ export class UI {
     });
     this.el.debugBody.innerHTML = '';
     defs[this.activeDebugTab].build(this.el.debugBody);
+  }
+
+  // --- alert strip (M4) --------------------------------------------------------
+  // One strip under the HUD for big in-game messages: red = warning,
+  // green = good news. Reused for any future alert (CRASH, wave incoming).
+  alert(kind, title, text, secs = 2.6) {
+    const a = this.el.alert;
+    this.el.alertTitle.textContent = title;
+    this.el.alertText.textContent = text;
+    a.className = `show ${kind}`;
+    void a.offsetWidth;                 // restart the entry animation
+    a.classList.add('pop');
+    clearTimeout(this.alertTimer);
+    this.alertTimer = setTimeout(() => { a.className = kind; }, secs * 1000);
+  }
+
+  // Throttled: one warning per ALERT_REARM seconds, however many attacks.
+  attackWarning(enemyType) {
+    const now = performance.now() / 1000;
+    if (now - (this.lastAttackWarning ?? -Infinity) < ALERT_REARM) return;
+    this.lastAttackWarning = now;
+    this.alert('warn', 'WARNING!', `${ENEMIES[enemyType]?.name ?? 'Enemy'} attacking your units`);
+  }
+
+  towerUnlocked(type) {
+    this.alert('good', 'TOWER UNLOCKED', TOWERS[type].name.toUpperCase(), 3);
+    const btn = this.trayBtns[type]?.btn;
+    if (btn) { btn.classList.remove('just-unlocked'); void btn.offsetWidth; btn.classList.add('just-unlocked'); }
   }
 
   toast(msg) {

@@ -8,6 +8,8 @@ import { Enemy } from '../js/entities.js';
 import { loadSave } from '../js/save.js';
 import { relocateBlockers, crashShuffle } from '../js/crash.js';
 import { placeBlockers, placeLockouts, placeExtraSpawns, rollBlueprints } from '../js/board.js';
+import { parseNarrative, archivePool, rollRun, memoriesLost, DEFAULT_AVATAR } from '../js/narrative.js';
+import { pickWeighted } from '../js/waves.js';
 
 let pass = 0, fail = 0;
 const check = (name, cond) => { cond ? pass++ : fail++; console.log(cond ? ' PASS' : ' FAIL', name); };
@@ -472,6 +474,57 @@ check('starting budgets never shrink across levels',
   for (let k = 0; k < 10; k++) st2.update(0.05, grid, []);
   st2.buildPath(field, grid);
   check('Stinger keeps its detour through a path rebuild', st2.detourCell === keep && st2.detourAt < Infinity);
+}
+
+// --- M4: narrative content + memory loss + weighted roster picks -----------------
+{
+  const md = [
+    '# Title', '> a note line', '',
+    'Result_Win_Label: Saved!',
+    'Level_1_Label: Archive 001',
+    'Level_1_Narrative_Desc: First paragraph.', 'Second paragraph.', '',
+    'Level_1_Archives: 2, 9',
+    'Archive1_Name: Ann', 'Archive1_CoreMemory1: A core', 'Archive1_CoreMemory1_Summary: core',
+    'Archive2_Name: Bo', 'Archive2_Icon:', 'Archive2_CoreMemory1: B core',
+    'Archive2_CoreMemory2:', 'Archive2_SecondaryMemory1: s1', 'Archive2_SecondaryMemory1_Summary: S1',
+    'Archive2_SecondaryMemory2: s2', 'Archive2_SecondaryMemory3: s3', 'Archive2_SecondaryMemory4: s4',
+    'Archive2_SecondaryMemory5_Summary',
+    'Archive3_Name: Placeholder',
+  ].join('\n');
+  const c = parseNarrative(md);
+  check('narrative: level text parses, continuation line is a new paragraph',
+    c.levels[1].label === 'Archive 001' && c.levels[1].narrativeDesc === 'First paragraph.\nSecond paragraph.');
+  check('narrative: screen strings override defaults, others keep theirs',
+    c.strings.Result_Win_Label === 'Saved!' && c.strings.Result_Lose_Label === 'Archive breached');
+  check('narrative: blank icon falls back to the default avatar', c.archives[2].icon === DEFAULT_AVATAR);
+  check('narrative: empty memories are skipped, missing summary uses the text',
+    c.archives[2].core.length === 1 && c.archives[2].secondary.length === 4 && c.archives[2].secondary[1].summary === 's2');
+  check('narrative: missing colon, missing archive and memory-less archive are flagged',
+    c.warnings.some(w => w.includes('no colon')) && c.warnings.some(w => w.includes('Archive9')) && c.warnings.some(w => w.includes('Archive3 has no Core')));
+  check('narrative: level pool names its archives', archivePool(c, 1).map(a => a.name).join() === 'Bo');
+  check('narrative: level with no pool uses every finished archive', archivePool(c, 4).map(a => a.name).join() === 'Ann,Bo');
+  let ok = true;
+  for (let i = 0; i < 50; i++) {
+    const run = rollRun(c, 1);
+    const last = run.lossOrder[run.lossOrder.length - 1];
+    if (run.secondary.length !== 3 || new Set(run.secondary).size !== 3 || last !== run.core || run.lossOrder.length !== 4) ok = false;
+  }
+  check('narrative: a run shows 1 Core + 3 Secondary, Core Memory lost last', ok);
+  check('narrative: no usable archive → no run', rollRun(parseNarrative(''), 1) === null);
+
+  const lost = [0, 3, 4, 7, 8, 11, 12, 13, 14, 15].map(n => memoriesLost(n, 15, 4)).join();
+  check('memory loss (15 Cores): 1 per 4 lost, Core Memory at one Core left', lost === '0,0,1,1,2,2,3,3,4,4');
+  check('memory loss: fewer memories shown never over-counts', memoriesLost(12, 15, 2) === 1 && memoriesLost(14, 15, 2) === 2);
+
+  if (globalThis.process?.versions?.node) {
+    const fs = await import('node:fs');
+    const real = parseNarrative(fs.readFileSync(new URL('../content/TDX_Narrative.md', import.meta.url), 'utf8'));
+    check('content/TDX_Narrative.md parses with every level 1–5 present',
+      LEVELS.every((_, i) => real.levels[i + 1]?.label) && archivePool(real, 1).length > 0);
+  }
+
+  check('roster pick: uniform without weights', pickWeighted(['a', 'b'], undefined, () => 0.6) === 'b');
+  check('roster pick: weights shift the odds', pickWeighted(['a', 'v'], { v: 3 }, () => 0.3) === 'v' && pickWeighted(['a', 'v'], { v: 3 }, () => 0.2) === 'a');
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

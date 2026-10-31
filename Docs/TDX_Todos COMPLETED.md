@@ -3,6 +3,39 @@ I'm keeping this as a rolling log of the big things we did though the Todo's lis
 
 
 
+
+## M2 — "Basic" (v1.02) — Tower & Enemy Expansion — ✅ COMPLETE (S12, 2026-10-13)
+New units land in small phases with playtest + iteration between each. No rushing units to "done" — they mature across phases.
+
+- [x] **Phase 1 — Tweaks** ✅ S9 (version display, per-level budgets, delta verify + Level Select display)
+- [x] **Phase 1 — GitHub repo** ✅ S10: local repo at project root (initial commit tagged v1.01-altair, stray Code/sim.mjs removed, backup procedure in QuickStart) → published private to github.com/Jogosity/TDX via GitHub Desktop. CLOSED
+- [x] **Phase 2A — Familiar-weapon towers** ✅ S11: Pulse (3-round burst rifle) + Compressor (45° pump shotgun), double-stack tray, debug spawn pause.
+- [x] **Phase 2B — Simple enemies** ✅ S12: Bug (random tower hunter, walks open cells, ignores base) + Stinger (packs of 2–4, detour route). Playtested + one tweak round (Bug hp ×3, debug flash + wallet, Bug routing).
+- [x] **Phase 4 — Integration + close** ✅ S12: BP regions replaced by primary/secondary/tertiary BP drop slots (15/5/3%, promotion rule); tests per mechanic (74 checks); bumped to **v1.02 Basic**.
+- ➜ Moved out: new enemies into L2–L5 wave rosters → **M3** (the sim tunes rosters anyway). Phases 3A/3B → **Content backlog (on hold)** below.
+
+## M3 — "Cobol" (v1.03) — Secure & Simulate — ✅ COMPLETE (S15, 2026-10-21)
+Requires the M2 roster settled first — new units add too much noise to balance against a moving target.
+
+- [x] Grow `tests/sim.mjs` into the headless difficulty simulator (tower DPS vs real pathing, batch config sweeps, leak/spike reports).
+- [x] Full balance pass: all 5 levels, method built (Ledger + Sim + tuning loop, E1–E14 in `TDX_M3_Difficulty_Plan.md`). L1–L4 play slightly easy, L5 slightly hard.
+- ➜ Moved to **M5**: replace the L2–L5 `genWaves` scaffolds with hand-tuned waves.
+- [x] Sim-answerable parked questions: per-level budget tuning (wave 1 fix, E7). Limiter → content backlog.
+- ➜ Moved to **M5**: CRASH cost-cap and BP drop rates (not yet measured).
+- [x] Bugs - Fix the 4s Spawn Cooldown - ensure system is working
+
+
+**Tweaks**
+- [x] Add a version number to the Main Menu in the game. We will start at v1.01 - Altair ✅ S9: `VERSION` in config, shown bottom of Main Menu home
+	- [x] We will increment the build number at the conclusion of each milestone.
+	- [x] Version numbers will also have a codename that increments in alphabetical order. We'll start at A and the designation v1.01 to keep everything aligned. List of A to K designations below.
+	- [x] Version numbers are only bumped when the full feature set for that milestone has been landed. (Rule noted in config comment — M2 closes as v1.02 Basic)
+- [x] Display the enemy level delta on the Level Select - ensure Level Delta is fully implemented and working ✅ S9: verified (HP scale + damage mult incl. Virus) + shown per level row
+- [x] Add a per-level Starting budget to the config, rather than re-using the same starting budget for all levels. ✅ S9: `LEVELS[i].startTokens` 300/340/390/450/520 (best-guess — hand-tune)
+	
+
+
+
 1. **Tweaks**
 - [x] Show a lightning/fire effect for 2 seconds or some other indication on a cell if a player's tower has been destroyed in a Crash or by a Virus.
 - [x] Add a 3 second delay at the start of all Waves before spawning actually begins. This gives players a chance to read the map, and to see the results of a Crash if there has been one.

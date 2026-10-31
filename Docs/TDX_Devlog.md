@@ -3,6 +3,41 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 16 — 2026-10-23 — M4 "Disc Drive" starts: rosters, alerts, narrative screens
+
+Plan agreed with Jogo: `Docs/TDX_M4_Plan.md`. Jogo's calls: each level names its archive pool; Cores pill is X/15; both story screens show on retries; the narrative .md moves into Code; win/lose labels live in the .md. Jogo commits via GitHub Desktop.
+
+### A. Bug + Stinger in the rosters (E15, detail in the M4 plan)
+- Stinger joins L3 from wave 3; Bug + Stinger join L4 and L5 from wave 2.
+- Sim (100 seeds, live + reactive bots): adding them as-is made L3–L5 clearly **easier**. Cause: picks are uniform per type, so two more types cut Virus numbers ~20%, and the Virus is the difficulty.
+- Fix: per-level roster pick **weights** (`weights` in genWaves; `pickWeighted` in waves.js, mirrored in the Ledger): Virus ×1.25 (L3), ×1.5 (L4, L5). Repriced Bug EV 170→110, Stinger EV 130→90, Stinger reward 90→40 (both were weaker than Threat EV says; Stinger paid far more Tokens per threat than anything else).
+- Result vs M3: Virus counts and towers lost to drain back to M3 levels. L3 and L5 (reactive) match M3; L4 and L5 (live bot) come out a little easier. Ledger rates late waves easier (off-target +0.05) because it can't see Bug drain or Stinger detours, same blind spot it has for the Virus. Jogo's playtest decides.
+- Tool: `node tools/sim/m4_roster.mjs [seeds] [levels]`.
+
+### B. In-game alerts
+- Alert strip under the HUD using Jogo's chevron art: red "WARNING! Virus/Bug attacking your units" (throttled, one per 6 s) and teal "TOWER UNLOCKED / PULSE" (tray card pulses). The drained tower's hex pulses red.
+
+### C. Narrative content
+- `Code/content/TDX_Narrative.md` is the master (old Docs file is a pointer stub). Same `Key: value` format; `>` lines are notes; a plain line after a key is a new paragraph; new keys: `Level_N_Archives`, screen strings (`Result_Win_Label` …), optional per-archive `Win_Label`/`Lose_Label`.
+- `js/narrative.js`: parser (flags typos), archive pool, run roll (1 Core + 3 Secondary), memory loss: 1 per 4 Cores lost, Secondaries first, Core Memory at one Core left, all on a loss.
+- Images: `Code/assets/avatars/` (copy of Assets/Avatars/Resized) and `Code/assets/icons/` (Jogo's icons with the white background made transparent).
+
+### D. Screens
+- `js/story.js`: Level Data → Archive Record → game → Level Result (+ Info pop-up with Back), built to the mockups. Replaces the LEVEL COMPLETE / REPO BREACHED banners; BITS + level unlock note sit on the Result screen.
+- Debug menu STORY tab: content problems list, Level Result previews.
+
+### Tests
+77 → **91** (parser, pools, run roll, memory loss, weighted picks, the real .md parses).
+
+### Next
+Jogo playtests on phone (screens, alerts, L3–L5 with Bug + Stinger). Then content writing, polish from playtest, v1.04.
+
+### Same day: screen timing (Jogo's request after the first look)
+- **PLAY → Level Select** every time (the existing Levels menu, until a narrative map screen exists).
+- **Sequential builds** (`story.js`, all timings in `TIMING`): card first, then Back, bar (wipes in), label, title. The Level Data description **teletypes** with a blinking cursor (38 chars/s, pause between paragraphs), then Continue rises. Archive Record slides its parts in one by one; the warning line pulses. Tap anywhere to finish a build instantly. Respects reduced-motion.
+- **End of level:** the board freezes and holds ~0.9 s, then the SUCCESS / FAILURE icon and title pop over the game; ~2.2 s later the Result screen slides up and builds: pill counts up to the Cores left, lost memories glitch in one at a time.
+
+---
 # ✅ MILESTONE 3 COMPLETE — v1.03 "Cobol" — 2026-10-21
 
 Banked by Jogo after the Session 15 playtest. M3 was Difficulty Management, and it was about **method as much as results**. Full record: `Docs/TDX_M3_Difficulty_Plan.md` (experiments E1–E14).

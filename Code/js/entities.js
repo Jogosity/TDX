@@ -37,6 +37,8 @@ export class Tower {
     this.burstLeft = 0;
     this.burstTimer = 0;
     this.flash = 0;
+    this.attackedFor = 0;     // seconds left on the "under attack" marker (M4)
+    this.attackedBy = null;   // enemy type that last drained this tower
   }
 
   get sellValue() { return Math.floor(this.spent * PLAYER.sellRefund); }
@@ -80,6 +82,7 @@ export class Tower {
 
   update(dt, enemies, projectiles, grid) {
     this.flash = Math.max(0, this.flash - dt * 4);
+    this.attackedFor = Math.max(0, this.attackedFor - dt);
 
     // applying an upgrade: tower is offline for UPGRADE.applyTime seconds
     if (this.upgrading) {
@@ -402,6 +405,8 @@ export class Enemy {
       this.attackTimer -= dt;
       if (this.attackTimer <= 0) {
         t.damage(this.def.attack.damage * this.damageMult);
+        t.attackedFor = this.def.attack.reload + 0.4;   // outlasts the gap between hits
+        t.attackedBy = this.type;
         this.attackTimer = this.def.attack.reload;
       }
       return;

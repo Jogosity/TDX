@@ -23,6 +23,15 @@
 
 import { targetCurve } from './target.js';
 
+// Mirror of waves.js pickWeighted (kept here so the ledger needs only config.js).
+function pickWeighted(pool, weights, rand) {
+  if (!weights) return pool[Math.floor(rand() * pool.length)];
+  const w = pool.map(k => weights[k] ?? 1);
+  let r = rand() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pool.length; i++) if ((r -= w[i]) < 0) return pool[i];
+  return pool[pool.length - 1];
+}
+
 // ---------------------------------------------------------------------------
 // Knobs (global what-ifs, never saved) and assumptions (model guesses the
 // sim will replace with measurements).
@@ -137,7 +146,7 @@ export function rollWave(cfg, wave, knobs, rand) {
     if (!affordable.length) break;
     const pool = affordable.filter(k => !cooling(k));
     if (!pool.length) { time += 0.3; continue; }      // only cooling types fit: wait, like the game
-    const key = pool[Math.floor(rand() * pool.length)];
+    const key = pickWeighted(pool, wave.weights, rand);   // same pick as waves.js
     const def = E[key];
     let n = 1;
     if (def.pack) {

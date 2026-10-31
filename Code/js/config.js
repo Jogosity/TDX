@@ -245,11 +245,12 @@ export const ENEMIES = {
     pack: { min: 5, max: 8 },
     color: '#ffd9c4', size: 0.26,
   },
-  // --- M2 Phase 2B (first pass — playtest + iterate) ----------------------------
-  // Not in any wave roster yet (debug SPAWN only) — rosters land with M3's sim.
-  // Rewards follow the hand-tuned ~3× spec scale of the existing roster.
+  // --- M2 Phase 2B; in the L3–L5 rosters since M4 (E15) -------------------------
+  // E15: the sim found both weaker than their Threat EV says, and Stinger's
+  // reward (90) far above every other unit's Tokens per threat. Repriced so
+  // adding them keeps M3's balance. Was: bug ev 170, stinger ev 130 reward 90.
   bug: {
-    name: 'Bug', ev: 170, health: 90, speed: SPEED.fast, reward: 30,
+    name: 'Bug', ev: 110, health: 90, speed: SPEED.fast, reward: 30,
     // hunter: ignores the base, flies straight at a random tower and drains it;
     // retargets randomly when it dies. Only heads for the base once no towers remain.
     hunter: true,
@@ -258,7 +259,7 @@ export const ENEMIES = {
     color: '#ff8a1f', size: 0.30,
   },
   stinger: {
-    name: 'Stinger', ev: 130, health: 70, speed: SPEED.fast, reward: 90,
+    name: 'Stinger', ev: 90, health: 70, speed: SPEED.fast, reward: 40,
     // detour: routes via a random off-path cell partway down the board, then
     // takes the optimal path to the base. min/max = fraction of the start
     // cell's distance-to-exit where the detour cell may sit; extraSteps = how
@@ -280,6 +281,7 @@ export const ENEMIES = {
 // with explicit arrays once the difficulty sim is running.
 // ---------------------------------------------------------------------------
 const ALL = ['hack', 'slice', 'crack', 'worm', 'virus'];
+const ALL_M4 = [...ALL, 'stinger', 'bug'];   // M4 E15: full roster from L4
 
 // Wave 1 cold-start (M3 E5): every level opens with light enemies only,
 // spawned further apart, so the opening Tokens can get a defence up before
@@ -289,7 +291,9 @@ const OPENING_SPREAD = 1.5;       // wave 1 spawnInterval multiplier
 const OPENING_MAV = 0.5;          // wave 1 MAV (and RTV) multiplier — M3 E7: fewer on the
                                   // board at once, same enemies and Tokens in total
 
-const genWaves = (count, { tev0, tevGrowth, mav0, mavGrowth, interval0, intervalStep, roster }) =>
+// weights (M4 E15): roster pick weights for every wave after wave 1, e.g.
+// { virus: 1.5 } keeps the Virus share when more unit types join the roster.
+const genWaves = (count, { tev0, tevGrowth, mav0, mavGrowth, interval0, intervalStep, roster, weights }) =>
   Array.from({ length: count }, (_, i) => {
     const mav = Math.round((mav0 * Math.pow(mavGrowth, i) * (i === 0 ? OPENING_MAV : 1)) / 10) * 10;
     const interval = Math.max(0.5, +(interval0 - intervalStep * i).toFixed(2));
@@ -299,6 +303,7 @@ const genWaves = (count, { tev0, tevGrowth, mav0, mavGrowth, interval0, interval
       rtv: Math.round((mav * 0.5) / 10) * 10,
       unlocked: i === 0 ? OPENING_ROSTER : roster(i),
       spawnInterval: i === 0 ? +(interval * OPENING_SPREAD).toFixed(2) : interval,
+      ...(weights && i > 0 ? { weights } : {}),
     };
   });
 
@@ -356,7 +361,8 @@ export const LEVELS = [
     waves: genWaves(9, {
       tev0: 2400, tevGrowth: 1.2, mav0: 800, mavGrowth: 1.09,
       interval0: 1.0, intervalStep: 0.05,
-      roster: (i) => (i < 1 ? ['hack', 'slice', 'crack', 'worm'] : ALL),
+      roster: (i) => (i < 1 ? ['hack', 'slice', 'crack', 'worm'] : i < 2 ? ALL : [...ALL, 'stinger']),
+      weights: { virus: 1.25 },   // E15: holds M3's Virus share with Stinger in
     }),
   },
   {
@@ -373,7 +379,8 @@ export const LEVELS = [
     waves: genWaves(10, {
       tev0: 3000, tevGrowth: 1.2, mav0: 900, mavGrowth: 1.08,
       interval0: 1.0, intervalStep: 0.05,
-      roster: () => ALL,
+      roster: () => ALL_M4,
+      weights: { virus: 1.5 },    // E15: holds M3's Virus share with Bug + Stinger in
     }),
   },
   {
@@ -390,7 +397,8 @@ export const LEVELS = [
     waves: genWaves(10, {
       tev0: 3600, tevGrowth: 1.2, mav0: 1000, mavGrowth: 1.08,
       interval0: 0.95, intervalStep: 0.05,
-      roster: () => ALL,
+      roster: () => ALL_M4,
+      weights: { virus: 1.5 },
     }),
   },
 ];

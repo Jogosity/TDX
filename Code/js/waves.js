@@ -10,6 +10,17 @@
 import { ENEMIES, WAVE_START_DELAY } from './config.js';
 import { Enemy } from './entities.js';
 
+// Roster pick: uniform unless the wave carries pick weights (M4 E15), e.g.
+// { virus: 1.5 } = Virus 1.5× as likely as each other affordable type.
+// Mirrored in tools/ledger/ledger.js.
+export function pickWeighted(pool, weights, rand) {
+  if (!weights) return pool[Math.floor(rand() * pool.length)];
+  const w = pool.map(k => weights[k] ?? 1);
+  let r = rand() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pool.length; i++) if ((r -= w[i]) < 0) return pool[i];
+  return pool[pool.length - 1];
+}
+
 export class WaveController {
   constructor(waveDef, grid, field, delta) {
     this.def = waveDef;
@@ -81,7 +92,7 @@ export class WaveController {
       this.spawnTimer = 0.3;
       return;
     }
-    const key = pool[Math.floor(Math.random() * pool.length)];
+    const key = pickWeighted(pool, this.def.weights, Math.random);
     const def = ENEMIES[key];
 
     if (def.pack) {

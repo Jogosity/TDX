@@ -260,6 +260,16 @@ export class Renderer {
   // --- towers ---------------------------------------------------------------
   drawTower(ctx, t, grid, time) {
     const s = grid.size;
+    if (t.attackedFor > 0) {              // under attack (M4): pulsing red cell
+      ctx.save();
+      ctx.globalAlpha = 0.45 + 0.25 * Math.sin(time * 10);
+      ctx.fillStyle = '#c4123f';
+      ctx.shadowColor = '#ff0a54';
+      ctx.shadowBlur = 16;
+      this.hexPath(ctx, t.x, t.y, s * 0.94);
+      ctx.fill();
+      ctx.restore();
+    }
     ctx.save();
     ctx.translate(t.x, t.y);
     if (t.weapon) {

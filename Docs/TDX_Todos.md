@@ -1,12 +1,5 @@
 
-**Tweaks**
-- [x] Add a version number to the Main Menu in the game. We will start at v1.01 - Altair ✅ S9: `VERSION` in config, shown bottom of Main Menu home
-	- [x] We will increment the build number at the conclusion of each milestone.
-	- [x] Version numbers will also have a codename that increments in alphabetical order. We'll start at A and the designation v1.01 to keep everything aligned. List of A to K designations below.
-	- [x] Version numbers are only bumped when the full feature set for that milestone has been landed. (Rule noted in config comment — M2 closes as v1.02 Basic)
-- [x] Display the enemy level delta on the Level Select - ensure Level Delta is fully implemented and working ✅ S9: verified (HP scale + damage mult incl. Virus) + shown per level row
-- [x] Add a per-level Starting budget to the config, rather than re-using the same starting budget for all levels. ✅ S9: `LEVELS[i].startTokens` 300/340/390/450/520 (best-guess — hand-tune)
-	
+
 
 **Version IDs**
 Altair - Start here V1.01
@@ -45,37 +38,54 @@ Phase 3
 
 The game is intended as a 360° demonstration of game craft — each milestone should be a complete, presentable exhibit, not just a feature dump. Version bumps only when a milestone's full feature set has landed.
 
-## M2 — "Basic" (v1.02) — Tower & Enemy Expansion — ✅ COMPLETE (S12, 2026-10-13)
-New units land in small phases with playtest + iteration between each. No rushing units to "done" — they mature across phases.
-
-- [x] **Phase 1 — Tweaks** ✅ S9 (version display, per-level budgets, delta verify + Level Select display)
-- [x] **Phase 1 — GitHub repo** ✅ S10: local repo at project root (initial commit tagged v1.01-altair, stray Code/sim.mjs removed, backup procedure in QuickStart) → published private to github.com/Jogosity/TDX via GitHub Desktop. CLOSED
-- [x] **Phase 2A — Familiar-weapon towers** ✅ S11: Pulse (3-round burst rifle) + Compressor (45° pump shotgun), double-stack tray, debug spawn pause.
-- [x] **Phase 2B — Simple enemies** ✅ S12: Bug (random tower hunter, walks open cells, ignores base) + Stinger (packs of 2–4, detour route). Playtested + one tweak round (Bug hp ×3, debug flash + wallet, Bug routing).
-- [x] **Phase 4 — Integration + close** ✅ S12: BP regions replaced by primary/secondary/tertiary BP drop slots (15/5/3%, promotion rule); tests per mechanic (74 checks); bumped to **v1.02 Basic**.
-- ➜ Moved out: new enemies into L2–L5 wave rosters → **M3** (the sim tunes rosters anyway). Phases 3A/3B → **Content backlog (on hold)** below.
-
-## M3 — "Cobol" (v1.03) — Secure & Simulate — ✅ COMPLETE (S15, 2026-10-21)
-Requires the M2 roster settled first — new units add too much noise to balance against a moving target.
-
-- [x] Grow `tests/sim.mjs` into the headless difficulty simulator (tower DPS vs real pathing, batch config sweeps, leak/spike reports).
-- [x] Full balance pass: all 5 levels, method built (Ledger + Sim + tuning loop, E1–E14 in `TDX_M3_Difficulty_Plan.md`). L1–L4 play slightly easy, L5 slightly hard.
-- ➜ Moved to **M5**: replace the L2–L5 `genWaves` scaffolds with hand-tuned waves.
-- [x] Sim-answerable parked questions: per-level budget tuning (wave 1 fix, E7). Limiter → content backlog.
-- ➜ Moved to **M5**: CRASH cost-cap and BP drop rates (not yet measured).
-- [x] Bugs - Fix the 4s Spawn Cooldown - ensure system is working
 
 
 ## M4 — "Disc Drive" (v1.04) — Narrative and Content
-Add a narrative system and content to give meaning to the game
+Add a narrative system and content to give meaning to the game.
+This will be achieved through information screens before and after each level.
 Jogo to do all the creative. (lots of design to be done for this MS)
+
 - [ ] Create a character a text panel system to convey narrative beats.
-- [ ] Create a .MD file to allow easy management of the text and image assets
-- [ ] Define the characters and factions 
-- [ ] Write the characters and they dialogue
-- [ ] Game features - Add Bug + Stinger (and Pulse/Compressor in play) to the L1–L5 wave rosters. Then a quick Sim + Ledger check so M4 doesn't undo M3's balance.
-- [ ] UX - Warning when towers are under attack (Virus drain especially). From M6.
-- [ ] UX - Clear message when a new tower has been unlocked. From M6.
+	- [ ] These screens have been designed - they can be found in the folder: Users/Jogosity/Library/Mobile Documents/iCloud~md~obsidian/Documents/JogoHome/1_projects/05_TDX/Assets/Screens
+	- [ ] There are 3 screens  - The Level Data screen, the Archive Data Screen and the Level Results Screen.
+	- [ ] These fit into the current screen flow in this order. 1. Main Menu. 2 Level Data Screen. 3. Archive Data Screen. 4. Gameplay. 5 Level Result Screen Win or Loss.
+	- [ ] I have provided a few versions of each screen - one with the type of content we can expect in the final game, and one called BLANK that simply names the text strings we will need for each piece of content.
+- [ ] I will provide the icons and buttons necessary to build the pictorial elements of the screen. But the basic furniture of frames and blocks can be generated at runtime.
+- [ ] We'll need to create a .MD file to allow easy management of the text and image assets
+	- [ ] The MD file will need a set of named strings for each Level and Archive.
+	- [ ] The Level Data screen shows some framing narrative. Each level will have a single specific Level Data screen.
+	- [ ] The Archive Data screen is show just before the level starts. It is a more specific piece of narrative framing and describes in detail the owner of the data archive that the enemies are attacking in the game.
+	- [ ] The Archive Data will pull from a pool of content. Typically an Archive Data will be a bio of a person of company and an associated avatar or logo.
+	- [ ] I will create the basic MD layout for the Level Data and Archive Data content. This will match the images of the screens.
+	- [ ] The Level Results screen shows the win/lose state and relevant win/lose icon.
+		- [ ] The level result also shows she number of memory cores remaining. With colour coding of Yellow meaning win, and red meaning lose.
+		- [ ] The level result screen shows the Icon of the Archive being attacked in this level.
+		- [ ] The level result screen shows the memory summary of any memories stolen during the attack. This keeps the amount of data on the screen low enough to be readable.
+		- [ ] The INFO button in the level result screen should popup the Archive Data screen so that people can remind themselves of the narrative strands. (This pop-up screen will have a BACK button to take you back to the level results screen)
+- [ ] How does the memory narrative system work?
+	- [ ] Each archive contains the details of a person or organisation.
+	- [ ] Archives can only have one person or one organisation.
+	- [ ] The Bio, Type and Description fields are just text strings that I can use to give a variety of context to the game.
+	- [ ] Archives have Core Memories and Secondary Memories.
+		- [ ] Core Memories are really important things to the person or org.
+		- [ ] Each Archive can have several Core Memories.
+		- [ ] Only ONE Core Memory is ever selected to be shown on the Archive Data in each game. The selection is random.
+		- [ ] Each archive can have lots of Secondary Memories
+		- [ ] Only 3 Secondary Memories are selected to be shows on the Archive Data screen in each game. The selection is random.
+		- [ ] OnlyCore or Secondary memories actually selected for that particular game can be lost.
+		- [ ] Lost Memories are listed on the Level Results screen.
+		- [ ] The number of Memories lost is based on the number of Cores in that level. The more Cores you lose, the more Memories are subsequently lost.
+		- [ ] You do not lose one memory per core. Instead you lose one memory for every 4 Cores lost. Since we have 15 Cores right now, you always lose the Core Memory when you are reduced to just 1 remaining Core. This means you can lose all memories but still win the level. Something of a pyrrhic victory.
+		- [ ] We might end up with different numbers of Cores in future levels. If this happens we'll use a formula to spread out the Memory loss rather than hard numbers.
+	- [ ] Because the content is stored in an MD file, I should be able to add content regularly without needing to refactor the game.
+- [ ] The value of the Memory Narrative system is that I can tell an interesting emergent story using really simple tools. For example, one of the Organisations you have helped defend, could end up emerging as a hostile actor that is actually performing the attacks. This will be a fun thing to write.
+
+- [ ] Jogo - Define the characters and factions and write their content - Started
+
+
+- [ ] Game features - Units - Add Bug + Stinger  to the L3–L5 wave rosters. Then a quick Sim + Ledger check so M4 doesn't undo M3's balance.
+- [ ] Game features - UX - Warning when towers are under attack (Virus drain especially). From M6. (See Virus_Attack_Warning.png)
+- [ ] Game features - UX - Clear message when a new tower has been unlocked. From M6.
 
 
 
@@ -124,5 +134,21 @@ Specced in TDX_Towers_and_Enemies.md. If any return after M3, re-run the difficu
 
 *End of doc*
 
+
+## MAD IDEA for M4
+Build me a proper game editor where I can make simple drag and drop edits to the levels.
+
+What enemies are in them
+Drag and drop
+
+What is the TEV and MAEV - sliders
+
+Intensity curve - start, mid and end wave intensity
+Pull points on a curve
+
+Level design
+Number of locked sectors, entry points - 
+Sliders, hit shuffle
+Min distance to base for entry points
 
 
