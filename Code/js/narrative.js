@@ -1,13 +1,24 @@
 // TDX — narrative content (M4 "Disc Drive").
-// Content lives in content/TDX_Narrative.md as `Key: value` lines, edited by
-// Jogo in Obsidian. This module parses it (DOM-free, Node-testable), picks the
-// archive and memories for a run, and works out which memories are lost.
+// Jogo writes the content in Apple Numbers and exports CSV (File → Export To →
+// CSV) into content/TDX_Text/ (Numbers names the folder after the source file
+// TDX_Text.numbers), one file per table, under the export's own names:
+//   Archives-Table 1.csv     one row per archive (person, business …) + its memories
+//   Levels-Table 1.csv       StringID, Text: Level_N_Label / _Narrative_Label /
+//                            _Narrative_Desc / _Archives (the Classes the level draws from)
+//   Screen Text-Table 1.csv  StringID, Text: fixed wording on the screens
+// This module parses them (DOM-free, Node-testable), picks the archive and
+// memories for a run, and works out which memories are lost.
 
-export const NARRATIVE_URL = 'content/TDX_Narrative.md';
+export const CONTENT_DIR = 'content/TDX_Text/';
+export const CONTENT_FILES = {
+  archives: 'Archives-Table 1.csv',
+  levels: 'Levels-Table 1.csv',
+  strings: 'Screen Text-Table 1.csv',
+};
 export const AVATAR_DIR = 'assets/avatars/';
 export const DEFAULT_AVATAR = 'Av_BLANK_S.png';
 
-// Screen strings used when the .md leaves one out.
+// Screen strings used when Screen Text leaves one out.
 export const DEFAULT_STRINGS = {
   Archive_Heading: 'Archive Record',
   Core_Memory_Heading: 'Core Memory',
@@ -23,98 +34,122 @@ export const DEFAULT_STRINGS = {
   No_Memories_Lost: 'None. Every memory is safe.',
 };
 
-const KEY_LINE = /^([A-Za-z][A-Za-z0-9_]*)\s*:\s*(.*)$/;
-const BARE_KEY = /^[A-Za-z]+\d*_[A-Za-z0-9_]+$/;     // a key that lost its colon
-const LEVEL_KEY = /^Level_(\d+)_(Label|Narrative_Label|Narrative_Desc|Archives)$/;
-const ARCHIVE_KEY = /^Archive(\d+)_(Icon|Name|Bio|Type|Description|Win_Label|Lose_Label|(Core|Secondary)Memory(\d+)(_Summary)?)$/;
-
-// Parse the .md. Returns { levels, archives, strings, warnings }.
-//   levels[n]   = { label, narrativeLabel, narrativeDesc, archives: [ids] }
-//   archives[n] = { id, icon, name, bio, type, description, winLabel, loseLabel,
-//                   core: [{ text, summary }], secondary: [{ text, summary }] }
-// Rules: `#` headings, `>` note lines and blank lines are ignored; a plain line right after a
-// key line continues that value as a new paragraph; empty values are skipped.
-export function parseNarrative(text) {
-  const raw = {};            // key → value, in file order
-  const warnings = [];
-  let last = null;
-  text.split(/\r?\n/).forEach((line, i) => {
-    const t = line.trim();
-    if (!t) { last = null; return; }
-    if (t.startsWith('#') || t.startsWith('>')) { last = null; return; }   // headings, notes
-    const m = t.match(KEY_LINE);
-    if (m) {
-      if (m[1] in raw && raw[m[1]]) warnings.push(`Line ${i + 1}: ${m[1]} appears twice (last one wins)`);
-      raw[m[1]] = m[2].trim();
-      last = m[1];
-    } else if (BARE_KEY.test(t)) {
-      warnings.push(`Line ${i + 1}: "${t}" has no colon`);
-      last = null;
-    } else if (last) {
-      raw[last] = raw[last] ? `${raw[last]}\n${t}` : t;
-    } else {
-      warnings.push(`Line ${i + 1}: text with no key ("${t.slice(0, 30)}…")`);
-    }
-  });
-
-  const levels = {}, archives = {}, strings = { ...DEFAULT_STRINGS };
-  const level = (n) => (levels[n] ??= { label: '', narrativeLabel: '', narrativeDesc: '', archives: [] });
-  const archive = (n) => (archives[n] ??= {
-    id: n, icon: DEFAULT_AVATAR, name: '', bio: '', type: '', description: '',
-    winLabel: '', loseLabel: '', core: [], secondary: [],
-  });
-  const memSlots = {};       // archive id → { core: {m: {text, summary}}, secondary: {...} }
-
-  for (const [key, value] of Object.entries(raw)) {
-    let m;
-    if ((m = key.match(LEVEL_KEY))) {
-      const lv = level(+m[1]);
-      if (m[2] === 'Archives') lv.archives = value.split(/[,\s]+/).filter(Boolean).map(Number).filter(n => n > 0);
-      else lv[{ Label: 'label', Narrative_Label: 'narrativeLabel', Narrative_Desc: 'narrativeDesc' }[m[2]]] = value;
-    } else if ((m = key.match(ARCHIVE_KEY))) {
-      const id = +m[1], a = archive(id);
-      if (m[3]) {
-        const kind = m[3] === 'Core' ? 'core' : 'secondary';
-        const slot = ((memSlots[id] ??= { core: {}, secondary: {} })[kind][+m[4]] ??= { text: '', summary: '' });
-        slot[m[5] ? 'summary' : 'text'] = value;
-      } else if (value) {
-        a[{ Icon: 'icon', Name: 'name', Bio: 'bio', Type: 'type', Description: 'description',
-            Win_Label: 'winLabel', Lose_Label: 'loseLabel' }[m[2]]] = value;
-      }
-    } else if (key in DEFAULT_STRINGS) {
-      if (value) strings[key] = value;
-    } else if (key === 'Heading') {
-      if (value) strings.Archive_Heading = value;        // Jogo's original key
-    } else {
-      warnings.push(`Unknown key: ${key}`);
-    }
+// RFC 4180 CSV: quoted fields may hold commas, quotes ("") and line breaks.
+export function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', quoted = false;
+  text = text.replace(/^\uFEFF/, '');
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; } else quoted = false;
+      } else field += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(field); rows.push(row); row = []; field = '';
+    } else field += c;
   }
-
-  // memories: keep numbered order, drop empty ones, default the summary
-  for (const [id, slots] of Object.entries(memSlots)) {
-    for (const kind of ['core', 'secondary']) {
-      archives[id][kind] = Object.keys(slots[kind]).map(Number).sort((a, b) => a - b)
-        .map(n => slots[kind][n])
-        .filter(mem => mem.text)
-        .map(mem => ({ text: mem.text, summary: mem.summary || mem.text }));
-    }
-  }
-  for (const a of Object.values(archives)) {
-    if (!a.name) warnings.push(`Archive${a.id} has no Name`);
-    if (a.core.length === 0) warnings.push(`Archive${a.id} has no Core Memory`);
-  }
-  for (const [n, lv] of Object.entries(levels)) {
-    for (const id of lv.archives) if (!archives[id]) warnings.push(`Level_${n}_Archives names Archive${id}, which doesn't exist`);
-  }
-  return { levels, archives, strings, warnings };
+  if (field || row.length) { row.push(field); rows.push(row); }
+  return rows;
 }
 
-// Archives that can be picked for a level (1-based level number): the
-// level's pool if it names one, otherwise every archive with a Name.
+// Rows as objects keyed by the header row. Headings and cells are trimmed;
+// trailing line breaks inside a cell go, line breaks within it stay.
+function table(text) {
+  const [header = [], ...rows] = parseCSV(text);
+  const keys = header.map(k => k.trim());
+  return rows.map(r => Object.fromEntries(keys.map((k, i) => [k, (r[i] ?? '').trim()])))
+    .filter(r => Object.values(r).some(v => v));
+}
+
+const norm = (s) => s.trim().toLowerCase();
+
+// Archives table headings (Jogo's names) → fields. Memory columns are found by
+// pattern: "Core Memory 2", "Core Memory 2 Summary", "Secondary Memory 5" …
+const ARCHIVE_COLS = {
+  name: ['Name'], active: ['Active'], icon: ['Archive Icon', 'Icon', 'Avatar'],
+  type: ['Archive Class', 'Class'], description: ['Archive Sub-Class', 'Sub-Class'],
+  bio: ['Archive Desc', 'Desc', 'Bio'],
+  winLabel: ['Win Label'], loseLabel: ['Lose Label'],
+};
+const MEM_COL = /^(core|secondary) memory (\d+)( summary)?$/i;
+const LEVEL_KEY = /^Level_(\d+)_(Label|Narrative_Label|Narrative_Desc|Archives)$/;
+
+// Parse the three CSV exports. Returns { levels, archives, strings, warnings }.
+//   levels[n]   = { label, narrativeLabel, narrativeDesc, classes: [Class names] }
+//   archives    = [{ id, active, icon, name, bio, type, description, winLabel, loseLabel,
+//                    core: [{ text, summary }], secondary: [{ text, summary }] }]
+// Only Active = YES archives are ever picked.
+export function parseContent({ archives = '', levels = '', strings = '' } = {}) {
+  const warnings = [];
+  const out = { levels: {}, archives: [], strings: { ...DEFAULT_STRINGS }, warnings };
+
+  table(archives).forEach((row, i) => {
+    const get = (f) => { for (const k of ARCHIVE_COLS[f]) if (row[k]) return row[k]; return ''; };
+    const a = {
+      id: i + 1, active: norm(get('active')) === 'yes',
+      icon: get('icon') || DEFAULT_AVATAR,
+      name: get('name'), bio: get('bio'), type: get('type'), description: get('description'),
+      winLabel: get('winLabel'), loseLabel: get('loseLabel'), core: [], secondary: [],
+    };
+    const slots = { core: {}, secondary: {} };
+    for (const [k, v] of Object.entries(row)) {
+      const m = k.match(MEM_COL);
+      if (!m) continue;
+      const slot = (slots[m[1].toLowerCase()][+m[2]] ??= { text: '', summary: '' });
+      slot[m[3] ? 'summary' : 'text'] = v;
+    }
+    for (const kind of ['core', 'secondary']) {
+      a[kind] = Object.keys(slots[kind]).map(Number).sort((x, y) => x - y)
+        .map(n => slots[kind][n]).filter(mem => mem.text)
+        .map(mem => ({ text: mem.text, summary: mem.summary || mem.text }));
+    }
+    if (!a.name) return;                      // blank spacer rows
+    if (a.active && a.core.length === 0) warnings.push(`${a.name} is Active but has no Core Memory`);
+    if (a.active && a.secondary.length < SECONDARY_SHOWN) warnings.push(`${a.name} is Active but has fewer than ${SECONDARY_SHOWN} Secondary Memories`);
+    out.archives.push(a);
+  });
+
+  for (const row of table(levels)) {
+    const id = (row.StringID || '').trim();
+    if (!id) continue;
+    const m = id.match(LEVEL_KEY);
+    if (!m) { warnings.push(`Levels: unknown StringID "${id}"`); continue; }
+    // tolerate a Text cell that repeats its own key ("Level_1_Label: Archive 001")
+    let text = row.Text || '';
+    if (text.startsWith(`${id}:`)) text = text.slice(id.length + 1).trim();
+    const lv = (out.levels[+m[1]] ??= { label: '', narrativeLabel: '', narrativeDesc: '', classes: [] });
+    if (m[2] === 'Archives') lv.classes = text.split(',').map(c => c.trim()).filter(Boolean);
+    else lv[{ Label: 'label', Narrative_Label: 'narrativeLabel', Narrative_Desc: 'narrativeDesc' }[m[2]]] = text;
+  }
+
+  for (const row of table(strings)) {
+    const id = (row.StringID || '').trim();
+    if (!id) continue;
+    if (id in DEFAULT_STRINGS) { if (row.Text) out.strings[id] = row.Text; }
+    else warnings.push(`Screen Text: unknown StringID "${id}"`);
+  }
+
+  const classes = new Set(out.archives.map(a => norm(a.type)));
+  for (const [n, lv] of Object.entries(out.levels)) {
+    for (const c of lv.classes) if (!classes.has(norm(c))) warnings.push(`Level ${n} draws from Class "${c}", which no archive has`);
+  }
+  return out;
+}
+
+const usable = (a) => a.active && a.name && a.core.length > 0;
+
+// Archives that can be picked for a level (1-based level number): Active ones
+// of the level's Classes; if the level names none (or none of its Classes has
+// an Active archive yet), any Active archive.
 export function archivePool(content, levelNo) {
-  const usable = (a) => a && a.name && a.core.length > 0;
-  const named = (content.levels[levelNo]?.archives ?? []).map(id => content.archives[id]).filter(usable);
-  return named.length ? named : Object.values(content.archives).filter(usable);
+  const classes = (content.levels[levelNo]?.classes ?? []).map(norm);
+  const all = content.archives.filter(usable);
+  const named = all.filter(a => classes.includes(norm(a.type)));
+  return named.length ? named : all;
 }
 
 const pickN = (arr, n, rand) => {
@@ -127,7 +162,7 @@ export const SECONDARY_SHOWN = 3;
 
 // One run's narrative: the archive, its one Core Memory and three Secondary
 // Memories (random), plus the order they'll be lost in: Secondaries first in
-// random order, the Core Memory last. Null if the .md has no usable archive.
+// random order, the Core Memory last. Null if there's no usable archive.
 export function rollRun(content, levelNo, rand = Math.random) {
   const pool = archivePool(content, levelNo);
   if (pool.length === 0) return null;
@@ -149,14 +184,16 @@ export function memoriesLost(coresLost, startCores, shown) {
   return Math.min(shown - 1, Math.floor(coresLost / step));
 }
 
-export async function loadNarrative(url = NARRATIVE_URL) {
-  try {
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return parseNarrative(await res.text());
-  } catch (err) {
-    const empty = parseNarrative('');
-    empty.warnings.push(`Couldn't load ${url}: ${err.message}`);
-    return empty;
-  }
+export async function loadNarrative(dir = CONTENT_DIR) {
+  const texts = {}, failed = [];
+  await Promise.all(Object.entries(CONTENT_FILES).map(async ([key, file]) => {
+    try {
+      const res = await fetch(dir + encodeURIComponent(file), { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      texts[key] = await res.text();
+    } catch (err) { failed.push(`Couldn't load ${dir}${file}: ${err.message}`); }
+  }));
+  const content = parseContent(texts);
+  content.warnings.unshift(...failed);
+  return content;
 }

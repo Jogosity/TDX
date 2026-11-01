@@ -26,6 +26,13 @@ Plan agreed with Jogo: `Docs/TDX_M4_Plan.md`. Jogo's calls: each level names its
 - `js/story.js`: Level Data → Archive Record → game → Level Result (+ Info pop-up with Back), built to the mockups. Replaces the LEVEL COMPLETE / REPO BREACHED banners; BITS + level unlock note sit on the Result screen.
 - Debug menu STORY tab: content problems list, Level Result previews.
 
+### Later: content moves to Numbers → CSV (2026-11-01)
+- Jogo writes in Apple Numbers, one table each for Archives, Levels and Screen Text, and exports CSV (File → Export To → CSV) into `Code/content/TDX_Text/` (named after the source file, TDX_Text.numbers) under the export's own names (`Archives-Table 1.csv` …), so exporting takes one click.
+- Archives: one row per archive with its memories in that row. Headings: Name, **Active** (YES = in the game), Archive Class (→ Type), Archive Sub-Class (→ Description), Archive Desc (→ Bio), Icon (coming), Core Memory N / Summary, Secondary Memory N / Summary. Any other column (Status, notes) is ignored.
+- Level pools now name **Classes**: `Level_N_Archives` = e.g. `Business` or `Human, Corporation`. Blank = any Active archive.
+- `narrative.js`: CSV parser (quoted cells, commas, line breaks), trims stray spaces, tolerates a Text cell repeating its key; problems listed in the debug STORY tab. `TDX_Narrative.md` is no longer read.
+- Tests 91 → 94.
+
 ### Tests
 77 → **91** (parser, pools, run roll, memory loss, weighted picks, the real .md parses).
 

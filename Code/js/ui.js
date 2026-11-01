@@ -415,9 +415,9 @@ export class UI {
           info.className = 'dbg-note';
           if (!c) info.textContent = 'Narrative still loading…';
           else {
-            const names = Object.values(c.archives).filter(a => a.name && a.core.length).map(a => a.name);
-            info.textContent = `Archives ready: ${names.length ? names.join(', ') : 'none'}.\n`
-              + (c.warnings.length ? `Problems in TDX_Narrative.md:\n• ${c.warnings.join('\n• ')}` : 'No problems in TDX_Narrative.md.');
+            const names = c.archives.filter(a => a.active && a.core.length).map(a => `${a.name} (${a.type || 'no Class'})`);
+            info.textContent = `Active archives: ${names.length ? names.join(', ') : 'none'}.\n`
+              + (c.warnings.length ? `Problems in the content CSVs:\n• ${c.warnings.join('\n• ')}` : 'No problems in the content CSVs.');
           }
           el.appendChild(info);
           this.dbgButton(el, 'Preview Level Result: win, 10/15', () => { this.hideDebugMenu(); this.game.debugPreviewResult(true, 10); });

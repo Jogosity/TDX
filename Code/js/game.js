@@ -350,7 +350,7 @@ class Game {
   // --- flow ------------------------------------------------------------------
   // PLAY uses the latest unlocked level; Level Select passes an index.
   // M4 flow: Level Data → Archive Record → battlefield. Back steps out again.
-  // A screen with no content in the .md is skipped.
+  // A screen with no content in the CSVs is skipped.
   async startRun(levelIndex = this.latestLevelIndex()) {
     const content = await this.narrativeReady;
     const levelNo = levelIndex + 1;

@@ -8,7 +8,7 @@ import { Enemy } from '../js/entities.js';
 import { loadSave } from '../js/save.js';
 import { relocateBlockers, crashShuffle } from '../js/crash.js';
 import { placeBlockers, placeLockouts, placeExtraSpawns, rollBlueprints } from '../js/board.js';
-import { parseNarrative, archivePool, rollRun, memoriesLost, DEFAULT_AVATAR } from '../js/narrative.js';
+import { parseCSV, parseContent, archivePool, rollRun, memoriesLost, DEFAULT_AVATAR, CONTENT_FILES } from '../js/narrative.js';
 import { pickWeighted } from '../js/waves.js';
 
 let pass = 0, fail = 0;
@@ -478,39 +478,44 @@ check('starting budgets never shrink across levels',
 
 // --- M4: narrative content + memory loss + weighted roster picks -----------------
 {
-  const md = [
-    '# Title', '> a note line', '',
-    'Result_Win_Label: Saved!',
-    'Level_1_Label: Archive 001',
-    'Level_1_Narrative_Desc: First paragraph.', 'Second paragraph.', '',
-    'Level_1_Archives: 2, 9',
-    'Archive1_Name: Ann', 'Archive1_CoreMemory1: A core', 'Archive1_CoreMemory1_Summary: core',
-    'Archive2_Name: Bo', 'Archive2_Icon:', 'Archive2_CoreMemory1: B core',
-    'Archive2_CoreMemory2:', 'Archive2_SecondaryMemory1: s1', 'Archive2_SecondaryMemory1_Summary: S1',
-    'Archive2_SecondaryMemory2: s2', 'Archive2_SecondaryMemory3: s3', 'Archive2_SecondaryMemory4: s4',
-    'Archive2_SecondaryMemory5_Summary',
-    'Archive3_Name: Placeholder',
-  ].join('\n');
-  const c = parseNarrative(md);
-  check('narrative: level text parses, continuation line is a new paragraph',
+  const arch = [
+    'Name,Active,Archive Class,Archive Sub-Class,Archive Desc,Icon,Core Memory 1,Core Memory 1 Summary,Core Memory 2,Core Memory 2 Summary,Secondary Memory 1,Secondary Memory 1 Summary,Secondary Memory 2,Secondary Memory 2 Summary,Secondary Memory 3,Secondary Memory 3 Summary,Secondary Memory 4,Secondary Memory 4 Summary,Status,',
+    'Ann ,YES,Human,Memories,Teacher,,"A core, with a comma\nand a ""quote""\n",core,,,s1,S1,s2,,s3,S3,s4,S4,done,',
+    ',,,,,,,,,,,,,,,,,,,',
+    'Bo,yes,Business,Records,Bakery,Av_X.png,B core,,,,b1,,b2,,b3,,,,,',
+    'Cy,,Business,Records,Shop,,C core,,,,c1,,c2,,c3,,,,,',
+    'Di,YES,Corporation,Records,Bank,,,,,,d1,,,,,,,,,',
+  ].join('\r\n');
+  const levels = 'StringID,Text,,\nLevel_1_Label,Level_1_Label: Archive 001,,\nLevel_1_Narrative_Desc,"First paragraph.\nSecond paragraph.",,\nLevel_1_Archives,Business,,\n,,,\nLevel_2_Archives,,,\nLevel_3_Archives,"Human, Spaceship",,\n';
+  const strings = 'StringID,Text\nResult_Win_Label,Saved!\nBogus_Key,x\n';
+  const c = parseContent({ archives: arch, levels, strings });
+  const ann = c.archives.find(a => a.name === 'Ann');
+  check('CSV: quoted cells keep commas, quotes and inner line breaks', parseCSV('a,"b,""c""\nd",e\n')[0].join('|') === 'a|b,"c"\nd|e');
+  check('content: trailing spaces and trailing line breaks are trimmed',
+    !!ann && ann.core[0].text === 'A core, with a comma\nand a "quote"');
+  check('content: headings map to Name / Bio / Class / Sub-Class, icon defaults',
+    ann.bio === 'Teacher' && ann.type === 'Human' && ann.description === 'Memories' && ann.icon === DEFAULT_AVATAR
+    && c.archives.find(a => a.name === 'Bo').icon === 'Av_X.png');
+  check('content: empty memories skipped, missing summary uses the text, extra columns ignored',
+    ann.core.length === 1 && ann.secondary.length === 4 && ann.secondary[1].summary === 's2');
+  check('content: blank rows dropped, Active YES (any case) only', c.archives.length === 4
+    && c.archives.filter(a => a.active).map(a => a.name).join() === 'Ann,Bo,Di');
+  check('content: level text parses, repeated key prefix stripped, line break kept',
     c.levels[1].label === 'Archive 001' && c.levels[1].narrativeDesc === 'First paragraph.\nSecond paragraph.');
-  check('narrative: screen strings override defaults, others keep theirs',
+  check('content: screen strings override defaults, others keep theirs',
     c.strings.Result_Win_Label === 'Saved!' && c.strings.Result_Lose_Label === 'Archive breached');
-  check('narrative: blank icon falls back to the default avatar', c.archives[2].icon === DEFAULT_AVATAR);
-  check('narrative: empty memories are skipped, missing summary uses the text',
-    c.archives[2].core.length === 1 && c.archives[2].secondary.length === 4 && c.archives[2].secondary[1].summary === 's2');
-  check('narrative: missing colon, missing archive and memory-less archive are flagged',
-    c.warnings.some(w => w.includes('no colon')) && c.warnings.some(w => w.includes('Archive9')) && c.warnings.some(w => w.includes('Archive3 has no Core')));
-  check('narrative: level pool names its archives', archivePool(c, 1).map(a => a.name).join() === 'Bo');
-  check('narrative: level with no pool uses every finished archive', archivePool(c, 4).map(a => a.name).join() === 'Ann,Bo');
+  check('content: unknown key, missing Class and Core-less Active archive are flagged',
+    c.warnings.some(w => w.includes('Bogus_Key')) && c.warnings.some(w => w.includes('Spaceship')) && c.warnings.some(w => w.includes('Di is Active')));
+  check('pool: a level draws only Active archives of its Classes', archivePool(c, 1).map(a => a.name).join() === 'Bo');
+  check('pool: a level with no Class picks from every Active archive', archivePool(c, 2).map(a => a.name).join() === 'Ann,Bo');
   let ok = true;
   for (let i = 0; i < 50; i++) {
-    const run = rollRun(c, 1);
+    const run = rollRun(c, 3);
     const last = run.lossOrder[run.lossOrder.length - 1];
-    if (run.secondary.length !== 3 || new Set(run.secondary).size !== 3 || last !== run.core || run.lossOrder.length !== 4) ok = false;
+    if (run.archive.name !== 'Ann' || run.secondary.length !== 3 || new Set(run.secondary).size !== 3 || last !== run.core || run.lossOrder.length !== 4) ok = false;
   }
-  check('narrative: a run shows 1 Core + 3 Secondary, Core Memory lost last', ok);
-  check('narrative: no usable archive → no run', rollRun(parseNarrative(''), 1) === null);
+  check('run: 1 Core + 3 Secondary from the level\'s Class, Core Memory lost last', ok);
+  check('run: no usable archive → no run', rollRun(parseContent({}), 1) === null);
 
   const lost = [0, 3, 4, 7, 8, 11, 12, 13, 14, 15].map(n => memoriesLost(n, 15, 4)).join();
   check('memory loss (15 Cores): 1 per 4 lost, Core Memory at one Core left', lost === '0,0,1,1,2,2,3,3,4,4');
@@ -518,9 +523,9 @@ check('starting budgets never shrink across levels',
 
   if (globalThis.process?.versions?.node) {
     const fs = await import('node:fs');
-    const real = parseNarrative(fs.readFileSync(new URL('../content/TDX_Narrative.md', import.meta.url), 'utf8'));
-    check('content/TDX_Narrative.md parses with every level 1–5 present',
-      LEVELS.every((_, i) => real.levels[i + 1]?.label) && archivePool(real, 1).length > 0);
+    const read = (f) => fs.readFileSync(new URL(`../content/TDX_Text/${f}`, import.meta.url), 'utf8');
+    const real = parseContent({ archives: read(CONTENT_FILES.archives), levels: read(CONTENT_FILES.levels), strings: read(CONTENT_FILES.strings) });
+    check('content/TDX_Text CSVs parse with at least one Active archive', archivePool(real, 1).length > 0);
   }
 
   check('roster pick: uniform without weights', pickWeighted(['a', 'b'], undefined, () => 0.6) === 'b');

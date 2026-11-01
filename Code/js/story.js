@@ -2,7 +2,7 @@
 // Assets/Screens: Level Data → Archive Record → (game) → Level Result, plus the
 // Archive Record as a pop-up from the Result screen's Info button.
 // Frames, bars and buttons are HTML/CSS; icons and avatars are Jogo's images.
-// Text comes from content/TDX_Narrative.md via narrative.js.
+// Text comes from the content CSVs (content/TDX_Text/) via narrative.js.
 //
 // Timing: each screen builds in sequence (background first, then its parts).
 // Elements start hidden with a `rv` class plus a style (rv-left, rv-up …) and
