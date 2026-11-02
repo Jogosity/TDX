@@ -11,7 +11,7 @@ It was last year.
 ","Has just bought a new scarf for the winter. It's the warmest and most comforting thing she owns and can't be without it.
 ",New comfort scarf.,
 Yelena Desjardins,YES,Av_PersonSetB_3_S.png,Human,Memories,Council Member,The development of five hundred homes on the Northfield estates is under threat because Connection Machines want to build a data centre instead. The go/nogo meeting is on Monday and she has the smoking gun about bribes being made by CM.,She can stop the Connection Machines data centre.,She built a dollhouse with her daughter. It was the most perfect day in her life. Her daughter has taken it with her to University.,Built a dollhouse with her daughter.,"Lying in my bed I hear the clock tick and think of you. Caught up in circles, confusion is nothing new. Flashback, warm nights, almost left behind. Suitcase of memories, Time after…",The lyrics to Cyndi Lauper’s “Time After Time”,"It took almost three years to do this, but Yelena has finally memorised the layout of all three local authority buildings. She hates getting lost.",Knows her way around in work!,November is the right time to plant more daffodils. She’s failed for the last three years but this time will be different!,Wants to plant daffodils.,Decided it was time to stay out of her mother’s way for a few months. Forty Two years of being judged is more than enough. Christmas without arguments will be a joy!,Had enough of her mum!,The local development committee is full of lunatics and never get anything done. Forget it! I’m out. (Sorry Hot Buns! You’re on your own.),Leaving the local development committee - tell Hot Buns.,The brown dress looked great on the rack but makes her look like a sausage. Take. It. Back. Before. Saturday.,Take the brown dress back.,
-Yuki Takahashi,YES,Av_PetStyleB_5.png,Human,Documents,Bus Driver,"Employment Contract: Pink and Sons.
+Yuki Takahashi,YES,Av_PetStyleB_5_S.png,Human,Documents,Bus Driver,"Employment Contract: Pink and Sons.
 1st Schedule: The employee (Mr. Y. Takahashi) will work a minimum of 39.5 hours a week at a standard salary of 2x Minimum Wage.
 The Employee shall give 2 (two) months notice before ending the employment.",Employment contract with the local bus company,"Re: Overdue repayments 
 Dear Mr Takahashi, I write with reference to the outstanding arrears to the value of €31789.27.
@@ -19,14 +19,14 @@ Please make remittance in full at your local branch of Grosvenor Square Bank.",B
 Reason: Consistently late for work as per your contract.
 WE HOPE THIS DELIVERY PUT A FEATHER IN YOUR CAP!",Employment termination at Tail Feathers couriers.,"Yuki, what the hell?
 I can’t pay the goddamn mortgage! Give me my money back you son of a bitch. Give me the fucking money",Email demanding repayment of a casual loan.,"Yukers! Hi!
-So that 3 grand! Lot of money!  Probably best you pay back your Auntie Elsie before I turn up at your doorstep wondering when the merch went and how much went up you. Love, hugs and serious fucking threats, baby! Elsie P.",A threatening email demanding payment from Elsie P.,"Hey Takahashi, You need to be careful man. I’ve been trying to bring down Elsie Prendergast for two years. I’ve got the warrant ready, but you need to make the drop.
+So that 3 grand! Lot of money!  Probably best you pay back your Auntie Elsie before I turn up at your doorstep wondering when the merch went and how much went up you. Love, hugs and serious fucking threats, baby! Elsie P. xoxox",A threatening email demanding payment from Elsie P.,"Hey Takahashi, You need to be careful man. I’ve been trying to bring down Elsie Prendergast for two years. I’ve got the warrant ready, but you need to make the drop.
 I’m worried about you man, you blow the whole investigation and get yourself killed!",An email from a concerned… friend?,"Found you, here’s the documentation linking you to Elsie Prendergast and her little chemical distribution business.
 It’s going to the police. Hope you like orange overalls.",Message about incriminating documents.,"Takahaski?
 Report in now. I’m hearing a lot of stuff about you and it’s making me nervous.
 Don’t drop me in it, man.
 PJK.
 Wait is this email secure?",Nervous email from PJK.  ,
-Thandiwe Dlamini,YES,Av_PersonSetB_6.jpg,Human,Notes,Architect,"Facebook login. Name
+Thandiwe Dlamini,YES,Av_PersonSetB_6_S.jpg,Human,Notes,Architect,"Facebook login. Name
 Password: TD_h@ppyPl@c3",Facebook login,"Google login. Name
 Password: TD_h@ppyPl@c3",Google login,"Hotmail login. LadyDreamPickle93
 Password: MookyIsADream",Hotmail login,"Tinder Login
@@ -49,20 +49,64 @@ Tamora,,,Human,,Performance Artist,,,,,,,,,,,,,,,,,
 Elsie Prendergast,,,Human,,Unemployed (Drug Dealer),,,,,,,,,,,,,,,,,
 Ravi Kulkarni,,,Human,,Courier,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,
-Hot Buns ,YES,Av_CompanyStyleB_11_S.png,Business,Business Records,The Tasty Pastry Shop,"Major new contract to supply the Old Lyric Theatre with 50 croissants a day. Could save the shop! Maybe I can push 50 Pain au chocolats as well! Don't forget to sign!
+Hot Buns ,YES,Av_CompanyStyleB_11_S.png,Business,Documents,The Tasty Pastry Shop,"Major new contract to supply the Old Lyric Theatre with 50 croissants a day. Could save the shop! Maybe I can push 50 Pain au chocolats as well! Don't forget to sign!
 ","Business-saving contract for croissants
 ","My Recipe book! Ten years of ideas, way too much to remember everything so the whole lot is in this folder. Super precious. Do not DELETE FFS!
 ",Recipe book.,"Local development grant available. I need to apply for this, my friend Yelena is on the committee and thinks I will be a guaranteed winner!",Apply for the local development grant!,The rent on the shop is overdue. The November invoice needs to be paid by Wednesday.,"Shop rent overdue.
 ",The lighting in the shop feels like an interrogation chamber. The electrictian is coming to refit everything on Thursday 18th. ,Lighting refit.,Special offer of flour from Mill Time Bakery Wholesalers! Orders only open for 12 hours on Monday.,Flour special offer,Bake-Off audition email chain. One last step and I'm on the show! Awaiting the next appointment.,Bake-Off audition.,"New sign PDF! The printers still have the old logo for the shop. Get them the new artwork or the new sign will be shit.
 ",New sign logo.,
 Pink and Sons,,,Business,,Bus Company,,,,,,,,,,,,,,,,,
-Tail Feathers,,,Business,,Zippy Couriers!,,,,,,,,,,,,,,,,,
+Tail Feathers,YES,Av_CompanyStyleA_3_S.png,Business,Slack,Couriers,"#agm-takeaways
+TLDR: things a looking up. Revenue is climbing faster than costs. The investment in better bikes and vans has hit RoI 6 months earlier than expected.",Slack message about the business going well,"#agm-takeaways
+Biggest Risk: Staff turnover is still to high, making delivery times erratic. (New Feathers have a +7% time delta over experienced Feathers.)
+Task: Improve retention of quality Feathers. Masha, can you dig in to this?",Slack message about staff turnover problems?,"#agm-takeaways
+Biggest Opportunity: Expand beyond the Greater London area.
+Friction: Logistics and physical infra.
+Recs: Buy “Drop n Go”, fire all the useless staff, keep the SE England contracts.
+",Slack message about expansion opportunities,"Hey Jake, 
+I’ve heard back from the Photosphere guys and they are happy to do a job lot discount on the bike lights.
+TPTB want 500 a year and it’ll come in at 33% of retail which is… what?
+Good, anyhow. Here’s the contract - Can you sort it by the end of the day?",DM about the bulk purchase of bike lights.,"#oopsie
+Accident Report: Wolfgang Stellmacher.
+One of our longer term Feathers, Stellmacher came off his bike on a patch of wet leaves on a dark-run. No major injuries, his doctors note was clear and Stellmacher’s own report suggests he’ll be riding again next week.
+He didn’t have the recommended front lights. We need to get these out to our Feathers!",Accident Report: Wolfgang Stellmacher.,"#car-div
+What’s up with the mid-dist teams?
+The bike guys are crushing it and even the van guys are actually delivering stuff instead of bitching about us on WhatsApp.
+But the car teams are… well… everything is down. Complaints are up. Times are tanking? 
+",Slack Message enquiring about the performance of mid-distance couriers.,"#management-all
+We need to stop referring to our drivers as “Feathers”. We’re not a punchy start up anymore, we even sold the bloody ping pong table. Can we just start calling them riders or couriers or something grown up?
+",Slack memo about the nickname given to the couriers.,"#shitposting-tailfeathers
+“Please find enclosed your package, “Eulogy for dad.”
+WE HOPE THIS DELIVERY PUT A FEATHER IN YOUR CAP!”
+
+This was a real thing I just delivered ffs…
+",An incredibly bad use of the company catchphrase,
 5th Street Laundrette,,,Business,,Launderette,,,,,,,,,,,,,,,,,
 Pep Prep ,,,Business,,Coffee 2Go,,,,,,,,,,,,,,,,,
 Pizz Prep ,,,Business,,Pizza 2 Go,,,,,,,,,,,,,,,,,
 Old Lyric ,,,Business,,Theatre,,,,,,,,,,,,,,,,,
 Mill Time,,,Business,,Artisan Bakery Wholesaler,,,,,,,,,,,,,,,,,
-Vermingtons ,,,Corporation,,National Railway Operator,,,,,,,,,,,,,,,,,
+Vermingtons ,YES,Av_OrgStyleB_7_S.png,Corporation,Emails,National Railway Operator,"Re: Government Funding 2029-2039
+Push harder on this. There’s nowhere for the gov to turn so we can twist the knife. Add another zero to the bid. ",Email about government funding ,"What are Grosvenor Square playing at? They can see the contracts are ready. Get them to release the capital. I don’t care what you have to do. Wait, do they know about Saker coming in? Can we tell them that?",Email about capital investments,"Re: Service Outages.
+This is getting boring. We can’t keep the servers up and running with the increased traffic. Yes all digital ticketing is great but we don’t have the infra.
+Sign the damn Connection Machines contract or I quit!
+Acuña",Email about server woes and a contract with Connection Machines.,"ALL, This is rumour control. We are not being bought out by Saker Investments.
+The next person who leaks any details relating to Saker and Vermingtons will be out of the door before they can say I’m On Fire.
+Which they will be.
+(Is this too strong? Rewrite if you need but make the point)",Email to staff about a possible takeover.,"ALL, Good news, you’ve all been enrolled in Dr.Forever private health scheme.
+You’ll see a new deduction on your next payslip of £1. Don’t worry about it, it just means this is a discounted perk, not a freebie, and it looks good on your P60. See attached Dr.Forever.PDF for all the details.
+",Email to staff about a new private health scheme.,"Re: Timetables
+Bump on this. WE have to lay another sixteen cross country services and no-one has even commented on the new timetable doc.
+Does this mean that I am in charge of all timetables and everyone is happy with the plan.
+I will now put this plan into action.
+KRs. TonyA",Email about timetables.,"DO NOT DISTRUBUTE
+Competitive bids.
+Fentons Rail: £3 billion over 7 years
+CrossOver: £7 billion over 5 years
+Virgin: Did not bid
+Fentons are the big risk. I’m trying to dig up the fine print.",Email about confidential bid data.,"Re: Rolling stock aquis.
+Looks like Virgin are going down the pan. Buy buy buy their pendolinos. Offer 25% of the ask.
+Close at 67% if they push.",Email about purchasing new trains.,
 Illuminé ,,,Corporation,,Computer Security,,,,,,,,,,,,,,,,,
 Connection Machines ,,,Corporation,,Cloud Compute,,,,,,,,,,,,,,,,,
 Saker Holdings ,,,Corporation,,Investments,,,,,,,,,,,,,,,,,

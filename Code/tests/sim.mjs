@@ -239,7 +239,8 @@ check('level bpPool only references real, lockable towers',
     f.recompute();
     if (g.spawns.length !== lvl.spawns) spawnOk = false;
     if (g.spawns[0].r !== 0) spawnOk = false;                      // anchored on top edge
-    if (!g.spawns.slice(1).every(sp => sp.r <= 4)) spawnOk = false; // extras in top 5 rows
+    if (!g.spawns.slice(1).every(sp => sp.r < lvl.grid.entryRows)) spawnOk = false; // extras in the entry rows
+    if (!g.spawns.slice(1).every(sp => f.dist.get(sp.key) >= lvl.grid.entryMinDist)) spawnOk = false;
     if (!g.spawns.every(sp => f.reachable(sp))) reachOk = false;
     const lockouts = [...g.cells.values()].filter(c => c.lockout);
     if (lockouts.length !== lvl.lockouts) lockoutOk = false;
@@ -251,13 +252,13 @@ check('level bpPool only references real, lockable towers',
       if ([...g.cells.values()].filter(c => c.blocker).length !== lvl.blockers) crashOk = false;
       if ([...g.cells.values()].filter(c => c.lockout).length !== lvl.lockouts) crashOk = false;
       if (g.spawns.length !== lvl.spawns || g.spawns[0].r !== 0) crashOk = false;
-      if (!g.spawns.slice(1).every(sp => sp.r <= 4)) crashOk = false;
+      if (!g.spawns.slice(1).every(sp => sp.r < lvl.grid.entryRows)) crashOk = false;
       if (!g.spawns.every(sp => f.reachable(sp))) crashOk = false;
     }
   }
-  check('all 5 level boards build with reachable spawns', reachOk);
+  check(`all ${LEVELS.length} level boards build with reachable spawns`, reachOk);
   check('lockouts: right counts, passable for enemies', lockoutOk);
-  check('entry points: counts, top-edge anchor, top-5-row rule', spawnOk);
+  check('entry points: counts, top-edge anchor, entry rows + min distance', spawnOk);
   check('crash shuffle preserves board invariants on every level', crashOk);
 }
 
@@ -265,31 +266,24 @@ check('all wave defs are sane (0 < rtv < mav <= tev, valid rosters)', LEVELS.eve
   l.waves.every(w => w.rtv > 0 && w.rtv < w.mav && w.mav <= w.tev &&
     w.unlocked.length > 0 && w.unlocked.every(k => ENEMIES[k]))));
 // --- Blueprint drop slots: primary / secondary / tertiary ----------------------
-check('every level has a primary BP slot',
-  LEVELS.every(l => typeof l.bpPool?.primary === 'string'));
-check('L1 and L2 carry a tertiary slot',
-  !!LEVELS[0].bpPool.tertiary && !!LEVELS[1].bpPool.tertiary);
 check('slot rates: primary 15%, secondary 5%, tertiary 3%',
   BLUEPRINTS.dropRates.primary === 0.15 && BLUEPRINTS.dropRates.secondary === 0.05 &&
   BLUEPRINTS.dropRates.tertiary === 0.03);
-check('BP promotion rule: secondary → next primary, tertiary → next secondary',
-  LEVELS.every((l, i) => i === 0 ||
-    (l.bpPool.primary === LEVELS[i - 1].bpPool.secondary &&
-     (!LEVELS[i - 1].bpPool.tertiary || l.bpPool.secondary === LEVELS[i - 1].bpPool.tertiary))));
 check('every lockable tray tower drops somewhere',
   TOWER_ORDER.filter(k => TOWERS[k].blueprints > 0)
     .every(k => LEVELS.some(l => Object.values(l.bpPool).includes(k))));
 {
   // observed rates over many kills match the slot rates
+  const POOL = { primary: 'vault', secondary: 'defrag', tertiary: 'ddos' };   // fixed, not level data
   const counts = {};
   const N = 40000;
-  for (let i = 0; i < N; i++) for (const k of rollBlueprints(LEVELS[0].bpPool, () => false)) counts[k] = (counts[k] || 0) + 1;
+  for (let i = 0; i < N; i++) for (const k of rollBlueprints(POOL, () => false)) counts[k] = (counts[k] || 0) + 1;
   const near = (k, r) => Math.abs((counts[k] || 0) / N - r) < 0.01;
   check('drop rolls hit the configured rates per slot',
     near('vault', 0.15) && near('defrag', 0.05) && near('ddos', 0.03));
-  const none = rollBlueprints(LEVELS[0].bpPool, () => true, () => 0);
+  const none = rollBlueprints(POOL, () => true, () => 0);
   check('unlocked towers never drop', none.length === 0);
-  const pOnly = rollBlueprints(LEVELS[0].bpPool, (k) => k !== 'vault', () => 0);
+  const pOnly = rollBlueprints(POOL, (k) => k !== 'vault', () => 0);
   check('slots roll independently (others unlocked → primary still drops)',
     pOnly.length === 1 && pOnly[0] === 'vault');
 }
@@ -299,8 +293,6 @@ check('version has number + alphabetical codename',
   /^\d+\.\d+$/.test(VERSION.number) && /^[A-Z]/.test(VERSION.codename));
 check('every level defines a starting budget',
   LEVELS.every(l => Number.isFinite(l.startTokens) && l.startTokens > 0));
-check('starting budgets never shrink across levels',
-  LEVELS.every((l, i) => i === 0 || l.startTokens >= LEVELS[i - 1].startTokens));
 {
   // enemy delta actually scales spawned enemies (health + attack damage)
   const d = LEVELS[4].enemyDelta;
@@ -486,7 +478,15 @@ check('starting budgets never shrink across levels',
     'Cy,,Business,Records,Shop,,C core,,,,c1,,c2,,c3,,,,,',
     'Di,YES,Corporation,Records,Bank,,,,,,d1,,,,,,,,,',
   ].join('\r\n');
-  const levels = 'StringID,Text,,\nLevel_1_Label,Level_1_Label: Archive 001,,\nLevel_1_Narrative_Desc,"First paragraph.\nSecond paragraph.",,\nLevel_1_Archives,Business,,\n,,,\nLevel_2_Archives,,,\nLevel_3_Archives,"Human, Spaceship",,\n';
+  const levels = [
+    'Level_Number,Level_Label,Level_Narrative_Label,Level_Narrative_Desc,Level_Archives,Notes,',
+    '1,Archive 001,Mischief,"First paragraph.\nSecond paragraph.",Business,ignored,',
+    ',,,,,,',
+    '2,Archive 002,,,,,',
+    '3,Archive 003,,,"Human, Spaceship",,',
+    '3,Duplicate,,,,,',
+    'x,Bad number,,,,,',
+  ].join('\n');
   const strings = 'StringID,Text\nResult_Win_Label,Saved!\nBogus_Key,x\n';
   const c = parseContent({ archives: arch, levels, strings });
   const ann = c.archives.find(a => a.name === 'Ann');
@@ -500,8 +500,12 @@ check('starting budgets never shrink across levels',
     ann.core.length === 1 && ann.secondary.length === 4 && ann.secondary[1].summary === 's2');
   check('content: blank rows dropped, Active YES (any case) only', c.archives.length === 4
     && c.archives.filter(a => a.active).map(a => a.name).join() === 'Ann,Bo,Di');
-  check('content: level text parses, repeated key prefix stripped, line break kept',
-    c.levels[1].label === 'Archive 001' && c.levels[1].narrativeDesc === 'First paragraph.\nSecond paragraph.');
+  check('content: one row per level, line break kept, extra columns ignored',
+    c.levels[1].label === 'Archive 001' && c.levels[1].narrativeLabel === 'Mischief'
+    && c.levels[1].narrativeDesc === 'First paragraph.\nSecond paragraph.' && c.levels[3].classes.join() === 'Human,Spaceship');
+  check('content: duplicate level rows and bad level numbers are flagged',
+    c.levels[3].label === 'Archive 003' && c.warnings.some(w => w.includes('Level 3 has more than one row'))
+    && c.warnings.some(w => w.includes('"x"')));
   check('content: screen strings override defaults, others keep theirs',
     c.strings.Result_Win_Label === 'Saved!' && c.strings.Result_Lose_Label === 'Archive breached');
   check('content: unknown key, missing Class and Core-less Active archive are flagged',
@@ -530,6 +534,65 @@ check('starting budgets never shrink across levels',
 
   check('roster pick: uniform without weights', pickWeighted(['a', 'b'], undefined, () => 0.6) === 'b');
   check('roster pick: weights shift the odds', pickWeighted(['a', 'v'], { v: 3 }, () => 0.3) === 'v' && pickWeighted(['a', 'v'], { v: 3 }, () => 0.2) === 'a');
+}
+
+// --- M5: level file + Level Editor model ----------------------------------------
+{
+  const { validateLevels } = await import('../tools/editor/validate.js');
+  const M = await import('../tools/editor/model.js');
+  const { formatLevels } = await import('../tools/editor/format.js');
+  const v = validateLevels(LEVELS);
+  check('levels.js passes the Level Editor checks', v.errors.length === 0);
+  if (v.errors.length) console.log('   ', v.errors.join('\n    '));
+  if (globalThis.process?.versions?.node) {
+    const fs = await import('node:fs');
+    const text = fs.readFileSync(new URL('../js/levels.js', import.meta.url), 'utf8');
+    check('levels.js is exactly what the editor would save (no noisy diffs)', formatLevels(LEVELS.map(M.normalizeLevel)) === text);
+  }
+  check('every level carries design.curve and design.target', LEVELS.every(l => l.design?.curve && l.design?.target));
+
+  // curve → waves: sane numbers, opening rule on wave 1, rosters untouched
+  const L = structuredClone(LEVELS[1]);
+  const before = L.waves.map(w => w.unlocked.join());
+  delete L.design.curve.points;
+  M.applyCurve(L);
+  check('curve: regenerated waves are sane', validateLevels([L]).errors.length === 0);
+  check('curve: rosters untouched by the curve', L.waves.every((w, i) => w.unlocked.join() === before[i]));
+  check('curve: TEV climbs from start to end', L.waves[0].tev < L.waves[L.waves.length - 1].tev);
+  check('curve: wave 1 opening (half MAV, 1.5× spread)',
+    L.waves[0].mav === Math.min(L.waves[0].tev, Math.max(60, Math.round(L.design.curve.mav * Math.sqrt(L.design.curve.start) * 0.5 / 10) * 10)));
+  // a pinned point fixes one wave's TEV
+  L.design.curve.points = L.waves.map(() => null); L.design.curve.points[3] = 0.5;
+  M.applyCurve(L);
+  check('curve: a pinned wave takes its own intensity', L.waves[3].tev === Math.round(L.design.curve.tev * 0.5 / 100) * 100);
+
+  // roster lanes round-trip and rewrite only rosters
+  const R = structuredClone(LEVELS[3]);
+  const nums = R.waves.map(w => w.tev).join();
+  const lanes = M.rosterLanes(R);
+  M.setRosterLanes(R, lanes);
+  check('lanes: round-trip leaves rosters and weights unchanged',
+    JSON.stringify(R.waves.map(w => [w.unlocked, w.weights ?? null])) === JSON.stringify(LEVELS[3].waves.map(w => [w.unlocked, w.weights ?? null])));
+  lanes.virus = { from: 5, to: R.waves.length - 1, weight: 2 };
+  M.setRosterLanes(R, lanes);
+  check('lanes: moving a lane moves the enemy, weights follow',
+    !R.waves[4].unlocked.includes('virus') && R.waves[5].unlocked.includes('virus') && R.waves[5].weights.virus === 2);
+  check('lanes: wave numbers untouched', R.waves.map(w => w.tev).join() === nums);
+  M.setWaveCount(R, R.waves.length + 2);
+  check('wave count: lanes that ran to the end still do', R.waves[R.waves.length - 1].unlocked.includes('virus'));
+
+  // entry point rules
+  const E = structuredClone(LEVELS[4]);
+  E.grid.entryRows = 3; E.grid.entryMinDist = 8; E.spawns = 3;
+  let entryOk = true;
+  for (let i = 0; i < 20; i++) {
+    const g = new HexGrid(E.grid); const f = new PathField(g);
+    placeExtraSpawns(g, f, 2); f.recompute();
+    if (!g.spawns.slice(1).every(sp => sp.r < 3 && f.dist.get(sp.key) >= 8)) entryOk = false;
+  }
+  check('entry rules: extras stay in the entry rows and at the min distance', entryOk);
+  const tooFar = structuredClone(E); tooFar.grid.entryMinDist = 99;
+  check('validator: impossible entry distance is an error', validateLevels([tooFar]).errors.length > 0);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

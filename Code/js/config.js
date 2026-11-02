@@ -116,8 +116,8 @@ export const UPGRADE = {
 export const BLUEPRINTS = {
   // Per-level drop slots (LEVELS[i].bpPool = { primary, secondary, tertiary }).
   // Each kill rolls every slot independently; a slot whose tower is already
-  // unlocked drops nothing. Rule of thumb: a level's secondary becomes the next
-  // level's primary, tertiary → secondary — a guide, not a rigid structure.
+  // unlocked drops nothing. Any slot may be empty. The Level Editor's unlock
+  // track estimates the level each tower unlocks in.
   dropRates: { primary: 0.15, secondary: 0.05, tertiary: 0.03 },  // per enemy kill
   lifetime: 10,       // seconds before an uncollected drop fades away
   tapRadius: 26,      // px — generous for thumbs
@@ -181,8 +181,7 @@ export const TOWERS = {
     color: '#4ec9ff', glow: '#8fd0ff',
   },
   // --- M2 Phase B1 (first pass — playtest + iterate) -------------------------
-  // BP drops: Compressor L2 tertiary → L3 secondary → L4 primary;
-  // Pulse L5 secondary (see LEVELS[i].bpPool).
+  // Where they drop: LEVELS[i].bpPool (js/levels.js, set in the Level Editor).
   pulse: {
     name: 'Pulse', cost: 400, health: 150,
     weapon: 'pulseRifle',
@@ -235,12 +234,12 @@ export const ENEMIES = {
     color: '#ff6a4f', size: 0.40,
   },
   worm: {
-    name: 'Worm', ev: 600, health: 350, speed: SPEED.medium * 1.7, reward: 60,
+    name: 'Worm', ev: 500, health: 350, speed: SPEED.medium * 1.7, reward: 60,
     desc: 'Fast and heavy. Punishes thin defences.',
     color: '#ffa03c', size: 0.40,
   },
   slice: {
-    name: 'Slice', ev: 60, health: 30, speed: SPEED.fast, reward: 14,
+    name: 'Slice', ev: 60, health: 30, speed: SPEED.fast, reward: 10,
     desc: 'Pack runner. Cheap, fast, arrives in groups.',
     pack: { min: 5, max: 8 },
     color: '#ffd9c4', size: 0.26,
@@ -272,136 +271,11 @@ export const ENEMIES = {
 };
 
 // ---------------------------------------------------------------------------
-// Level data (Retention Module 3 — Area Unlock).
-// Per level: grid shape, entry points (spawns), blockers, Lockout cells
-// (enemy may pass, player may not build), enemy delta, region-locked bpPool,
-// colour theme (subtle cool variants), and wave definitions.
-// Levels unlock linearly; PLAY starts the latest unlocked level.
-// L2–L5 waves are generated scaffolds (genWaves) — tune freely or replace
-// with explicit arrays once the difficulty sim is running.
+// Level data (Retention Module 3 — Area Unlock) lives in levels.js, written by
+// the Level Editor (tools/editor/). Re-exported here so everything that reads
+// the config sees the levels too.
 // ---------------------------------------------------------------------------
-const ALL = ['hack', 'slice', 'crack', 'worm', 'virus'];
-const ALL_M4 = [...ALL, 'stinger', 'bug'];   // M4 E15: full roster from L4
-
-// Wave 1 cold-start (M3 E5): every level opens with light enemies only,
-// spawned further apart, so the opening Tokens can get a defence up before
-// the tanks (Worm, Crack) arrive in wave 2. Applies to L1 and genWaves.
-const OPENING_ROSTER = ['hack', 'slice'];
-const OPENING_SPREAD = 1.5;       // wave 1 spawnInterval multiplier
-const OPENING_MAV = 0.5;          // wave 1 MAV (and RTV) multiplier — M3 E7: fewer on the
-                                  // board at once, same enemies and Tokens in total
-
-// weights (M4 E15): roster pick weights for every wave after wave 1, e.g.
-// { virus: 1.5 } keeps the Virus share when more unit types join the roster.
-const genWaves = (count, { tev0, tevGrowth, mav0, mavGrowth, interval0, intervalStep, roster, weights }) =>
-  Array.from({ length: count }, (_, i) => {
-    const mav = Math.round((mav0 * Math.pow(mavGrowth, i) * (i === 0 ? OPENING_MAV : 1)) / 10) * 10;
-    const interval = Math.max(0.5, +(interval0 - intervalStep * i).toFixed(2));
-    return {
-      tev: Math.round((tev0 * Math.pow(tevGrowth, i)) / 100) * 100,
-      mav,
-      rtv: Math.round((mav * 0.5) / 10) * 10,
-      unlocked: i === 0 ? OPENING_ROSTER : roster(i),
-      spawnInterval: i === 0 ? +(interval * OPENING_SPREAD).toFixed(2) : interval,
-      ...(weights && i > 0 ? { weights } : {}),
-    };
-  });
-
-export const LEVELS = [
-  {
-    name: 'Level 1: Shallow Breach',
-    grid: { rowWidths: [7, 8, 8, 8, 8, 8, 7, 6, 5, 4, 3], spawnCells: 1 },
-    spawns: 1,
-    blockers: 6,
-    lockouts: 0,
-    startTokens: 300,             // per-level starting budget (best-guess — tune freely)
-    enemyDelta: { health: 1.0, damage: 1.0 },
-    rewardBits: 3,
-    bpPool: { primary: 'vault', secondary: 'defrag', tertiary: 'ddos' },
-    theme: {},                    // baseline blue
-    waves: [
-      { tev: 1200, mav: 600 * OPENING_MAV, rtv: 300 * OPENING_MAV, unlocked: OPENING_ROSTER,                          spawnInterval: 1.8 },  // was [hack], 1.2 (×1.5)
-      { tev: 1600, mav: 700,  rtv: 360, unlocked: ['hack', 'slice'],                       spawnInterval: 1.1 },
-      { tev: 2000, mav: 800,  rtv: 400, unlocked: ['hack', 'slice', 'crack'],              spawnInterval: 1.0 },
-      { tev: 2600, mav: 900,  rtv: 440, unlocked: ['hack', 'slice', 'crack'],              spawnInterval: 0.9 },
-      { tev: 3200, mav: 1000, rtv: 500, unlocked: ['hack', 'slice', 'crack', 'worm'],      spawnInterval: 0.9 },
-      { tev: 4000, mav: 1100, rtv: 560, unlocked: ['hack', 'slice', 'crack', 'worm'],      spawnInterval: 0.8 },
-      { tev: 4800, mav: 1200, rtv: 600, unlocked: ['hack', 'slice', 'crack', 'worm', 'virus'], spawnInterval: 0.8 },
-      { tev: 6000, mav: 1400, rtv: 700, unlocked: ['hack', 'slice', 'crack', 'worm', 'virus'], spawnInterval: 0.7 },
-    ],
-  },
-  {
-    name: 'Level 2: The Narrows',
-    grid: { rowWidths: [6, 7, 7, 6, 6, 5, 5, 4, 3], spawnCells: 1 },  // small + tight
-    spawns: 2,
-    blockers: 5,
-    lockouts: 3,
-    startTokens: 340,
-    enemyDelta: { health: 1.15, damage: 1.1 },
-    rewardBits: 4,
-    bpPool: { primary: 'defrag', secondary: 'ddos', tertiary: 'compressor' },
-    theme: { cellFill: '#0a1a36', cellLine: '#1d4a5e', blockerFill: '#122a44', blockerLine: '#2e6e86' },
-    waves: genWaves(8, {
-      tev0: 1800, tevGrowth: 1.22, mav0: 700, mavGrowth: 1.09,
-      interval0: 1.1, intervalStep: 0.05,
-      roster: (i) => (i < 2 ? ['hack', 'slice', 'crack'] : i < 4 ? ['hack', 'slice', 'crack', 'worm'] : ALL),
-    }),
-  },
-  {
-    name: 'Level 3: Wide Delta',
-    grid: { rowWidths: [9, 10, 10, 10, 9, 8, 6, 4], spawnCells: 1 },  // wide + short
-    spawns: 2,
-    blockers: 8,
-    lockouts: 4,
-    startTokens: 390,
-    enemyDelta: { health: 1.3, damage: 1.2 },
-    rewardBits: 5,
-    bpPool: { primary: 'ddos', secondary: 'compressor' },
-    theme: { cellFill: '#0a1c30', cellLine: '#1a5a52', blockerFill: '#10304a', blockerLine: '#2e8a76' },
-    waves: genWaves(9, {
-      tev0: 2400, tevGrowth: 1.2, mav0: 800, mavGrowth: 1.09,
-      interval0: 1.0, intervalStep: 0.05,
-      roster: (i) => (i < 1 ? ['hack', 'slice', 'crack', 'worm'] : i < 2 ? ALL : [...ALL, 'stinger']),
-      weights: { virus: 1.25 },   // E15: holds M3's Virus share with Stinger in
-    }),
-  },
-  {
-    name: 'Level 4: Deep Trench',
-    grid: { rowWidths: [5, 6, 6, 7, 7, 7, 7, 6, 6, 5, 4, 3], spawnCells: 1 },  // narrow + tall
-    spawns: 3,
-    blockers: 7,
-    lockouts: 4,
-    startTokens: 450,
-    enemyDelta: { health: 1.5, damage: 1.35 },
-    rewardBits: 6,
-    bpPool: { primary: 'compressor', secondary: 'deleter' },
-    theme: { cellFill: '#100f3e', cellLine: '#33308a', blockerFill: '#191856', blockerLine: '#4a48a8' },
-    waves: genWaves(10, {
-      tev0: 3000, tevGrowth: 1.2, mav0: 900, mavGrowth: 1.08,
-      interval0: 1.0, intervalStep: 0.05,
-      roster: () => ALL_M4,
-      weights: { virus: 1.5 },    // E15: holds M3's Virus share with Bug + Stinger in
-    }),
-  },
-  {
-    name: 'Level 5: The Sprawl',
-    grid: { rowWidths: [8, 9, 10, 10, 9, 9, 8, 7, 6, 5, 3], spawnCells: 1 },  // big board
-    spawns: 3,
-    blockers: 10,
-    lockouts: 5,
-    startTokens: 520,
-    enemyDelta: { health: 1.75, damage: 1.5 },
-    rewardBits: 8,
-    bpPool: { primary: 'deleter', secondary: 'pulse' },
-    theme: { cellFill: '#0e1a2a', cellLine: '#3a5a78', blockerFill: '#16283c', blockerLine: '#5a7e9e' },
-    waves: genWaves(10, {
-      tev0: 3600, tevGrowth: 1.2, mav0: 1000, mavGrowth: 1.08,
-      interval0: 0.95, intervalStep: 0.05,
-      roster: () => ALL_M4,
-      weights: { virus: 1.5 },
-    }),
-  },
-];
+export { LEVELS } from './levels.js';
 
 // ---------------------------------------------------------------------------
 // Global grid constants. Per-level shape lives in LEVELS[i].grid.

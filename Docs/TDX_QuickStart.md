@@ -11,13 +11,13 @@ Before doing anything else, read these files in `1_projects/05_TDX/`:
 2. `Docs/TDX_Todos.md` — the milestone roadmap (M5 objectives) at the bottom.
 3. `Docs/TDX_Retention_Modules.md` — retention module designs and their current status.
 4. `Docs/TDX_Initial_Design.md` — the original design doc (reference).
-5. `Code/js/config.js` — all balance and level data. I may have hand-edited this since the last session; treat it as the current source of truth.
+5. `Code/js/config.js` (balance: towers, weapons, enemies) and `Code/js/levels.js` (the 10 levels, written by the Level Editor). I may have changed either since the last session; treat them as the current source of truth.
 
-The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (94 checks passing as of M4 close; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
+The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (104 checks passing as of Session 17; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
 
 The project is a git repo (root of `05_TDX/`) — commit at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap (M3–M6) is at the bottom of `TDX_Todos.md`.
 
-Where we left off (Session 16): **M4 "Disc Drive" is banked as v1.04.** Read the MILESTONE 4 COMPLETE summary in the devlog. Narrative content lives in Jogo's Numbers file, exported as CSV to `Code/content/TDX_Text/` (no code needed to add archives; the debug menu's STORY tab lists content problems). Balance tools: the Ledger at `Code/tools/ledger/` (http://localhost:8000/tools/ledger/ while `python3 Code/serve.py` runs) and the Sim (`node tools/sim/run.mjs [seeds]` from Code/; `tools/sim/m4_roster.mjs` for E15). Next is M5: a drag-and-drop level editor, 10 levels with redistributed unlocks, then the balance pass.
+Where we left off (Session 17): **M5 "Elm" has started.** Levels moved out of config.js into `Code/js/levels.js`, written by the new **Level Editor** at `Code/tools/editor/` (http://localhost:8000/tools/editor/ while `python3 Code/serve.py` runs; Save only works from the Mac itself, via localhost). The game now has **10 levels**: L1–L5 play as before, L6–L10 are first drafts, and tower unlocks are spread across them. The editor shows the Ledger's pressure live and an unlock track; the Ledger's Shaping dials are gone (the editor replaces them). Sim: `node tools/sim/run.mjs [seeds]` from Code/. Plan: `Docs/TDX_M5_Plan.md`. Next: Jogo shapes L6–L10 in the editor and playtests, then the balance pass (drop rates vs kill counts, wave 2 spikes on L8–L10).
 
 Today: [state the step from the plan's Order of work]
 

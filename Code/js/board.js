@@ -45,12 +45,20 @@ export function clearLockouts(grid) {
 }
 
 // Extra entry points (2nd/3rd spawns). The 1st spawn stays anchored on the
-// top edge (placed by HexGrid.build); extras may sit anywhere in the top 5
-// rows. Cells must be free and connected to the base.
+// top edge (placed by HexGrid.build); extras may sit anywhere in the level's
+// top `entryRows` rows, at least `entryMinDist` steps from the base (per level,
+// LEVELS[i].grid). Cells must be free and connected to the base.
+export const entryRules = (grid) => ({
+  rows: grid.def.entryRows ?? 5,
+  minDist: grid.def.entryMinDist ?? 0,
+});
+
 export function placeExtraSpawns(grid, field, count) {
   field.recompute();
+  const { rows, minDist } = entryRules(grid);
   const candidates = [...grid.cells.values()].filter(c =>
-    c.r <= 4 && !c.spawn && !c.exit && !c.occupied && !c.lockout && field.reachable(c));
+    c.r < rows && !c.spawn && !c.exit && !c.occupied && !c.lockout && field.reachable(c) &&
+    field.dist.get(c.key) >= minDist);
   let placed = 0, guard = 0;
   while (placed < count && guard++ < 200 && candidates.length > 0) {
     const i = Math.floor(Math.random() * candidates.length);

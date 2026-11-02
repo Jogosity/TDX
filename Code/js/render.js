@@ -4,7 +4,7 @@
 import { TOWERS, WEAPONS, GRID, UPGRADE } from './config.js';
 import { cellPx } from './entities.js';
 
-const COL = {
+export const COL = {
   bg: '#050820',
   cellFill: '#0c1434',
   cellLine: '#1d2c5c',

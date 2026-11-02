@@ -284,9 +284,20 @@ export class UI {
     for (const sc of this.el.mainMenu.querySelectorAll('.menu-screen')) {
       sc.classList.toggle('show', sc.id === id);
     }
+    this.buildMenuScreen(id);
+  }
+
+  buildMenuScreen(id) {
     if (id === 'mm-towers') this.buildTowersScreen();
     if (id === 'mm-enemies') this.buildEnemiesScreen();
     if (id === 'mm-levels') this.buildLevelsScreen();
+  }
+
+  // Rebuild the open menu screen after progress changes underneath it (debug
+  // unlocks), e.g. Level Select stays open behind the debug menu.
+  refreshMenu() {
+    const open = this.el.mainMenu.querySelector('.menu-screen.show');
+    if (open) this.buildMenuScreen(open.id);
   }
 
   buildLevelsScreen() {

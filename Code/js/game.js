@@ -54,6 +54,8 @@ class Game {
     this.run = null;                             // this run's archive + memories (M4)
     this.narrativeReady = loadNarrative().then((c) => {
       this.narrative = c;
+      // levels with no Level_N rows play without a Level Data screen (M5: 10 levels)
+      LEVELS.forEach((_, i) => { if (!c.levels[i + 1]) c.warnings.push(`Levels: no Level_${i + 1} rows yet (its Level Data screen is skipped)`); });
       if (c.warnings.length) console.warn('TDX narrative:', c.warnings);
       return c;
     });
@@ -285,6 +287,7 @@ class Game {
     this.save.towersUnlocked = [...TOWER_ORDER];
     writeSave(this.save);
     this.ui.refresh();
+    this.ui.refreshMenu();
   }
 
   debugLockAllTowers() {
@@ -292,18 +295,21 @@ class Game {
     this.save.blueprints = {};    // restart the collection loop cleanly
     writeSave(this.save);
     this.ui.refresh();
+    this.ui.refreshMenu();
   }
 
   debugUnlockAllLevels() {
     this.save.levelsUnlocked = LEVELS.length - 1;
     writeSave(this.save);
     this.ui.refresh();
+    this.ui.refreshMenu();
   }
 
   debugLockAllLevels() {
     this.save.levelsUnlocked = 0;
     writeSave(this.save);
     this.ui.refresh();
+    this.ui.refreshMenu();
   }
 
   debugResetAll() { clearSave(); window.location.reload(); }

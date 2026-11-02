@@ -3,6 +3,39 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 17 — 2026-11-02 — M5 "Elm" starts: Level Editor, 10 levels
+
+Plan agreed with Jogo: `Docs/TDX_M5_Plan.md` ("build it, we'll iterate faster that way"). Jogo commits via GitHub Desktop.
+
+### A. Level data gets its own file
+- `js/levels.js` holds every level as plain data. `config.js` re-exports `LEVELS`, so the game, Sim, Ledger and tests read it unchanged. `genWaves` and the OPENING constants are gone from the game; the waves they made are written out as numbers.
+- Proof: the data matched the old config value for value, and the Sim gave identical output before and after (same seeds).
+- New per level: `grid.entryRows` (extra entry points sit in the top N rows, was a fixed 5) and `grid.entryMinDist` (at least N steps from the base), used by `board.js` and CRASH.
+- `design` per level is for the editor and Ledger only: `curve` (intensity handles) and `target` (the Ledger's start/end pressure, moved out of `tools/ledger/target.js`).
+
+### B. Level Editor (`tools/editor/`)
+- http://localhost:8000/tools/editor/ while `serve.py` runs. **Save** writes `js/levels.js` through a new POST route in `serve.py` (localhost only, atomic write, only accepts the editor's own file). Every save is a clean diff: one key per line, one wave per line (`format.js`; a test checks the file is exactly what the editor would write).
+- Panels: level strip (drag to reorder, add, duplicate, delete, Ledger verdict per level); **Board** (live preview from the real board code, drag row ends to resize, + / − row, entry points, entry rows, min distance to base, blockers, Lockouts, Shuffle, theme colours, enemy routes); **Intensity** (TEV bars and MAV ticks, three handles bend the curve, per-wave pins, peak TEV/MAV, spawn gaps, cold-start wave 1 toggle); **Ledger pressure** live against a draggable target; **Roster** lanes (drag enemies onto a wave, drag bars and ends, pick weights, expected count per wave); **Unlocks** (drag towers into drop slots; unlock track across all levels) and economy sliders.
+- Undo/redo (⌘Z / ⇧⌘Z), ⌘S, unsaved-changes guard. Save is blocked while any level fails the checks (`validate.js`, shared with the tests).
+- Curve model (`model.js`): intensity I per wave from a monotone curve through start/mid/end; TEV = peak × I, MAV = peak × √I, RTV = MAV/2, spawn gap slow→fast. M1–M4 waves were fitted; a few waves that sit off the curve carry pins so nothing changed.
+- The Ledger's Shaping dials are removed (the editor does that job live); the Ledger points to the editor.
+
+### C. 10 levels and the unlock spread
+- L1–L5 unchanged in waves and boards. L6 Twin Gates, L7 The Spire, L8 Crossfire, L9 Deep Core, L10 Root Access are drafts (names and themes are placeholders) with new shapes, 11–15 waves and peak TEV 21k–27k.
+- Kill counts are high (Ledger: ~210 kills in L1 up to ~1,500 in L8), so any slot a tower is in usually unlocks it that level. Spread: Vault L1, Defrag L2, DDOS L3, Compressor L5, Deleter L6, Pulse L8; L4, L7, L9, L10 drop nothing new. Tertiary teasers in L1 (Defrag) and L2 (DDOS). Drop rates vs kill counts is a balance-pass question.
+- Sim (8 seeds, Threader-only bots, so harder than real play): L6–L7 easy; L8–L10 lose 25–50% of runs, mostly to a wave 2 spike (the first full-size wave). Ledger reads every level "too easy" (its known blind spot: no drain).
+- Levels without `Level_N` rows in the Levels CSV skip the Level Data screen; the STORY tab now lists them.
+- Tests 94 → **104** (editor checks over levels.js, file format round-trip, curve, lanes, wave count, entry rules). The old BP promotion and fixed-tertiary tests are gone (slots are free-form now).
+
+### Later the same day
+- Ledger: Campaign Pressure split into two rows of five levels (same scale on both).
+- Fix: debug Unlock / Lock all levels and towers now redraw the open menu screen (Level Select stayed stale behind the debug menu since M4).
+- **Levels CSV is one row per level** (Jogo's reorganisation): columns `Level_Number`, `Level_Label`, `Level_Narrative_Label`, `Level_Narrative_Desc`, `Level_Archives`; other columns are ignored. Bad or repeated level numbers show in the STORY tab. The old StringID layout is no longer read. Tests 104 → 105.
+
+### Next
+Jogo: "a good session, the editor is really helpful and the workflow is smooth." Next session: Jogo playtests and balances in the editor, then we run the Sim and compare its numbers with his experience. One more day on content, then M6 (game online). Balance pass items: wave 2 on L8–L10, drop rates, L3 reactive losses, and the M4 ideas list.
+
+---
 # ✅ MILESTONE 4 COMPLETE — v1.04 "Disc Drive" — 2026-11-02
 
 Banked by Jogo after a playtest: "the balance is ok enough that we've not broken the game", with the rebalance in M5. M4 was Narrative and Content: give the game meaning through screens before and after each level, with Jogo leading the creative. Plan and experiment log: `Docs/TDX_M4_Plan.md` (E15).

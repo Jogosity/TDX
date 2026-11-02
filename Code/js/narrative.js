@@ -3,8 +3,9 @@
 // CSV) into content/TDX_Text/ (Numbers names the folder after the source file
 // TDX_Text.numbers), one file per table, under the export's own names:
 //   Archives-Table 1.csv     one row per archive (person, business …) + its memories
-//   Levels-Table 1.csv       StringID, Text: Level_N_Label / _Narrative_Label /
-//                            _Narrative_Desc / _Archives (the Classes the level draws from)
+//   Levels-Table 1.csv       one row per level: Level_Number, Level_Label,
+//                            Level_Narrative_Label, Level_Narrative_Desc,
+//                            Level_Archives (the Classes the level draws from)
 //   Screen Text-Table 1.csv  StringID, Text: fixed wording on the screens
 // This module parses them (DOM-free, Node-testable), picks the archive and
 // memories for a run, and works out which memories are lost.
@@ -76,7 +77,11 @@ const ARCHIVE_COLS = {
   winLabel: ['Win Label'], loseLabel: ['Lose Label'],
 };
 const MEM_COL = /^(core|secondary) memory (\d+)( summary)?$/i;
-const LEVEL_KEY = /^Level_(\d+)_(Label|Narrative_Label|Narrative_Desc|Archives)$/;
+// Levels table headings → fields. Any other column (notes …) is ignored.
+const LEVEL_COLS = {
+  number: 'Level_Number', label: 'Level_Label', narrativeLabel: 'Level_Narrative_Label',
+  narrativeDesc: 'Level_Narrative_Desc', archives: 'Level_Archives',
+};
 
 // Parse the three CSV exports. Returns { levels, archives, strings, warnings }.
 //   levels[n]   = { label, narrativeLabel, narrativeDesc, classes: [Class names] }
@@ -114,16 +119,16 @@ export function parseContent({ archives = '', levels = '', strings = '' } = {}) 
   });
 
   for (const row of table(levels)) {
-    const id = (row.StringID || '').trim();
-    if (!id) continue;
-    const m = id.match(LEVEL_KEY);
-    if (!m) { warnings.push(`Levels: unknown StringID "${id}"`); continue; }
-    // tolerate a Text cell that repeats its own key ("Level_1_Label: Archive 001")
-    let text = row.Text || '';
-    if (text.startsWith(`${id}:`)) text = text.slice(id.length + 1).trim();
-    const lv = (out.levels[+m[1]] ??= { label: '', narrativeLabel: '', narrativeDesc: '', classes: [] });
-    if (m[2] === 'Archives') lv.classes = text.split(',').map(c => c.trim()).filter(Boolean);
-    else lv[{ Label: 'label', Narrative_Label: 'narrativeLabel', Narrative_Desc: 'narrativeDesc' }[m[2]]] = text;
+    const raw = row[LEVEL_COLS.number] ?? '';
+    const n = Number(raw);
+    if (!Number.isInteger(n) || n < 1) { warnings.push(`Levels: "${raw}" in ${LEVEL_COLS.number} isn't a level number`); continue; }
+    if (out.levels[n]) { warnings.push(`Levels: Level ${n} has more than one row (the first is used)`); continue; }
+    out.levels[n] = {
+      label: row[LEVEL_COLS.label] ?? '',
+      narrativeLabel: row[LEVEL_COLS.narrativeLabel] ?? '',
+      narrativeDesc: row[LEVEL_COLS.narrativeDesc] ?? '',
+      classes: (row[LEVEL_COLS.archives] ?? '').split(',').map(c => c.trim()).filter(Boolean),
+    };
   }
 
   for (const row of table(strings)) {

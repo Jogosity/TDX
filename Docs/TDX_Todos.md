@@ -48,7 +48,7 @@ Jogo to do all the creative. (lots of design to be done for this MS)
 - [x] Create a character a text panel system to convey narrative beats.
 	- [x] These screens have been designed - they can be found in the folder: Users/Jogosity/Library/Mobile Documents/iCloud~md~obsidian/Documents/JogoHome/1_projects/05_TDX/Assets/Screens
 	- [x] There are 3 screens  - The Level Data screen, the Archive Data Screen and the Level Results Screen.
-	- [ ] These fit into the current screen flow in this order. 1. Main Menu. 2 Level Data Screen. 3. Archive Data Screen. 4. Gameplay. 5 Level Result Screen Win or Loss.
+	- [x] These fit into the current screen flow in this order. 1. Main Menu. 2 Level Data Screen. 3. Archive Data Screen. 4. Gameplay. 5 Level Result Screen Win or Loss.
 	- [x] I have provided a few versions of each screen - one with the type of content we can expect in the final game, and one called BLANK that simply names the text strings we will need for each piece of content.
 - [x] I will provide the icons and buttons necessary to build the pictorial elements of the screen. But the basic furniture of frames and blocks can be generated at runtime.
 - [x] We'll need to create a .MD file to allow easy management of the text and image assets
@@ -90,8 +90,8 @@ Jogo to do all the creative. (lots of design to be done for this MS)
 
 
 ## M5 - "Elm" (v1.05) - Balance and Expansion
-- [ ] Create a better Editor tool to manage the enemy composition and TEV and MAEV
-- [ ] Increase level count to 10 - experiment with size/shape and play length - eg. much higher TEV for later levels. 
+- [x] Create a better Editor tool to manage the enemy composition and TEV and MAEV ✅ S17 (`Code/tools/editor/`)
+- [x] Increase level count to 10 - experiment with size/shape and play length - eg. much higher TEV for later levels. ✅ S17 (L6–L10 drafts; shape them in the editor)
 - [ ] Replace the L2–L5 `genWaves` scaffolds with hand-tuned waves; CRASH cost-cap and BP drop rates (from M3).
 - [ ] Work through the "M4 ideas" list at the end of `TDX_M3_Difficulty_Plan.md`: L5's early Virus count, unit EVs (Worms rare, Hacks uncommon), Defrag as an anti-virus tower, targeting rules, Virus behaviour, tower value (DDOS, Compressor, Pulse), the Ledger's Virus spiral, L3 layout.
 - [ ] Look at ebb and flow within waves - perhaps using flow rate and "invisible" sub waves during a single wave.

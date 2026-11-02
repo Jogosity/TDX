@@ -208,7 +208,7 @@ export function computeLedger(cfg, knobs = DEFAULT_KNOBS, a = DEFAULT_ASSUMPTION
   return cfg.LEVELS.map((level, li) => {
     const pathLen = level.grid.rowWidths.length * a.mazeFactor;   // nominal route, cells
     let tokens = (level.startTokens ?? cfg.PLAYER.startTokens) * knobs.startTokens;
-    const targets = targetCurve(li, level.waves.length, a.target);
+    const targets = targetCurve(level.design?.target, level.waves.length);
     const waves = level.waves.map((wave, wi) => {
       const w = waveLedger(cfg, level, wave, knobs, a, rand);
       const viruses = w.byType.virus?.count ?? 0;

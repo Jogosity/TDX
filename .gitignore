@@ -7,3 +7,6 @@
 # editor cruft
 *.swp
 .vscode/
+
+# Level Editor temp file (only exists mid-save)
+*.saving
