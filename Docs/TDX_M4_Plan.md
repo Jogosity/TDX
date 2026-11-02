@@ -1,6 +1,6 @@
 # TDX M4 "Disc Drive" (v1.04): Plan
 
-Status: **agreed 2026-10-23; Phases A–D built in Session 16, waiting on Jogo's playtest.**
+Status: **complete. Banked as v1.04 Disc Drive on 2026-11-02.** E15 verdict: kept (Jogo's playtest: balance OK; rebalance in M5).
 Sources: `TDX_Todos.md` (M4), `TDX_Game_Narrative_Content.md`, `Notes/Narrative.md`, the screen mockups in `Assets/Screens/`, the M4 ideas list in `TDX_M3_Difficulty_Plan.md`.
 
 ## What M4 delivers
@@ -73,4 +73,4 @@ Hypothesis: adding the two units changes difficulty little. Sim, 100 seeds per l
 - Virus pick weight alone restored Virus numbers but L3–L5 stayed easy: Bug and Stinger are weaker than their Threat EV (Stinger also paid 90 Tokens).
 - **Final (in config.js):** Virus weight 1.25 (L3) / 1.5 (L4, L5); Bug EV 110; Stinger EV 90, reward 40. Three knobs, not the one the plan allowed: one fixes the dilution, the other two reprice the units.
 - Ledger: L1–L2 unchanged; L3–L5 late waves read easier (off-target 0.30/0.35/0.36 → 0.35/0.41/0.42). The Ledger doesn't model Bug drain or detours.
-- Verdict: pending Jogo's playtest. Rollback: remove `weights` and the Bug/Stinger roster entries in config.js, restore the old EVs (noted in the ENEMIES comment).
+- Verdict: **kept** (2026-11-02 playtest). Rollback: remove `weights` and the Bug/Stinger roster entries in config.js, restore the old EVs (noted in the ENEMIES comment).

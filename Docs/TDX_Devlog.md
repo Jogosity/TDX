@@ -3,6 +3,20 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+# ✅ MILESTONE 4 COMPLETE — v1.04 "Disc Drive" — 2026-11-02
+
+Banked by Jogo after a playtest: "the balance is ok enough that we've not broken the game", with the rebalance in M5. M4 was Narrative and Content: give the game meaning through screens before and after each level, with Jogo leading the creative. Plan and experiment log: `Docs/TDX_M4_Plan.md` (E15).
+
+- **Narrative screens** (`js/story.js`), built to Jogo's mockups: Level Data (teletype description) → Archive Record → game → SUCCESS/FAILURE verdict over the board → Level Result slides in (Cores pill counts up, lost memories glitch in), with an Info pop-up. Sequential builds, tap to skip, timings in `TIMING`. PLAY now opens Level Select.
+- **Memory narrative** (`js/narrative.js`): per run, 1 Core + 3 Secondary memories from a random archive in the level's Class pool. One memory lost per 4 Cores lost; the Core Memory goes at one Core left; a loss takes all.
+- **Content workflow:** Jogo writes in Apple Numbers (`TDX_Text.numbers`) and exports CSV into `Code/content/TDX_Text/`. Archives carry an Active flag; levels name the Classes they draw from; problems show in the debug STORY tab. Adding content needs no code.
+- **Bug + Stinger in the rosters** (E15): Virus pick weight per level plus repriced EVs keep M3's Virus pressure.
+- **Alerts:** red under-attack warning with a pulsing hex; teal tower-unlocked message.
+- `VERSION` → **1.04 Disc Drive**. Tests 77 → **94**.
+
+Carried forward to M5 "Elm" (Balance and Expansion): level editor tool, 10 levels, hand-tuned waves, the M4 ideas list, the E15 balance (L4/L5 a little easy in the sim). Content (more Active archives, L2–L5 level text) rolls out continuously through the CSV workflow.
+
+---
 ## Session 16 — 2026-10-23 — M4 "Disc Drive" starts: rosters, alerts, narrative screens
 
 Plan agreed with Jogo: `Docs/TDX_M4_Plan.md`. Jogo's calls: each level names its archive pool; Cores pill is X/15; both story screens show on retries; the narrative .md moves into Code; win/lose labels live in the .md. Jogo commits via GitHub Desktop.
