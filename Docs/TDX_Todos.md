@@ -92,9 +92,16 @@ Jogo to do all the creative. (lots of design to be done for this MS)
 ## M5 - "Elm" (v1.05) - Balance and Expansion
 - [x] Create a better Editor tool to manage the enemy composition and TEV and MAEV ✅ S17 (`Code/tools/editor/`)
 - [x] Increase level count to 10 - experiment with size/shape and play length - eg. much higher TEV for later levels. ✅ S17 (L6–L10 drafts; shape them in the editor)
+- [x] NEW - Add a pie chart to the Ledger for each level showing the typical token income from the various enemy types. I want to be able to see where the income is coming from when the balance skews to too easy. (Hypothesis: the swarm attacks reward too highly) - Claude to do on Tuesday mornng. ✅ S18 (Ledger → Token income)
+- [x] Swarm rewards overheating the economy: Slice 9, Stinger 21 by the per-HP rule ✅ S18 (see `TDX_AI_Balance_Notes.md`)
+- [ ] NEW - Stinger and Bug units not doing enough work. Maybe too easy to kill before they have an impact. Jogo to tweak.
 - [ ] Replace the L2–L5 `genWaves` scaffolds with hand-tuned waves; CRASH cost-cap and BP drop rates (from M3).
 - [ ] Work through the "M4 ideas" list at the end of `TDX_M3_Difficulty_Plan.md`: L5's early Virus count, unit EVs (Worms rare, Hacks uncommon), Defrag as an anti-virus tower, targeting rules, Virus behaviour, tower value (DDOS, Compressor, Pulse), the Ledger's Virus spiral, L3 layout.
 - [ ] Look at ebb and flow within waves - perhaps using flow rate and "invisible" sub waves during a single wave.
+- [x] Upgrade values from one rule (`UPGRADE.valueShare` 0.6) ✅ S19 (see `TDX_AI_Balance_Notes.md` F4)
+- [ ] NEW (S21) - Blueprint spread across 10 levels: same system, but no level without BPs until every tower is unlocked. Now: L4, L7, L9, L10 have empty pools; each tower has one primary level.
+- [ ] NEW (S21) - Investigate a massive-attack mechanic: an overwhelming "panic moment" wave event. Exploratory; may not work.
+- [ ] Watch the economy after the F4 upgrade change; revisit upgrade prices (`costMult`) if Tokens run hot or cold.
 - [ ] Expand on Tower Upgrade system - consider "abilities" as an upgrade as well as just firepower. Eg. Threaders can become more defensive of neighbours. DDOs can look for concentrated packs. If this doesn't work, purely numeric boosts is always a solid fallback.
 - [ ] Return to formal balance management to close Milestone
 

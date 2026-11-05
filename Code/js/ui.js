@@ -10,6 +10,7 @@ export class UI {
     this.game = game;
     this.el = {
       wave: document.getElementById('wave-label'),
+      level: document.getElementById('level-label'),
       lives: document.getElementById('lives-pill'),
       tokens: document.getElementById('tokens-val'),
       bits: document.getElementById('bits-val'),
@@ -155,6 +156,7 @@ export class UI {
 
   refresh() {
     const s = this.game.state;
+    this.el.level.textContent = `Level ${s.levelIndex + 1}`;
     this.el.wave.textContent = `Wave ${Math.min(s.waveIndex + 1, s.level.waves.length)}/${s.level.waves.length}`;
     this.el.lives.textContent = `${s.lives}/${s.maxLives}`;
     this.el.tokens.textContent = s.tokens;
@@ -214,7 +216,9 @@ export class UI {
       btn.textContent = `TIER ${tower.tier + 1} LOCKED`;
       btn.classList.add('locked'); // tap opens the Upgrade Menu
     } else {
-      btn.textContent = `TIER ${tower.tier + 1} −${tower.upgradeCost}`;
+      const p = tower.def.power;
+      const power = p && p.tier === tower.tier + 1 ? ` · ★ ${p.name.toUpperCase()}` : '';
+      btn.textContent = `TIER ${tower.tier + 1} −${tower.upgradeCost}${power}`;
       btn.disabled = st.reason === 'tokens';
     }
   }
@@ -257,6 +261,7 @@ export class UI {
       if (this.game.tierUnlockOf(key) >= UPGRADE.maxTier) row.classList.add('owned');
       const label = document.createElement('span');
       label.textContent = `${def.name.toUpperCase()} · T${this.game.tierUnlockOf(key)}/${UPGRADE.maxTier}`;
+      if (def.power) label.title = `★ ${def.power.name} (Tier ${def.power.tier}): ${def.power.desc}`;
       row.appendChild(label);
       row.appendChild(this.tierControl(key, () => this.buildTierList(container)));
       container.appendChild(row);

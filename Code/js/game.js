@@ -13,6 +13,11 @@ import { UI } from './ui.js';
 import { Story } from './story.js';
 import { loadNarrative, rollRun, memoriesLost } from './narrative.js';
 
+// Per-level numbers for the Analytics Report (S20). Tokens earned = kill
+// rewards + sell refunds (not starting Tokens); spent = builds + upgrades;
+// lost = towers drained or crushed by a CRASH; leakedBy = Cores taken, by enemy.
+const newLevelStats = () => ({ built: 0, lost: 0, upgraded: 0, earned: 0, spent: 0, kills: 0, leakedBy: {} });
+
 class Game {
   constructor() {
     this.canvas = document.getElementById('game-canvas');
@@ -44,6 +49,7 @@ class Game {
       shake: 0,             // 1 → 0 screenshake envelope
       crashFx: null,        // { t, dur } while the CRASH caption glitches
       time: 0,
+      stats: newLevelStats(),   // Analytics Report (S20)
     };
 
     this.wave = null;
@@ -87,6 +93,7 @@ class Game {
     s.phase = 'build';
     s.waveIndex = 0;
     s.tokens = s.level.startTokens ?? PLAYER.startTokens;
+    s.stats = newLevelStats();
     s.lives = PLAYER.startLives;
     s.towers = [];
     s.enemies = [];
@@ -177,6 +184,8 @@ class Game {
   buildTower(type, cell) {
     const def = TOWERS[type];
     this.state.tokens -= def.cost;
+    this.state.stats.built++;
+    this.state.stats.spent += def.cost;
     const tower = new Tower(type, cell);
     cell.tower = tower;
     this.state.towers.push(tower);
@@ -214,6 +223,8 @@ class Game {
       return;
     }
     this.state.tokens -= t.upgradeCost;
+    this.state.stats.upgraded++;
+    this.state.stats.spent += t.upgradeCost;
     t.spent += t.upgradeCost;
     t.beginUpgrade();
     this.ui.refresh();
@@ -336,6 +347,7 @@ class Game {
     const t = this.state.selectedTower;
     if (!t) return;
     this.state.tokens += t.sellValue;
+    this.state.stats.earned += t.sellValue;
     this.removeTower(t);
     this.selectTower(null);
     this.ui.refresh();
@@ -447,8 +459,16 @@ class Game {
     this.story.showResult(
       { win, lives: Math.max(0, s.lives), maxLives: s.maxLives, run, lost: run ? run.lossOrder.slice(0, lostN) : [], note },
       this.narrative.strings,
-      { wallet: { tokens: s.tokens, bits: this.save.bits }, onContinue: () => window.location.reload() },
+      { wallet: { tokens: s.tokens, bits: this.save.bits }, onContinue: () => this.showAnalytics() },
     );
+  }
+
+  // Analytics Report (S20): the level in numbers, then back to the menu.
+  showAnalytics() {
+    this.story.showAnalytics(this.state.stats, this.narrative.strings, {
+      wallet: { tokens: this.state.tokens, bits: this.save.bits },
+      onContinue: () => window.location.reload(),
+    });
   }
 
   // --- CRASH -----------------------------------------------------------------
@@ -459,6 +479,7 @@ class Game {
   executeCrash() {
     const s = this.state;
     const destroyed = crashShuffle(this.grid, this.field, CRASH.maxTowerKills);
+    s.stats.lost += destroyed.length;
     for (const t of destroyed) {
       t.alive = false;
       s.effects.push({ kind: 'death', x: t.x, y: t.y, color: '#4ef3ff', t: 0, dur: 0.4 });
@@ -555,6 +576,7 @@ class Game {
     // towers destroyed by Virus attacks
     const destroyed = s.towers.filter(t => !t.alive);
     if (destroyed.length > 0) {
+      s.stats.lost += destroyed.length;
       for (const t of destroyed) {
         t.cell.tower = null;
         s.effects.push({ kind: 'death', x: t.x, y: t.y, color: '#4ef3ff', t: 0, dur: 0.4 });
@@ -572,11 +594,14 @@ class Game {
       e.resolved = true;
       dirty = true;
       if (e.reachedBase) {
+        s.stats.leakedBy[e.type] = (s.stats.leakedBy[e.type] ?? 0) + 1;
         s.lives--;
         s.baseFlash = 1;
         if (s.lives <= 0) { this.gameOver(); return; }
       } else {
         s.tokens += e.def.reward;
+        s.stats.kills++;
+        s.stats.earned += e.def.reward;
         s.effects.push(makeConfetti(e.x, e.y));
         this.rollBlueprint(e.x, e.y);
       }

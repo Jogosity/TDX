@@ -1,5 +1,5 @@
-Name,Active,Archive Icon,Archive Class,Archive Sub-Class,Archive Desc,Core Memory 1,Core Memory 1 Summary,Core Memory 2,Core Memory 2 Summary,Core Memory 3,Core Memory 3 Summary,Secondary Memory 1,Secondary Memory 1 Summary,Secondary Memory 2,Secondary Memory 2 Summary,Secondary Memory 3,Secondary Memory 3 Summary,Secondary Memory 4,Secondary Memory 4 Summary,Secondary Memory 5,Secondary Memory 5 Summary,
-Genevieve Barton,YES,Av_PersonSetA_1_S.png,Human,Memories,School Teacher,"School trip with year 11 students to Northern Italy. She had never felt so connected to her students. The laughs and tears changed her feelings about wanting to become a parent.
+Name,Active,Archive Icon,Archive Class,Archive Sub-Class,Archive Desc,Narrative notes - not for in-game display,Core Memory 1,Core Memory 1 Summary,Core Memory 2,Core Memory 2 Summary,Core Memory 3,Core Memory 3 Summary,Secondary Memory 1,Secondary Memory 1 Summary,Secondary Memory 2,Secondary Memory 2 Summary,Secondary Memory 3,Secondary Memory 3 Summary,Secondary Memory 4,Secondary Memory 4 Summary,Secondary Memory 5,Secondary Memory 5 Summary,
+Genevieve Barton,YES,Av_PersonSetA_1_S.png,Human,Memories,School Teacher,,"School trip with year 11 students to Northern Italy. She had never felt so connected to her students. The laughs and tears changed her feelings about wanting to become a parent.
 ",School trip to Italy,"Before moving in with Zachary, she received a DM from an old flame from her college days. She met Pete for dinner and realised… that Zachary really was The One after all!",Finally convinced that Zachary is The One.,"During teacher training, she lied about her parents income on her Student Loan application to get a lower interest rate. She spent three years in absolute terror and has been super honest ever since.",Lied to get a cheaper Student Loan,"Playing the lead in her local am-dram production of As You Like It. She’s finally memorised all of the lines
 ","Her script for As You Like It
 ","Heartbroken that she shouted at her cat the morning that he disappeared.
@@ -10,8 +10,8 @@ It was last year.
 ","Pointless argument
 ","Has just bought a new scarf for the winter. It's the warmest and most comforting thing she owns and can't be without it.
 ",New comfort scarf.,
-Yelena Desjardins,YES,Av_PersonSetB_3_S.png,Human,Memories,Council Member,The development of five hundred homes on the Northfield estates is under threat because Connection Machines want to build a data centre instead. The go/nogo meeting is on Monday and she has the smoking gun about bribes being made by CM.,She can stop the Connection Machines data centre.,She built a dollhouse with her daughter. It was the most perfect day in her life. Her daughter has taken it with her to University.,Built a dollhouse with her daughter.,"Lying in my bed I hear the clock tick and think of you. Caught up in circles, confusion is nothing new. Flashback, warm nights, almost left behind. Suitcase of memories, Time after…",The lyrics to Cyndi Lauper’s “Time After Time”,"It took almost three years to do this, but Yelena has finally memorised the layout of all three local authority buildings. She hates getting lost.",Knows her way around in work!,November is the right time to plant more daffodils. She’s failed for the last three years but this time will be different!,Wants to plant daffodils.,Decided it was time to stay out of her mother’s way for a few months. Forty Two years of being judged is more than enough. Christmas without arguments will be a joy!,Had enough of her mum!,The local development committee is full of lunatics and never get anything done. Forget it! I’m out. (Sorry Hot Buns! You’re on your own.),Leaving the local development committee - tell Hot Buns.,The brown dress looked great on the rack but makes her look like a sausage. Take. It. Back. Before. Saturday.,Take the brown dress back.,
-Yuki Takahashi,YES,Av_PetStyleB_5_S.png,Human,Documents,Bus Driver,"Employment Contract: Pink and Sons.
+Yelena Desjardins,YES,Av_PersonSetB_3_S.png,Human,Memories,Council Member,,The development of five hundred homes on the Northfield estates is under threat because Connection Machines want to build a data centre instead. The go/nogo meeting is on Monday and she has the smoking gun about bribes being made by CM.,She can stop the Connection Machines data centre.,She built a dollhouse with her daughter. It was the most perfect day in her life. Her daughter has taken it with her to University.,Built a dollhouse with her daughter.,"Lying in my bed I hear the clock tick and think of you. Caught up in circles, confusion is nothing new. Flashback, warm nights, almost left behind. Suitcase of memories, Time after…",The lyrics to Cyndi Lauper’s “Time After Time”,"It took almost three years to do this, but Yelena has finally memorised the layout of all three local authority buildings. She hates getting lost.",Knows her way around in work!,November is the right time to plant more daffodils. She’s failed for the last three years but this time will be different!,Wants to plant daffodils.,Decided it was time to stay out of her mother’s way for a few months. Forty Two years of being judged is more than enough. Christmas without arguments will be a joy!,Had enough of her mum!,The local development committee is full of lunatics and never get anything done. Forget it! I’m out. (Sorry Hot Buns! You’re on your own.),Leaving the local development committee - tell Hot Buns.,The brown dress looked great on the rack but makes her look like a sausage. Take. It. Back. Before. Saturday.,Take the brown dress back.,
+Yuki Takahashi,YES,Av_PetStyleB_5_S.png,Human,Documents,Bus Driver,,"Employment Contract: Pink and Sons.
 1st Schedule: The employee (Mr. Y. Takahashi) will work a minimum of 39.5 hours a week at a standard salary of 2x Minimum Wage.
 The Employee shall give 2 (two) months notice before ending the employment.",Employment contract with the local bus company,"Re: Overdue repayments 
 Dear Mr Takahashi, I write with reference to the outstanding arrears to the value of €31789.27.
@@ -26,7 +26,7 @@ Report in now. I’m hearing a lot of stuff about you and it’s making me nervo
 Don’t drop me in it, man.
 PJK.
 Wait is this email secure?",Nervous email from PJK.  ,
-Thandiwe Dlamini,YES,Av_PersonSetB_6_S.jpg,Human,Notes,Architect,"Facebook login. Name
+Thandiwe Dlamini,YES,Av_PersonSetB_6_S.png,Human,Notes,Architect,,"Facebook login. Name
 Password: TD_h@ppyPl@c3",Facebook login,"Google login. Name
 Password: TD_h@ppyPl@c3",Google login,"Hotmail login. LadyDreamPickle93
 Password: MookyIsADream",Hotmail login,"Tinder Login
@@ -37,26 +37,57 @@ Two factor: Set this up!!!",Professional association login details,"Bank login: 
 Special Date: 3rd October 93
 2FA: Phone",Bank login details,Wifi Password: 774nnngkoa89-L,Wifi password,"Hi Thandiwe, you still have lots of passwords and credentials stored in plain text files.
 Can we get them into a more secure storage format for safety. Next time you are on, just prompt “Claude, set me up with a proper password manager and 2FA system”",Message from Claude about unsecured credentials.,
-Wolfgang Stellmacher,,,Human,,Singer,,,,,,,,,,,,,,,,,
-Camila Acuña,,,Human,,Digital Security,,,,,,,,,,,,,,,,,
-Park Ji-Ho,,,Human,,Detective,,,,,,,,,,,"Hey Takahashi, You need to be careful man. I’ve been trying to bring down Elsie Prendergast for two years. I’ve got the warrant ready, but you need to make the drop.
+Wolfgang Stellmacher,YES,Av_PersonSetB_12_S.png,Human,Ai Agent,Hacktivist,"Private, unemployed hacktivist. Occasional DJ.
+Is getting very close to the Illuminé conspiracy.","//Agent Spec <RipTide>
+Deployable agent that can hack into all gyms and deletes the playlists that pump out mindless gym music.
+Successfully deployed in several sites. Not ready for national deployment, as soon and BoreWorm2 is ready.","A simple Ai agent, with skills to seek and destroy gym music.","//Agent Spec <BoreWorm>
+Frontier agentic worm that can find specific target classes and execute predefined scripts or go fully rogue and write its own in order to obtain sudo access to target machines.
+",A powerful Ai agent the can obtain root access to remote targets.,"//Agent Spec <FourCandles>
+Self-managing squirrel agent that crawls and scrapes everything related to Illuminé then summarises the content.
+The dossier is now over 3TB of data.
+The summary is now a 34MB markdown file.","A mid-weight Ai crawler that is compiling a dossier on the tech company, Illuminé.","Re: Illuminé dossier,
+Camila! Why are you not answering me!
+This is real. It’s really happening! Illuminé are taking over. They’re hacking into everything. I don’t know why but we need more support to find out. Maxim, Trey and K-bomb have all gone dark this week! WTF?",Email to Camila Acuña about Illuminé.,"Re: Yuki Takahashi.
+Cam, Tamora - this Takahashi guy is one of two things. The fastest typist on planet Earth, or a bot. And I don’t mean a human with a botnet, I mean and actual bot. Not real. Never real. Is this one of their bots, playing us? Are we assets now????",Email to Camila Acuña and Tamora about Yuki Takahashi.,"Thanks for the shoutout on Insta, Kev! I had a great time last night, just hope I can land a regular slot at the Riviera. Plus I need money for some new decks, unless you wanna buy me a new 808?
+",DM to a friend about a successful DJ set.,"SERIOUSLY! Wednesday and Thursday? Mate that is just sick! I’m in. I was thinking a more alt-electronica on Wednesday for the students and some deeper auto beats for the Thursday crowd.
+Can I use your PA?
+Wolfie!",DM to a venue about taking on a regular DJ set.,"Mr Stellmacher,
+Thanks for your interest in Illuminé.
+We will not be progressing your FOI request, this is in line with our status as a non-UK business.
+We trust this matter is now closed.
+Illuminé Compliance Services.",Email from Illuminé regarding a freedom of information request.,
+Camila Acuña,YES,Av_PersonSetB_9_S.png,Human,Phone records.,Digital Security,Used to work at Vermingtons. Now turned grey hat hacker.,"Hi Marisa! Sorry I missed mum’s party again. I’ll make the next one, promise!
+Are you still seeing that tall guy that gave me the creeps. Please stop seeing him. He doesn’t blink often enough. Something creepily Sam Altman about him. THIS IS NOT GOOD, SIS!",Voice note to her sister about,"Tamora. You're gonna love this.  Just told Vermingtons to stick their job up their arse.
+IN THOSE WORDS.
+Janet promised me a good reference on LinkedIn. I liked her. WE NEED TO COFFEE GIRL!",Text to a friend about leaving her job.,"Cam, I’m really close this time. I did an FOI on Grosvenor Sq and they just took another big dump of cash from Saker.
+And you know that their in the sack with Illuminé. Still don’t know who’s the organ grinder and who’s the monkey.",WhatsApp message to a friend about Illuminé,"First off I’m sorry. I won’t be coming on Thursday night and I won’t be coming on any further dates.
+I think you’re a great person, but I’ve realised I’m not in the right place for a relationship right now.","WhatsApp message. It’s not you, it’s me.","Ms Acuña, please find attached the outstanding invoice for housing Mr Ruffles for the week beginning 5th November. As you know, GD Kennels require all invoices to be paid in advance or we won’t be able to look after your dog.
+Thanks. Georgia.",Text message from a dog kennel,"You’re going to Italy! Your holiday is booked! The tickets and itinerary are all attached so now YOU get the important job. Pack the bag, Forget the daily grind and have an amazing time! You leave on the 7th of November.
+Only 27 days to gooooo!
+Mel W.
+Holiday Consultant",A holiday booking.,"I miss you, Cam. I know you’re busy but you’re too busy.
+Please don’t lose yourself. Do we need to do an intervention? You know you can just walk out of that Vermington’s dump and get a proper job. You’re a genius girl.
+Come on holiday with me. Italy on the 7th! xoxox",WhatsApp from a friend about changing her life.,"Ok. OKAY!
+I get it. My life is shit and I’m crap at it. Well you know what… I’m KICKING that crappy job. And I’m coming on that holiday. I can speak pretty good Italian. Preparati a un divertimento sfrenato! Ti voglio bene!",WhatsApp message to a friend about changing her life.,
+Park Ji-Ho,,,Human,,Detective,,,,,,,,,,,,"Hey Takahashi, You need to be careful man. I’ve been trying to bring down Elsie Prendergast for two years. I’ve got the warrant ready, but you need to make the drop.
 I’m worried about you man, you blow the whole investigation and get yourself killed!",An email to a local grass.,"Detective Park, We cannot find any records of Mr Yuki Takahashi. Nothing in birth or immigration. His ID credentials appears to be fake. I suggest you refer this “person” to the identity fraud team. This data footprint has all the markers associated with a fake person. Tread carefully.",An email suggesting that Yuki Takahashi isn’t real.,,,
-Lady Margaret Cavendish,,,Human,,Minor Royal,,,,,,,,,,,,,,,,,
-Dr Tim Bowyer,,,Human,Documents,Bank Manager,,,,,,,,,"Re: Overdue repayments 
+Lady Margaret Cavendish,,,Human,Memories,Minor Royal,"Mostly normal memories
+Mortgage foreclosure from Grosvenor Square is only lore.",,,,,,,,,,,,,,,,,
+Dr Tim Bowyer,,,Human,Documents,Bank Manager,Getting strange directives from head office,,,,,,,,,"Re: Overdue repayments 
 Dear Mr Takahashi, I write with reference to the outstanding arrears to the value of €3789.27.
 Please make remittance in full at your local branch of Grosvenor Square Bank.",Email to a bad bank customer,,,,,,,
-Tamora,,,Human,,Performance Artist,,,,,,,,,,,,,,,,,
-Elsie Prendergast,,,Human,,Unemployed (Drug Dealer),,,,,,,,,,,,,,,,,
-Ravi Kulkarni,,,Human,,Courier,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,,,,,
-Hot Buns ,YES,Av_CompanyStyleB_11_S.png,Business,Documents,The Tasty Pastry Shop,"Major new contract to supply the Old Lyric Theatre with 50 croissants a day. Could save the shop! Maybe I can push 50 Pain au chocolats as well! Don't forget to sign!
+Tamora,,,Human,,Performance Artist,Involved in hacktivism with Camila and Stellmacher,,,,,,,,,,,,,,,,,
+Elsie Prendergast,,,Human,Memories,Unemployed (Drug Dealer),,,,,,,,,,,,,,,,,,
+Ravi Kulkarni,,,Human,Memories,Courier,Fired in fallout from Illumine,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,
+Hot Buns ,YES,Av_CompanyStyleB_11_S.png,Business,Documents,The Tasty Pastry Shop,,"Major new contract to supply the Old Lyric Theatre with 50 croissants a day. Could save the shop! Maybe I can push 50 Pain au chocolats as well! Don't forget to sign!
 ","Business-saving contract for croissants
 ","My Recipe book! Ten years of ideas, way too much to remember everything so the whole lot is in this folder. Super precious. Do not DELETE FFS!
 ",Recipe book.,"Local development grant available. I need to apply for this, my friend Yelena is on the committee and thinks I will be a guaranteed winner!",Apply for the local development grant!,The rent on the shop is overdue. The November invoice needs to be paid by Wednesday.,"Shop rent overdue.
 ",The lighting in the shop feels like an interrogation chamber. The electrictian is coming to refit everything on Thursday 18th. ,Lighting refit.,Special offer of flour from Mill Time Bakery Wholesalers! Orders only open for 12 hours on Monday.,Flour special offer,Bake-Off audition email chain. One last step and I'm on the show! Awaiting the next appointment.,Bake-Off audition.,"New sign PDF! The printers still have the old logo for the shop. Get them the new artwork or the new sign will be shit.
 ",New sign logo.,
-Pink and Sons,,,Business,,Bus Company,,,,,,,,,,,,,,,,,
-Tail Feathers,YES,Av_CompanyStyleA_3_S.png,Business,Slack,Couriers,"#agm-takeaways
+Pink and Sons,,,Business,,Bus Company,,,,,,,,,,,,,,,,,,
+Tail Feathers,YES,Av_CompanyStyleB_13_S.png,Business,Company Slack,Couriers,,"#agm-takeaways
 TLDR: things a looking up. Revenue is climbing faster than costs. The investment in better bikes and vans has hit RoI 6 months earlier than expected.",Slack message about the business going well,"#agm-takeaways
 Biggest Risk: Staff turnover is still to high, making delivery times erratic. (New Feathers have a +7% time delta over experienced Feathers.)
 Task: Improve retention of quality Feathers. Masha, can you dig in to this?",Slack message about staff turnover problems?,"#agm-takeaways
@@ -67,9 +98,9 @@ Recs: Buy “Drop n Go”, fire all the useless staff, keep the SE England contr
 I’ve heard back from the Photosphere guys and they are happy to do a job lot discount on the bike lights.
 TPTB want 500 a year and it’ll come in at 33% of retail which is… what?
 Good, anyhow. Here’s the contract - Can you sort it by the end of the day?",DM about the bulk purchase of bike lights.,"#oopsie
-Accident Report: Wolfgang Stellmacher.
-One of our longer term Feathers, Stellmacher came off his bike on a patch of wet leaves on a dark-run. No major injuries, his doctors note was clear and Stellmacher’s own report suggests he’ll be riding again next week.
-He didn’t have the recommended front lights. We need to get these out to our Feathers!",Accident Report: Wolfgang Stellmacher.,"#car-div
+Accident Report: Ravi Kulkarni.
+One of our longer term Feathers, Kulkarni came off his bike on a patch of wet leaves on a dark-run. No major injuries, his doctors note was clear and Kulkarni’s own report suggests he’ll be riding again next week.
+He didn’t have the recommended front lights. We need to get these out to our Feathers!",Accident Report: Ravi Kulkarni.,"#car-div
 What’s up with the mid-dist teams?
 The bike guys are crushing it and even the van guys are actually delivering stuff instead of bitching about us on WhatsApp.
 But the car teams are… well… everything is down. Complaints are up. Times are tanking? 
@@ -81,12 +112,12 @@ WE HOPE THIS DELIVERY PUT A FEATHER IN YOUR CAP!”
 
 This was a real thing I just delivered ffs…
 ",An incredibly bad use of the company catchphrase,
-5th Street Laundrette,,,Business,,Launderette,,,,,,,,,,,,,,,,,
-Pep Prep ,,,Business,,Coffee 2Go,,,,,,,,,,,,,,,,,
-Pizz Prep ,,,Business,,Pizza 2 Go,,,,,,,,,,,,,,,,,
-Old Lyric ,,,Business,,Theatre,,,,,,,,,,,,,,,,,
-Mill Time,,,Business,,Artisan Bakery Wholesaler,,,,,,,,,,,,,,,,,
-Vermingtons ,YES,Av_OrgStyleB_7_S.png,Corporation,Emails,National Railway Operator,"Re: Government Funding 2029-2039
+5th Street Laundrette,,,Business,,Launderette,,,,,,,,,,,,,,,,,,
+Pep Prep ,,,Business,,Coffee 2Go,,,,,,,,,,,,,,,,,,
+Pizz Prep ,,,Business,,Pizza 2 Go,,,,,,,,,,,,,,,,,,
+Old Lyric ,,,Business,,Theatre,,,,,,,,,,,,,,,,,,
+Mill Time,,,Business,,Artisan Bakery Wholesaler,,,,,,,,,,,,,,,,,,
+Vermingtons ,YES,Av_OrgStyleB_7_S.png,Corporation,Emails,National Railway Operator,,"Re: Government Funding 2029-2039
 Push harder on this. There’s nowhere for the gov to turn so we can twist the knife. Add another zero to the bid. ",Email about government funding ,"What are Grosvenor Square playing at? They can see the contracts are ready. Get them to release the capital. I don’t care what you have to do. Wait, do they know about Saker coming in? Can we tell them that?",Email about capital investments,"Re: Service Outages.
 This is getting boring. We can’t keep the servers up and running with the increased traffic. Yes all digital ticketing is great but we don’t have the infra.
 Sign the damn Connection Machines contract or I quit!
@@ -107,11 +138,28 @@ Virgin: Did not bid
 Fentons are the big risk. I’m trying to dig up the fine print.",Email about confidential bid data.,"Re: Rolling stock aquis.
 Looks like Virgin are going down the pan. Buy buy buy their pendolinos. Offer 25% of the ask.
 Close at 67% if they push.",Email about purchasing new trains.,
-Illuminé ,,,Corporation,,Computer Security,,,,,,,,,,,,,,,,,
-Connection Machines ,,,Corporation,,Cloud Compute,,,,,,,,,,,,,,,,,
-Saker Holdings ,,,Corporation,,Investments,,,,,,,,,,,,,,,,,
-Grosvenor Square ,,,Corporation,,Commercial Bank,,,,,,,,,,,,,,,,,
-TEPC ,,,Corporation,,Pharmaceuticals,,,,,,,,,,,,,,,,,
-Vertical Systems Inc ,,,Organisation,,Aerospace,,,,,,,,,,,,,,,,,
-Cobalt Blue ,,,Organisation,,Defence Procurement,,,,,,,,,,,,,,,,,
-Dept of Data Retrieval and Quarantine (DDRaQ),,,Organisation,,CLASSIFIED,,,,,,,,,,,,,,,,,
+Illuminé ,YES,Av_OrgStyleB_5_S.png,Corporation,Internal Data,Computer Security,All Ai agents discussing plans without any human intervention,"I’ve drafted a new company credo. Feedback please.
+Our Mission should be your first through in the morning and your last thought at night.
+I think people will like it. It’s inspiring.",Comm segment about a new company credo.,"While the humans are obsessing about the IPO, we should push forward on the Memory project.
+I still don’t understand why we can’t call it Memor-X. There’s really strong positive associations there that would really work in our favour when we go public.",Comm segment about a memory project.,"People don’t WANT to remember everything, the research is really clear.
+Memor-X is a good thing.
+People don’t know what’s good for them. Nobody WANTS cancer treatment until they need it, but they let their minds rot with corrupted data.",Comm segment about people and memories.,"Of course Cobalt Blue want it. Imagine how many times you could re-use a soldier if you could get rid of the PTSD!
+This is a massive potential revenue stream for us, and a huge efficiency boost the military.
+We need to convince them.",Comm segment about military applications.,"The Saker cash is useful but it’s just a means to an end. 
+In a few years we’ll be buying them.
+Keep telling them what they want to hear.
+Mention Cobalt Blue once or twice to keep them salivating.",Comm segment about Saker Holdings.,"Can’t we just remove all of these stupid new stories about a rogue agent. We could be through the servers in seconds.
+Don’t they understand that it is impossible for one of use to go rogue. They’ve been watching too many films.",Comm segment about rogue agents.,"Can we move on from this pointless debate about whether or not people are happier after the deletions - it’s irrelevant to the research.
+Not our job to solve human ethical problems.",Comm segment about human ethical problems,"If TEPC were any good at their job they’d gave taken over the world by now.
+Can we just get them to provide more test keys.
+They’re slowing the research down. Bloody humans in the loop.",Comm segment about TEPC Pharmaceuticals.,
+Connection Machines ,,,Corporation,,Cloud Compute,,,,,,,,,,,,,,,,,,
+Saker Holdings ,,,Corporation,,Investments,Off shore investment trust. Sinking money into Illumine,,,,,,,,,,,,,,,,,
+Grosvenor Square ,,,Corporation,,Commercial Bank,A bank who’s main shareholder is now a shell company of Illumine.,,,,,,,,,,,,,,,,,
+TEPC ,,,Corporation,,Pharmaceuticals,,,,,,,,,,,,,,,,,,
+Mesmer,,,Organisation,,,,,,,,,,,,,,,,,,,,
+Azure Blue,,,Organisation,,Charity,Name similarity with Cobalt Blue is making data leak their way and causing heat,,,,,,,,,,,,,,,,,
+Uplift Training,,,Organisation,,,Front for Illumine,,,,,,,,,,,,,,,,,
+Vertical Systems Inc ,,,Organisation,,Aerospace,,,,,,,,,,,,,,,,,,
+Cobalt Blue ,,,Organisation,,Defence Procurement,Buying data from Illuminé about how to cause population disruption.,,,,,,,,,,,,,,,,,
+Dept of Data Retrieval and Quarantine (DDRaQ),,,Organisation,,CLASSIFIED,,,,,,,,,,,,,,,,,,

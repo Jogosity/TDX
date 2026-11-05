@@ -1,6 +1,6 @@
 // TDX — towers, enemies, projectiles and the weapon system.
 
-import { WEAPONS, TOWERS, ENEMIES, PLAYER, UPGRADE, BUILD_TIME } from './config.js';
+import { WEAPONS, TOWERS, ENEMIES, PLAYER, UPGRADE, BUILD_TIME, tierStat } from './config.js';
 import { smoothPath, pointAt } from './path.js';
 
 let nextId = 1;
@@ -39,15 +39,21 @@ export class Tower {
     this.flash = 0;
     this.attackedFor = 0;     // seconds left on the "under attack" marker (M4)
     this.attackedBy = null;   // enemy type that last drained this tower
+    this.attacker = null;     // the enemy itself (Self Defence power)
+    this.sinceHit = Infinity; // seconds since the last hit (Self Repair power)
+  }
+
+  // Has this tower's Special Power switched on (TOWERS[x].power, from its tier)?
+  hasPower(kind) {
+    const p = this.def.power;
+    return !!p && p.kind === kind && this.tier >= p.tier;
   }
 
   get sellValue() { return Math.floor(this.spent * PLAYER.sellRefund); }
 
-  // Tier 1 = base stat, TOWERS[x].tier4 = Tier 4 stat, linear in between.
+  // Stat at a tier: the F4 value rule or the tower's tier4 target (config.js).
   tierStat(base, key, tier) {
-    const t4 = this.def.tier4?.[key];
-    if (t4 === undefined) return base;
-    return base + (t4 - base) * (tier - 1) / (UPGRADE.maxTier - 1);
+    return tierStat(this.def, key, base, tier);
   }
 
   // Token cost of the NEXT tier, or null at max tier.
@@ -68,11 +74,13 @@ export class Tower {
     if (this.weapon) {
       const w = WEAPONS[base.weapon];
       this.weapon.damage = this.tierStat(w.damage, 'damage', tier);
+      if (this.def.power?.kind === 'boost') this.weapon[this.def.power.stat] = w[this.def.power.stat];
     }
     if (this.aura && this.def.tier4?.slowFactor !== undefined) {
       this.aura.factor = this.tierStat(base.aura.factor, 'slowFactor', tier);
     }
     this.tier = tier;
+    if (this.weapon && this.hasPower('boost')) this.weapon[this.def.power.stat] *= this.def.power.mult;
   }
 
   damage(amount) {
@@ -83,6 +91,10 @@ export class Tower {
   update(dt, enemies, projectiles, grid) {
     this.flash = Math.max(0, this.flash - dt * 4);
     this.attackedFor = Math.max(0, this.attackedFor - dt);
+    this.sinceHit += dt;
+    if (this.hasPower('heal') && this.sinceHit >= this.def.power.delay && this.health < this.maxHealth) {
+      this.health = Math.min(this.maxHealth, this.health + this.maxHealth * this.def.power.perSec * dt);
+    }
 
     // applying an upgrade: tower is offline for UPGRADE.applyTime seconds
     if (this.upgrading) {
@@ -147,7 +159,10 @@ export class Tower {
   }
 
   // "First" targeting: the enemy closest to the base along its path.
+  // Self Defence: an enemy draining this tower comes first.
   pickTarget(enemies, rangePx) {
+    if (this.hasPower('selfDefence') && this.attackedFor > 0 && this.attacker?.alive &&
+        Math.hypot(this.attacker.x - this.x, this.attacker.y - this.y) <= rangePx) return this.attacker;
     let best = null, bestRemain = Infinity;
     for (const e of enemies) {
       if (!e.alive) continue;
@@ -199,6 +214,8 @@ export class Projectile {
     const w = tower.weapon;
     this.weapon = w;
     this.sourceType = tower.type;
+    // AntiVirus power: bonus damage against some enemy types
+    this.bonus = tower.hasPower?.('antiVirus') ? tower.def.power : null;
     this.x = tower.x;
     this.y = tower.y;
     this.speed = w.projectileSpeed * cellPx(grid);
@@ -233,7 +250,7 @@ export class Projectile {
         if (d <= e.radius + step * 0.5 && d < hitD) { hitD = d; hit = e; }
       }
       if (hit) {
-        hit.damage(this.weapon.damage);
+        hit.damage(this.dmgVs(hit));
         effects.push({ kind: 'hit', x: hit.x, y: hit.y, color: this.weapon.projectile.color, t: 0, dur: 0.15 });
         this.alive = false;
         return;
@@ -258,7 +275,7 @@ export class Projectile {
     const dx = t.x - this.x, dy = t.y - this.y;
     const d = Math.hypot(dx, dy);
     if (d <= step + t.radius) {
-      t.damage(this.weapon.damage);
+      t.damage(this.dmgVs(t));
       effects.push({ kind: 'hit', x: t.x, y: t.y, color: this.weapon.projectile.color, t: 0, dur: 0.15 });
       this.alive = false;
       return;
@@ -268,13 +285,17 @@ export class Projectile {
     this.y += (dy / d) * step;
   }
 
+  dmgVs(e) {
+    return this.bonus && this.bonus.vs.includes(e.type) ? this.weapon.damage * this.bonus.mult : this.weapon.damage;
+  }
+
   detonate(enemies, effects) {
     this.alive = false;
     effects.push({ kind: 'blast', x: this.aimPoint.x, y: this.aimPoint.y, r: this.splashPx, color: this.weapon.projectile.color, t: 0, dur: 0.3 });
     for (const e of enemies) {
       if (!e.alive) continue;
       const d = Math.hypot(e.x - this.aimPoint.x, e.y - this.aimPoint.y);
-      if (d <= this.splashPx + e.radius) e.damage(this.weapon.damage);
+      if (d <= this.splashPx + e.radius) e.damage(this.dmgVs(e));
     }
   }
 }
@@ -407,6 +428,8 @@ export class Enemy {
         t.damage(this.def.attack.damage * this.damageMult);
         t.attackedFor = this.def.attack.reload + 0.4;   // outlasts the gap between hits
         t.attackedBy = this.type;
+        t.attacker = this;
+        t.sinceHit = 0;
         this.attackTimer = this.def.attack.reload;
       }
       return;

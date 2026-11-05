@@ -45,8 +45,10 @@ export const WEAPONS = {
   },
   // 360° scattershot: fires a full ring of straight-flying pellets.
   // radial: true → no aiming; pelletCount pellets per blast, damage is per pellet.
+  // S18 tower value (TDX_AI_Balance_Notes F3): damage per pellet 7 → 30, so
+  // Defrag removes about half a Threader's HP per Token, like Pulse.
   scatterShot: {
-    damage: 7, fireRate: 0.8, clipSize: 4, reloadTime: 2.4,
+    damage: 30, fireRate: 0.8, clipSize: 4, reloadTime: 2.4,
     burstCount: 1, burstInterval: 0, spread: 0.12,
     projectileSpeed: 7, splashRadius: 0, range: 2.0,
     radial: true, pelletCount: 12,
@@ -63,8 +65,9 @@ export const WEAPONS = {
   // Pump shotgun (M2 B1): aimed cone of straight-flying pellets.
   // cone = total spread angle (radians); pellets fan evenly across it and die
   // at the range edge like scatterShot. damage is per pellet.
+  // S18 tower value (F3): damage per pellet 7 → 10, half a Threader's value per Token.
   pumpShotgun: {
-    damage: 7, fireRate: 1.4, clipSize: 4, reloadTime: 2.4,
+    damage: 10, fireRate: 1.4, clipSize: 4, reloadTime: 2.4,
     burstCount: 1, burstInterval: 0, spread: 0.05,
     projectileSpeed: 9, splashRadius: 0, range: 1.8,
     cone: Math.PI / 4, pelletCount: 8,                    // 45° fan per spec
@@ -77,8 +80,9 @@ export const WEAPONS = {
 // Towers are always built at Tier 1. Tier ACCESS is unlocked with BITS in the
 // Upgrade Menu (persistent). APPLYING an upgrade to a tower in the field costs
 // Tokens: costMult × the tower's base cost per step, and takes applyTime secs.
-// Per-tower upgradeable stats live in TOWERS[x].tier4 — the Tier 4 value.
-// Tier 1 is the base stat; tiers 2–3 are linearly interpolated between them.
+// How a tower's stats grow per tier: see tierStat() below. Towers marked
+// upgrade: 'rule' follow the value rule (F4); others give TOWERS[x].tier4
+// (the Tier 4 value) and tiers 2–3 are interpolated linearly.
 // ---------------------------------------------------------------------------
 // Seconds to construct a new tower — same clock-timer system as upgrades.
 export const BUILD_TIME = 3;
@@ -105,7 +109,33 @@ export const UPGRADE = {
   costMult: [2, 3, 4],            // Tokens: tier 1→2, 2→3, 3→4 (× base cost)
   applyTime: 3,                   // seconds, clock timer shown over the tower
   tierUnlockBits: { 2: 3, 3: 8, 4: 15 },
+  // S19 value rule (TDX_AI_Balance_Notes F4). The Tier 2 upgrade delivers this
+  // share of the tower's Tier 1 value per Token (HP removed per second per
+  // 100 Tokens); damage and HP then rise by the same step each tier, so the
+  // share tapers as prices climb (0.6 → T3 40%, T4 30%, ×4.6 at Tier 4).
+  // An upgrade is a little worse per Token than a new tower: the premium for
+  // packing firepower into one cell.
+  valueShare: 0.6,
 };
+
+// Special Powers (S19): TOWERS[x].power = { tier, kind, name, desc, … } — one
+// per tower, switched on from that tier. Kinds: 'selfDefence' (targets an
+// enemy draining it before anything else), 'heal' (regains perSec × max HP a
+// second after `delay` quiet seconds), 'boost' (a weapon stat × mult, e.g.
+// range, splashRadius, fireRate),
+// 'antiVirus' (damage × mult against the enemy types in `vs`).
+
+// A tower stat at a tier. Rule towers: base × (1 + (tier − 1) × step), where
+// step = costMult[0] × valueShare makes the Tier 2 upgrade worth valueShare of
+// a new tower per Token. Others: linear from base to tier4[key].
+export function tierStat(def, key, base, tier) {
+  if (def.upgrade === 'rule' && (key === 'damage' || key === 'health')) {
+    return base * (1 + (tier - 1) * UPGRADE.costMult[0] * UPGRADE.valueShare);
+  }
+  const t4 = def.tier4?.[key];
+  if (t4 === undefined) return base;
+  return base + (t4 - base) * (tier - 1) / (UPGRADE.maxTier - 1);
+}
 
 // ---------------------------------------------------------------------------
 // Collection (Core) — Retention Module 2.
@@ -131,14 +161,19 @@ export const BLUEPRINTS = {
 export const TOWERS = {
   threader: {
     name: 'Threader', cost: 100, health: 100,
+    power: { tier: 2, kind: 'selfDefence', name: 'Self Defence',
+      desc: 'Returns fire on any enemy draining it.' },
     weapon: 'machineGun',
-    tier4: { health: 250, damage: 9 },
+    upgrade: 'rule',                     // F4 value rule (was tier4 health 250, damage 9)
     blueprints: 0,
     desc: 'Rapid-fire machine gun. Cheap, reliable lane damage.',
     color: '#6db4ff', glow: '#4ef3ff',
   },
   vault: {
     name: 'Vault', cost: 60, health: 200,
+    // heal: share of max HP per second, once `delay` seconds have passed since the last hit
+    power: { tier: 2, kind: 'heal', perSec: 0.1, delay: 5, name: 'Self Repair',
+      desc: 'Repairs itself when left alone for 5 seconds.' },
     weapon: null,
     tier4: { health: 600 },
     blueprints: 10,
@@ -158,22 +193,26 @@ export const TOWERS = {
   },
   ddos: {
     name: 'DDOS', cost: 400, health: 150,
+    power: { tier: 3, kind: 'boost', stat: 'splashRadius', mult: 2, name: 'Cluster Bomb',
+      desc: 'Grenade blasts twice as wide.' },
     weapon: 'grenadeLauncher',
-    tier4: { health: 350, damage: 36 },
+    upgrade: 'rule',                     // F4 value rule (was tier4 health 350, damage 36)
     blueprints: 12,
     desc: 'Grenade launcher. Lobbed splash damage at medium range.',
     color: '#57a9ff', glow: '#57a9ff',
   },
   defrag: {
     name: 'Defrag', cost: 500, health: 150,
+    power: { tier: 2, kind: 'antiVirus', mult: 1.5, vs: ['virus', 'bug'], name: 'AntiVirus',
+      desc: '+50% damage to Viruses and Bugs.' },
     weapon: 'scatterShot',
-    tier4: { health: 350, damage: 18 },
+    upgrade: 'rule',                     // F4 value rule (was tier4 health 350, damage 77)
     blueprints: 14,
     desc: '360° scattershot. Strongest when enemies surround it.',
     color: '#49e6b0', glow: '#49e6b0',
   },
   deleter: {
-    name: 'Deleter', cost: 700, health: 80,
+    name: 'Deleter', cost: 200, health: 80,   // S18 tower value: was 700 (see TDX_AI_Balance_Notes F3)
     weapon: 'sniperRifle',
     tier4: { health: 200, damage: 300 },
     blueprints: 18,
@@ -184,16 +223,20 @@ export const TOWERS = {
   // Where they drop: LEVELS[i].bpPool (js/levels.js, set in the Level Editor).
   pulse: {
     name: 'Pulse', cost: 400, health: 150,
+    power: { tier: 4, kind: 'boost', stat: 'fireRate', mult: 1.5, name: 'Overclock',
+      desc: '+50% fire rate.' },
     weapon: 'pulseRifle',
-    tier4: { health: 350, damage: 30 },
+    upgrade: 'rule',                     // F4 value rule (was tier4 health 350, damage 30)
     blueprints: 16,
     desc: 'Burst rifle. Three-round pulses, Threader reach, heavier hits.',
     color: '#9b8cff', glow: '#b8a8ff',
   },
   compressor: {
     name: 'Compressor', cost: 400, health: 100,
+    power: { tier: 3, kind: 'boost', stat: 'range', mult: 1.5, name: 'Long Choke',
+      desc: '+50% range.' },
     weapon: 'pumpShotgun',
-    tier4: { health: 250, damage: 15 },
+    upgrade: 'rule',                     // F4 value rule (was tier4 health 250, damage 21)
     blueprints: 16,
     desc: 'Pump shotgun. 45° pellet fan — brutal up close, short reach.',
     color: '#4fd8c8', glow: '#7af0e2',
@@ -238,10 +281,15 @@ export const ENEMIES = {
     desc: 'Fast and heavy. Punishes thin defences.',
     color: '#ffa03c', size: 0.40,
   },
+  // S18 swarm rule: pack units pay by HP at Hack's rate (0.30 Tokens per HP),
+  // reward = round(health × 0.3). They spawn in numbers, so paying per pick
+  // overfilled the wallet (Ledger: ~52% of kill income came from Slice and
+  // Stinger). Was: slice 10 (14 before S17), stinger 40.
   slice: {
-    name: 'Slice', ev: 60, health: 30, speed: SPEED.fast, reward: 10,
+    name: 'Slice', ev: 60, health: 30, speed: SPEED.fast, reward: 9,
     desc: 'Pack runner. Cheap, fast, arrives in groups.',
     pack: { min: 5, max: 8 },
+    spawnCooldown: 5,   // S20: min seconds between Slice packs (from the last one out); stops packs landing back to back (F6)
     color: '#ffd9c4', size: 0.26,
   },
   // --- M2 Phase 2B; in the L3–L5 rosters since M4 (E15) -------------------------
@@ -258,7 +306,7 @@ export const ENEMIES = {
     color: '#ff8a1f', size: 0.30,
   },
   stinger: {
-    name: 'Stinger', ev: 90, health: 70, speed: SPEED.fast, reward: 40,
+    name: 'Stinger', ev: 90, health: 70, speed: SPEED.fast, reward: 21,   // S18 swarm rule (see Slice)
     // detour: routes via a random off-path cell partway down the board, then
     // takes the optimal path to the base. min/max = fraction of the start
     // cell's distance-to-exit where the detour cell may sit; extraSteps = how

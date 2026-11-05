@@ -10,6 +10,8 @@
 // All timings live in TIMING so they're easy to tune.
 
 import { AVATAR_DIR, DEFAULT_AVATAR } from './narrative.js';
+import { ENEMIES } from './config.js';
+import { drawEnemyShape } from './render.js';
 
 const ICONS = 'assets/icons/';
 
@@ -66,6 +68,23 @@ const blueBtn = (label, onTap) => {
   const b = h('button', 'story-btn', label);
   b.addEventListener('click', onTap);
   return b;
+};
+
+// A small canvas with the enemy drawn the way the board draws it.
+const enemyIcon = (type) => {
+  const c = h('canvas', 'an-icon');
+  const css = 30, dpr = window.devicePixelRatio || 1;
+  c.width = c.height = css * dpr;
+  const ctx = c.getContext('2d');
+  const def = ENEMIES[type];
+  if (!def) return c;
+  ctx.scale(dpr, dpr);
+  ctx.translate(css / 2, css / 2);
+  if (type !== 'worm') ctx.scale(1, -1);   // point down, as on the board
+  ctx.shadowColor = def.color;
+  ctx.shadowBlur = 8;
+  drawEnemyShape(ctx, type, css * 0.62, def.color);
+  return c;
 };
 
 export class Story {
@@ -191,7 +210,8 @@ export class Story {
 
   // 2. Archive Record: who the enemies are attacking this run.
   // onStart null = pop-up mode (from the Result screen): Back only, no build-up.
-  showArchive(run, strings, { wallet, onBack, onStart, host = this.root }) {
+  // lost: memories lost this run (from the Result screen's Info button), shown in red.
+  showArchive(run, strings, { wallet, onBack, onStart, host = this.root, lost = [] }) {
     const card = this.card(host, { onBack, wallet });
     card.classList.add('archive');
     const bar = rv(h('div', 'story-bar with-icon'), 'bar');
@@ -208,18 +228,27 @@ export class Story {
     who.appendChild(av);
     const facts = h('div', 'archive-facts');
     const factEls = [rv(h('div', 'archive-name', run.archive.name), 'right')];
-    for (const k of ['bio', 'type', 'description']) if (run.archive[k]) factEls.push(rv(h('div', 'archive-fact', run.archive[k]), 'right'));
+    for (const k of ['bio', 'description'])   // Archive Class (type) is a writing aid, not shown (S18)
+      if (run.archive[k]) factEls.push(rv(h('div', 'archive-fact', run.archive[k]), 'right'));
     facts.append(...factEls);
     who.appendChild(facts);
     body.appendChild(who);
 
-    const memEls = [rv(h('div', 'mem-head', strings.Core_Memory_Heading), 'fade'), rv(paras('mem-text', run.core.text), 'up')];
+    // S20: no headings. ★ marks the Core Memory, • each Secondary Memory;
+    // memories lost this run are red. (\uFE0E keeps ★ a text glyph, not an emoji.)
+    const memory = (m, mark) => {
+      const el = rv(paras('mem-text' + (lost.includes(m) ? ' gone' : ''), m.text), 'up');
+      const first = el.querySelector('p');
+      if (first) first.prepend(h('span', 'mem-mark', mark));
+      return el;
+    };
+    const memEls = [memory(run.core, '\u2605\uFE0E')];
+    body.appendChild(memEls[0]);
     if (run.secondary.length) {
-      memEls.push(rv(h('div', 'mem-head', strings.Secondary_Memories_Heading), 'fade'));
       const list = h('div', 'mem-list');
-      for (const m of run.secondary) { const p = rv(paras('mem-text', m.text), 'up'); list.appendChild(p); memEls.push(p); }
-      body.append(memEls[0], memEls[1], memEls[2], list);
-    } else body.append(...memEls);
+      for (const m of run.secondary) { const el = memory(m, '\u2022'); list.appendChild(el); memEls.push(el); }
+      body.appendChild(list);
+    }
     card.appendChild(body);
 
     const tail = [];
@@ -280,7 +309,7 @@ export class Story {
     if (r.run) {
       const av = rv(h('div', 'result-avatar'), 'pop');
       av.appendChild(avatar(r.run.archive, 'archive-avatar'));
-      av.appendChild(iconBtn('Icon_Info.png', 'result-info', 'Archive details', () => this.showArchivePopup(r.run, strings)));
+      av.appendChild(iconBtn('Icon_Info.png', 'result-info', 'Archive details', () => this.showArchivePopup(r.run, strings, r.lost)));
       body.appendChild(av);
       const lost = h('div', 'result-lost');
       const head = rv(h('div', 'mem-head', strings.Memories_Lost_Heading), 'fade');
@@ -307,7 +336,56 @@ export class Story {
     this.later(() => btn.classList.add('in'), t + 400);
   }
 
-  showArchivePopup(run, strings) {
-    this.showArchive(run, strings, { host: this.popup, onBack: () => this.popup.classList.remove('show') });
+  // 4. Analytics Report (S20): the level in numbers, after the Result screen.
+  // stats from game.js newLevelStats(); labels from Screen Text (narrative.js).
+  showAnalytics(stats, strings, { wallet, onContinue }) {
+    const card = this.card(this.root, { wallet });
+    card.classList.add('analytics');
+    card.appendChild(h('div', 'story-spacer'));
+    const bar = rv(h('div', 'story-bar'), 'bar');
+    const label = rv(h('span', '', strings.Analytics_Heading), 'fade');
+    bar.appendChild(label);
+    card.appendChild(bar);
+
+    const body = h('div', 'story-body');
+    const order = [bar, label];
+    const row = (name, value, cls = '') => {
+      const r = rv(h('div', 'an-row ' + cls), 'up');
+      r.append(h('span', 'an-label', name), h('span', 'an-value', String(value)));
+      body.appendChild(r);
+      order.push(r);
+      return r;
+    };
+    row(strings.Analytics_Built, stats.built);
+    row(strings.Analytics_Lost, stats.lost);
+    row(strings.Analytics_Upgraded, stats.upgraded);
+    row(strings.Analytics_Earned, stats.earned, 'tok');
+    row(strings.Analytics_Spent, stats.spent, 'tok');
+    row(strings.Analytics_Kills, stats.kills);
+
+    const leaks = Object.entries(stats.leakedBy).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    const head = rv(h('div', 'mem-head an-head', strings.Analytics_Cores_Lost), 'fade');
+    body.appendChild(head);
+    order.push(head);
+    if (leaks.length === 0) {
+      const none = rv(h('div', 'an-none', strings.Analytics_No_Cores_Lost), 'fade');
+      body.appendChild(none);
+      order.push(none);
+    }
+    for (const [type, n] of leaks) {
+      const r = rv(h('div', 'an-leak'), 'up');
+      r.append(enemyIcon(type), h('span', 'an-label', ENEMIES[type]?.name ?? type), h('span', 'an-value', `\u00D7${n}`));
+      body.appendChild(r);
+      order.push(r);
+    }
+    card.appendChild(body);
+    const btn = rv(blueBtn('Continue', onContinue), 'up');
+    card.appendChild(btn);
+    const t = this.seq(order, TIMING.cardIn, TIMING.step);
+    this.later(() => btn.classList.add('in'), t + 300);
+  }
+
+  showArchivePopup(run, strings, lost = []) {
+    this.showArchive(run, strings, { host: this.popup, lost, onBack: () => this.popup.classList.remove('show') });
   }
 }

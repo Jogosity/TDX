@@ -50,6 +50,8 @@ export const DEFAULT_OPTS = {
   baseBias: 0,               // >0 weights path near the base (killing ground); 2 = strongly
   screen: 4,                 // Threaders built first before the mix starts
   standoff: null,            // { ddos: 2.6 } = keep that tower ≥ 2.6 cells from the route
+  upgrade: false,            // spend spare Tokens upgrading guns once no build cell is left
+  upgradeAt: 0,              // >0: from this many guns, upgrade before building (fewer, better towers)
   noDrain: false,            // Virus keeps HP/speed/reward but loses its attack (walks like a Hack)
   viewport: [390, 844],      // phone portrait; speeds are in cells so this only sets px scale
 };
@@ -101,7 +103,7 @@ function runWave(s, opts, bot) {
   }
   const m = {
     wave: s.waveIndex + 1, tokensStart: s.tokens + s.spentThisBreak, towersStart: s.towers.length,
-    spawned: {}, kills: 0, leaks: 0, leakedBy: {}, towersLostDrain: 0, tokensLostDrain: 0, towersLostCrash: 0,
+    spawned: {}, kills: 0, leaks: 0, leakedBy: {}, towersLostDrain: 0, tokensLostDrain: 0, towersLostCrash: 0, upgrades: 0,
     drain: 0, duration: 0, timedOut: false, vaultsBuilt: 0, rebuilds: 0,
   };
   s.metrics = m;
@@ -177,7 +179,7 @@ function runWave(s, opts, bot) {
 // Lives may go negative: the run continues so every wave gets measured, and
 // lostAtWave records where the real game would have ended.
 export function runLevel(levelIndex, userOpts = {}) {
-  const opts = { ...DEFAULT_OPTS, ...userOpts };
+  const opts = { ...DEFAULT_OPTS, ...(BOT_PRESETS[userOpts.bot] ?? {}), ...userOpts };
   const realRandom = Math.random;
   Math.random = mulberry32(opts.seed * 7919 + levelIndex * 104729);
   const virusAttack = ENEMIES.virus.attack;
@@ -195,7 +197,8 @@ export function runLevel(levelIndex, userOpts = {}) {
       waves.push(m);
       if (lostAtWave === null && s.lives <= 0) lostAtWave = m.wave;
     }
-    return { level: levelIndex + 1, seed: opts.seed, lostAtWave, livesEnd: s.lives, waves };
+    const towers = s.towers.filter(t => t.alive).map(t => ({ type: t.type, tier: t.tier }));
+    return { level: levelIndex + 1, seed: opts.seed, lostAtWave, livesEnd: s.lives, waves, towers };
   } finally {
     Math.random = realRandom;
     ENEMIES.virus.attack = virusAttack;
@@ -261,8 +264,17 @@ function bestVaultCell(s) {
 // Jogo's killing ground (E9): dense Threaders, DDOS artillery, a Compressor or two.
 export const KILLING_GROUND = ['threader', 'threader', 'ddos', 'threader', 'threader', 'compressor'];
 
+// The 'skilled' bot's build order once its first `screen` guns (all Threaders)
+// are down: Threaders stay the backbone, specialists mixed in.
+export const DIVERSE = ['threader', 'defrag', 'threader', 'compressor', 'threader', 'pulse', 'threader', 'ddos'];
+
 const greedyBuild = (s, opts, reserve = 0) => {
-  let builds = s.towers.length;
+  let builds = s.towers.length, full = false;
+  // upgradeAt: once this many guns are down, upgrades come before new builds
+  // (Jogo's style: fewer, better towers, cells left empty)
+  if (opts.upgrade && opts.upgradeAt && s.towers.filter(t => t.weapon).length >= opts.upgradeAt) {
+    upgradeBusiest(s, reserve);
+  }
   for (let guard = 0; guard < 60; guard++) {
     const wantVault = opts.vaultShare > 0 && s.towers.some(t => t.weapon)
       && s.towers.filter(t => t.type === 'vault').length < Math.floor((builds + 1) * opts.vaultShare);
@@ -270,16 +282,59 @@ const greedyBuild = (s, opts, reserve = 0) => {
     if (!wantVault && opts.mix) {
       // cycle the mix by guns built so far; save up for the next big tower
       const guns = s.towers.filter(t => t.weapon).length;
-      if (guns >= opts.screen) type = opts.mix[(guns - opts.screen) % opts.mix.length];
+      if (guns >= opts.screen && s.waveIndex >= (opts.mixFromWave ?? 0)) type = opts.mix[(guns - opts.screen) % opts.mix.length];
     }
+    // Saving up for a specialist holds up Threaders. mixSave false: never save;
+    // 'calm': save only while nothing has leaked this wave (under pressure, guns now)
+    const save = opts.mixSave === 'calm' ? !(s.metrics?.leaks > 0) : opts.mixSave !== false;
+    if (type !== 'threader' && !wantVault && !save && s.tokens - reserve < TOWERS[type].cost) type = 'threader';
     if (s.tokens - reserve < TOWERS[type].cost) break;
     const range = TOWERS[type].weapon ? WEAPONS[TOWERS[type].weapon].range : 0;
     const standoff = opts.standoff?.[type] ?? 0;
-    const cell = type === 'vault' ? bestVaultCell(s) : bestGunCell(s, range, opts.baseBias, standoff);
-    if (!cell) break;
+    let cell = type === 'vault' ? bestVaultCell(s) : bestGunCell(s, range, opts.baseBias, standoff);
+    // no spot for this specialist (e.g. DDOS stand-off): build a Threader instead
+    if (!cell && opts.mix && type !== 'threader' && type !== 'vault') {
+      type = 'threader';
+      cell = bestGunCell(s, WEAPONS.machineGun.range, opts.baseBias, 0);
+    }
+    if (!cell) { full = true; break; }
     buildTower(s, type, cell);
     builds++;
   }
+  if (opts.upgrade && full) upgradeBusiest(s, reserve);
+};
+
+// Upgrades (S19): with nowhere left to build, spare Tokens go into the gun
+// that covers the most path, preferring lower tiers (path covered ÷ tier).
+// All tiers are assumed unlocked: a skilled player's ceiling.
+function upgradeBusiest(s, reserve = 0) {
+  const pts = pathSamples(s);
+  const px = cellPx(s.grid);
+  for (let guard = 0; guard < 20; guard++) {
+    let best = null, bestScore = 0;
+    for (const t of s.towers) {
+      if (!t.alive || !t.weapon || t.upgrading || t.upgradeCost === null) continue;
+      if (s.tokens - reserve < t.upgradeCost) continue;
+      const r = t.weapon.range * px;
+      const cover = pts.filter(p => Math.hypot(p.x - t.x, p.y - t.y) <= r).length;
+      const score = cover / t.tier;
+      if (score > bestScore) { bestScore = score; best = t; }
+    }
+    if (!best) return;
+    s.tokens -= best.upgradeCost;
+    best.spent += best.upgradeCost;
+    best.beginUpgrade();
+    s.metrics.upgrades++;
+  }
+}
+
+// Option presets a bot brings with it (a caller's own options still win).
+const BOT_PRESETS = {
+  // reactive + Threaders only for 8 guns and waves 1–3, then the DIVERSE mix
+  // without saving up (a specialist goes in when it's affordable; saving
+  // starved the early waves: L5 5/8 lost vs 1/8) + DDOS kept back from the
+  // route, as Jogo plays it + upgrades once the board is full (S19)
+  skilled: { mix: DIVERSE, screen: 8, mixFromWave: 3, mixSave: 'calm', standoff: { ddos: 2.6 }, upgrade: true },
 };
 
 const BOTS = {
@@ -354,6 +409,9 @@ const BOTS = {
     },
   },
 };
+// 'skilled' (S19): the reactive bot's Virus reflexes; its BOT_PRESETS entry
+// adds the DIVERSE build mix and upgrades.
+BOTS.skilled = BOTS.reactive;
 
 // Where a walking Virus will first find a tower within its scan range:
 // { tower, before: a route point ~1 cell earlier } or null.

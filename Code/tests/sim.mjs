@@ -1,14 +1,14 @@
 // TDX headless sanity tests — run: node tests/sim.mjs (from Code/)
 import { HexGrid } from '../js/hex.js';
 import { PathField, smoothPath } from '../js/path.js';
-import { Tower, cellPx } from '../js/entities.js';
+import { Tower, Projectile, cellPx } from '../js/entities.js';
 import { WaveController } from '../js/waves.js';
-import { LEVELS, WEAPONS, TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, PLAYER, VERSION, BLUEPRINTS } from '../js/config.js';
+import { LEVELS, WEAPONS, TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, PLAYER, VERSION, BLUEPRINTS, tierStat } from '../js/config.js';
 import { Enemy } from '../js/entities.js';
 import { loadSave } from '../js/save.js';
 import { relocateBlockers, crashShuffle } from '../js/crash.js';
 import { placeBlockers, placeLockouts, placeExtraSpawns, rollBlueprints } from '../js/board.js';
-import { parseCSV, parseContent, archivePool, rollRun, memoriesLost, DEFAULT_AVATAR, CONTENT_FILES } from '../js/narrative.js';
+import { parseCSV, parseContent, archivePool, rollRun, memoriesLost, DEFAULT_AVATAR, CONTENT_FILES, SECONDARY_SHOWN } from '../js/narrative.js';
 import { pickWeighted } from '../js/waves.js';
 
 let pass = 0, fail = 0;
@@ -126,15 +126,85 @@ check('wave terminates', t < 600);
   check('towers build at Tier 1', t.tier === 1);
   check('tier 2 costs 2x base', t.upgradeCost === TOWERS.threader.cost * UPGRADE.costMult[0]);
   t.applyTier(4);
-  check('tier 4 hits the configured stat targets',
-    t.maxHealth === TOWERS.threader.tier4.health && t.weapon.damage === TOWERS.threader.tier4.damage);
+  const T = TOWERS.threader, W = WEAPONS[T.weapon];
+  check('tier 4 hits the stat targets',
+    t.maxHealth === Math.round(tierStat(T, 'health', T.health, 4)) && t.weapon.damage === tierStat(T, 'damage', W.damage, 4));
   const t2 = new Tower('threader', cell);
   t2.applyTier(2);
-  const midHealth = TOWERS.threader.health + (TOWERS.threader.tier4.health - TOWERS.threader.health) / 3;
-  check('intermediate tiers interpolate linearly', Math.abs(t2.maxHealth - midHealth) <= 1);
+  // F4 value rule: the Tier 2 upgrade adds valueShare of a new tower's damage per Token
+  const perToken1 = W.damage / T.cost, perTokenUp = (t2.weapon.damage - W.damage) / (T.cost * UPGRADE.costMult[0]);
+  check('upgrade value rule: Tier 2 gives valueShare of Tier 1 value per Token', Math.abs(perTokenUp / perToken1 - UPGRADE.valueShare) < 1e-9);
+  const t3 = new Tower('threader', cell);
+  t3.applyTier(3);
+  check('rule tiers rise in equal steps', Math.abs((t3.weapon.damage - t2.weapon.damage) - (t2.weapon.damage - W.damage)) < 1e-9);
+  check('tier4 towers (Deleter) still interpolate to their target',
+    tierStat(TOWERS.deleter, 'damage', WEAPONS.sniperRifle.damage, 4) === TOWERS.deleter.tier4.damage);
   t2.spent += 200; // one upgrade bought
   check('sell refund covers upgrade spend', t2.sellValue === Math.floor((100 + 200) * PLAYER.sellRefund));
   cell.tower = null;
+}
+
+// --- Special Powers (S19): one per tower, from its tier ------------------------
+{
+  const cell = { x: 0, y: 0 };
+  const fake = (x, y, remain) => ({ x, y, alive: true, path: { total: remain }, dist: 0 });
+  // Threader Self Defence: an enemy draining it beats "First" targeting
+  const t1 = new Tower('threader', cell), t2 = new Tower('threader', cell);
+  t2.applyTier(2);
+  const first = fake(30, 0, 10), drainer = fake(20, 0, 500);
+  for (const t of [t1, t2]) { t.attacker = drainer; t.attackedFor = 1; }
+  check('Self Defence: off at Tier 1 (First targeting)', t1.pickTarget([first, drainer], 1000) === first);
+  check('Self Defence: Tier 2 Threader targets the enemy draining it', t2.pickTarget([first, drainer], 1000) === drainer);
+  t2.attackedFor = 0;
+  check('Self Defence: back to First once the attack stops', t2.pickTarget([first, drainer], 1000) === first);
+  // Vault Self Repair: heals only after `delay` quiet seconds
+  const v = new Tower('vault', cell);
+  v.upgrading = null; v.applyTier(2);
+  const P = TOWERS.vault.power;
+  v.health = 50; v.sinceHit = 0;
+  for (let i = 0; i < (P.delay - 0.5) * 10; i++) v.update(0.1, [], [], grid);
+  check('Self Repair: no healing inside the delay', v.health === 50);
+  for (let i = 0; i < 20; i++) v.update(0.1, [], [], grid);
+  check('Self Repair: heals perSec × max HP a second after the delay', v.health > 50 && v.health <= 50 + v.maxHealth * P.perSec * 1.6 + 1e-9);
+  const v1 = new Tower('vault', cell); v1.upgrading = null; v1.health = 50; v1.sinceHit = 99;
+  v1.update(1, [], [], grid);
+  check('Self Repair: off at Tier 1', v1.health === 50);
+  // Defrag AntiVirus: +50% damage to Viruses and Bugs from Tier 2
+  const d1 = new Tower('defrag', cell), d2 = new Tower('defrag', cell);
+  d2.applyTier(2);
+  const A = TOWERS.defrag.power;
+  const p1 = new Projectile(d1, null, 0, grid), p2 = new Projectile(d2, null, 0, grid);
+  check('AntiVirus: off at Tier 1', p1.dmgVs({ type: 'virus' }) === d1.weapon.damage);
+  check('AntiVirus: Tier 2 Defrag does ×mult to Virus and Bug, normal to others',
+    p2.dmgVs({ type: 'virus' }) === d2.weapon.damage * A.mult && p2.dmgVs({ type: 'bug' }) === d2.weapon.damage * A.mult &&
+    p2.dmgVs({ type: 'hack' }) === d2.weapon.damage);
+  // Boost powers: DDOS blast ×2 from Tier 3, Pulse fire rate ×1.5 at Tier 4
+  const dd = new Tower('ddos', cell); dd.applyTier(2); const s2 = dd.weapon.splashRadius; dd.applyTier(3);
+  check('Cluster Bomb: DDOS splash ×2 from Tier 3',
+    s2 === WEAPONS.grenadeLauncher.splashRadius && dd.weapon.splashRadius === s2 * TOWERS.ddos.power.mult &&
+    new Projectile(dd, { x: 1, y: 1 }, 0, grid).splashPx === dd.weapon.splashRadius * cellPx(grid));
+  const pu = new Tower('pulse', cell); pu.applyTier(3); const f3 = pu.weapon.fireRate; pu.applyTier(4);
+  check('Overclock: Pulse fire rate ×1.5 at Tier 4 only',
+    f3 === WEAPONS.pulseRifle.fireRate && pu.weapon.fireRate === f3 * TOWERS.pulse.power.mult);
+  // Compressor Long Choke: +50% range from Tier 3, and it sticks through later tiers
+  const base = WEAPONS.pumpShotgun.range, c = new Tower('compressor', cell);
+  c.applyTier(2); const r2 = c.weapon.range;
+  c.applyTier(3); const r3 = c.weapon.range;
+  c.applyTier(4);
+  check('Long Choke: Compressor range ×1.5 from Tier 3 only',
+    r2 === base && Math.abs(r3 - base * TOWERS.compressor.power.mult) < 1e-9 && c.weapon.range === r3);
+}
+
+// --- Sim 'skilled' bot (S19): diversifies and upgrades ------------------------
+{
+  const { runLevel } = await import('../tools/sim/engine.js');
+  const r = runLevel(4, { seed: 2, bot: 'skilled' });
+  const types = new Set(r.towers.map(t => t.type));
+  const ups = r.waves.reduce((a, w) => a + w.upgrades, 0);
+  check('skilled bot: builds specialists alongside Threaders', types.has('threader') && [...types].some(t => !['threader', 'vault'].includes(t)));
+  check('skilled bot: upgrades towers once the board is full', ups > 0 && r.towers.some(t => t.tier > 1));
+  const live = runLevel(4, { seed: 2, bot: 'live' });
+  check('live bot unchanged: Threaders only, Tier 1', live.towers.every(t => t.type === 'threader' && t.tier === 1));
 }
 
 // --- tower roster: DDOS restored, Defrag added, Limiter hidden ----------------
@@ -363,7 +433,8 @@ check('every level defines a starting budget',
   const t4 = new Tower('compressor', cell);
   t4.applyTier(4);
   check('new towers hit their tier-4 targets',
-    t4.weapon.damage === TOWERS.compressor.tier4.damage && t4.maxHealth === TOWERS.compressor.tier4.health);
+    t4.weapon.damage === tierStat(TOWERS.compressor, 'damage', WEAPONS.pumpShotgun.damage, 4) &&
+    t4.maxHealth === Math.round(tierStat(TOWERS.compressor, 'health', TOWERS.compressor.health, 4)));
 }
 
 // --- Milestone 2 Phase 2B: Bug (tower hunter) + Stinger (detour raider) --------
@@ -516,9 +587,9 @@ check('every level defines a starting budget',
   for (let i = 0; i < 50; i++) {
     const run = rollRun(c, 3);
     const last = run.lossOrder[run.lossOrder.length - 1];
-    if (run.archive.name !== 'Ann' || run.secondary.length !== 3 || new Set(run.secondary).size !== 3 || last !== run.core || run.lossOrder.length !== 4) ok = false;
+    if (run.archive.name !== 'Ann' || run.secondary.length !== SECONDARY_SHOWN || new Set(run.secondary).size !== SECONDARY_SHOWN || last !== run.core || run.lossOrder.length !== SECONDARY_SHOWN + 1) ok = false;
   }
-  check('run: 1 Core + 3 Secondary from the level\'s Class, Core Memory lost last', ok);
+  check(`run: 1 Core + ${SECONDARY_SHOWN} Secondary from the level\'s Class, Core Memory lost last`, ok);
   check('run: no usable archive → no run', rollRun(parseContent({}), 1) === null);
 
   const lost = [0, 3, 4, 7, 8, 11, 12, 13, 14, 15].map(n => memoriesLost(n, 15, 4)).join();

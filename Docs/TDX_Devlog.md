@@ -3,6 +3,51 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 20 — 2026-11-05 — Slice pack cooldown
+
+Slices had no spawn cooldown, so packs landed back to back and the MAV squeeze favoured them (cheapest unit). `ENEMIES.slice.spawnCooldown: 5`. Skilled bot L5–L10: Slice share of spawns 55% → 35%, spawns −12%, L10 losses 6/8 → 2/8; Stingers take up some of the room (20% → 30%). Detail: `Docs/TDX_AI_Balance_Notes.md` F6.
+
+Later: Jogo's L5–L10 playtest (fewer, better, upgraded towers) + skilled bot on all levels, with a new `upgradeAt` option (upgrade before building from N guns). Upgrading now matches building with 20–40% fewer guns; losses sit in the openings (L3, L8, L9), survivors coast late. F7.
+
+Then F8: L6/L7 enemy health 2.1/2.2, L8/L9/L10 starting Tokens 950/1000/1000 (skilled-bot sweeps). Finding: enemy delta bites the opening more than the late game; the curve's end handle is the late-game dial.
+
+### UX (evening)
+- Archive screen: Core/Secondary headings gone; ★ before the Core Memory, • before each Secondary Memory. From the Result screen's Info button, memories lost this run show in rgb(247, 0, 93).
+- New **Analytics Report** screen after the Result screen (wins and losses): towers built / lost / upgraded, Tokens earned (kills + sells) / spent (builds + upgrades), enemies destroyed, and Cores lost by enemy with the board's own enemy icons. Counts live in `state.stats` (`newLevelStats()` in `js/game.js`); labels are Screen Text strings (`Analytics_*`) so the CSV can reword them.
+- HUD: "Level N" above "Wave x/y".
+
+## Session 19 — 2026-11-04 — Upgrade values from one rule
+
+Upgrades were poor value: each step returned ~20% of a new tower's HP/s per Token at T2, near zero at T4 (detail: `Docs/TDX_AI_Balance_Notes.md` F4). New rule: the T2 upgrade gives `UPGRADE.valueShare` (0.6) of the tower's T1 value per Token, with damage and HP rising in equal steps (×4.6 at T4). Threader, Pulse, Defrag, Compressor and DDOS use `upgrade: 'rule'`; Deleter, Vault and Limiter keep `tier4`. `tierStat()` lives in `config.js`, shared by the game, the Ledger and the tests. Tests 107 passing (3 new: the value rule, equal steps, tier4 towers still interpolate).
+
+### Special Powers (one per tower, from a tier)
+Data in `TOWERS[x].power` (`js/config.js`); behaviour in `js/entities.js` (`hasPower`). The upgrade button shows ★ and the power name on the tier that switches it on.
+- Threader, T2, **Self Defence**: targets an enemy draining it before anything else.
+- Vault, T2, **Self Repair**: regains 10% of max HP per second after 5 s without a hit.
+- Compressor, T3, **Long Choke**: +50% range (the range ring grows with it).
+- Defrag, T2, **AntiVirus**: +50% damage to Viruses and Bugs.
+- DDOS, T3, **Cluster Bomb**: grenade blast radius ×2.
+- Pulse, T4, **Overclock**: +50% fire rate.
+Range, blast and fire rate share one `kind: 'boost'` (a weapon stat × mult). The Ledger's tower table doesn't count powers yet. Tests 118 passing (11 new).
+
+### Sim: 'skilled' bot (F5)
+New bot = reactive + Threaders first, specialists from W4 (`DIVERSE` mix, saving up only while nothing has leaked) + upgrades once the board is full. `node tools/sim/run.mjs` now includes it. L5–L10: late waves held far better (L8 late leaks gone); remaining losses are mostly the wave 2 cliff on L6/L8/L9/L10, and L10's late waves. Tests 121 passing.
+
+## Session 18 — 2026-11-03 — Token income pies, swarm rewards by rule
+
+### A. Ledger: Token income
+New section after Level summary: a donut per level (starting Tokens + kill income by enemy type), click to select, with a table for the selected level. Campaign Pressure now in two rows of 5.
+
+### B. Swarm rewards from a rule (detail in `Docs/TDX_AI_Balance_Notes.md`, F1)
+The pies showed Slice + Stinger earning ~52% of kill income from L3 on. Of three pricing rules anchored on Hack (per EV, per HP, per threat), only per HP cuts swarm pay. Applied to swarm units only: **Slice 10 → 9, Stinger 40 → 21** (`reward = round(health × 0.3)`); Bug stays 30. Ledger: income −17%, swarm share 52% → 41%. Sim: banked Tokens before the last wave roughly halve; L5 gets harder (watch it in play). Tests 105 passing.
+
+### C. Playtest follow-ups
+- L5 lost on W10 with the new rewards: its HP multiplier made every reward worth less (F2). L5 `enemyDelta.health` 1.75 → 1.6. Jogo then cleared it with 3 of 15 cores left.
+- Tower value bench with the real combat code (F3): Defrag damage 7 → 30 (T4 77), Compressor 7 → 10 (T4 21), Deleter price 700 → 200. DDOS left alone (its value is range). Tests 105 passing.
+
+### D. Archive screen: less text
+Archive Class line removed (still in the CSV for writing); 3 memories shown instead of 4 (1 Core + 2 Secondary, `SECONDARY_SHOWN` in `js/narrative.js`); a blank line between Secondary Memories. With 3 memories and 15 Cores, one is lost per 5 Cores lost.
+
 ## Session 17 — 2026-11-02 — M5 "Elm" starts: Level Editor, 10 levels
 
 Plan agreed with Jogo: `Docs/TDX_M5_Plan.md` ("build it, we'll iterate faster that way"). Jogo commits via GitHub Desktop.

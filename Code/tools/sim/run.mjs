@@ -12,6 +12,7 @@ export const SCENARIOS = {
   'drain':          {},
   'drain + Vaults': { vaultShare: 0.2 },
   'drain, reactive': { bot: 'reactive' },   // E8: Vault-and-rebuild loop
+  'skilled':        { bot: 'skilled' },     // S19: reactive + specialist mix + upgrades
 };
 
 const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;

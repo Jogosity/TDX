@@ -101,13 +101,12 @@ export const chord = (range, offset) => 2 * Math.sqrt(Math.max(0, range * range 
 
 export function towerAtTier(cfg, key, tier, knobs, a) {
   const t = cfg.TOWERS[key];
-  const lerp = (base, t4) => (t4 === undefined ? base : base + (t4 - base) * (tier - 1) / (cfg.UPGRADE.maxTier - 1));
   let cost = t.cost;
   for (let i = 0; i < tier - 1; i++) cost += t.cost * cfg.UPGRADE.costMult[i];
-  const out = { key, name: t.name, tier, cost, health: Math.round(lerp(t.health, t.tier4?.health)) };
+  const out = { key, name: t.name, tier, cost, health: Math.round(cfg.tierStat(t, 'health', t.health, tier)) };
   if (!t.weapon) return { ...out, dps: 0, dpsNominal: 0, range: 0, reach: 0, dpsPer100: 0, passPer100: 0 };
   const w = cfg.WEAPONS[t.weapon];
-  const damage = lerp(w.damage, t.tier4?.damage) * knobs.towerDamage;
+  const damage = cfg.tierStat(t, 'damage', w.damage, tier) * knobs.towerDamage;
   const d = weaponDps(w, damage, a);
   const reach = chord(w.range, a.pathOffset) * a.mazeFactor;   // cells of route in range
   return {

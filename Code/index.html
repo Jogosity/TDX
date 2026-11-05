@@ -45,6 +45,8 @@
     z-index: 5;
   }
   #wave-label { font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+  #hud-level-wave { display: flex; flex-direction: column; line-height: 1.15; }
+  #level-label { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.75; }   /* S20 */
   #lives-pill {
     background: linear-gradient(180deg, #ffc73c, #ff9210);
     color: #201000;
@@ -474,7 +476,11 @@
   .mem-head { font-size: 15px; font-weight: 800; margin-top: 14px; }
   .mem-text { font-size: 14px; line-height: 1.3; }
   .mem-text.dim { opacity: 0.6; }
-  .mem-list .mem-text + .mem-text { margin-top: 10px; }
+  .mem-list .mem-text + .mem-text { margin-top: 1.3em; }   /* a blank line between memories (S18) */
+  .archive .story-body > .mem-text { margin-top: 14px; }    /* S20: headings gone; space above the Core Memory */
+  .mem-list { margin-top: 1.3em; }
+  .mem-mark { margin-right: 0.4em; }
+  .mem-text.gone { color: rgb(247, 0, 93); }                  /* lost this run (Result → Info) */
   .story-warning {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     color: var(--teal);
@@ -533,6 +539,17 @@
   .result-lost .mem-head { font-size: 17px; }
   .result-lost .mem-text { font-size: 16px; margin-top: 8px; }
   .result-note { font-size: 12px; opacity: 0.7; margin-top: 14px; }
+  /* Analytics Report (S20) */
+  .analytics .story-body { margin-top: 18px; }
+  .an-row, .an-leak { display: flex; align-items: center; gap: 10px; font-size: 17px; padding: 5px 0; }
+  .an-row { border-bottom: 1px solid rgba(0, 255, 204, 0.18); }
+  .an-label { flex: 1; }
+  .an-value { font-weight: 800; font-variant-numeric: tabular-nums; }
+  .an-row.tok .an-value { color: var(--green); }
+  .an-head { margin-top: 18px; margin-bottom: 4px; }
+  .an-leak .an-value { color: rgb(247, 0, 93); }
+  .an-icon { position: static; width: 30px; height: 30px; flex: none; }
+  .an-none { font-size: 15px; opacity: 0.6; }
   /* --- story timing (M4): sequential reveals, see story.js TIMING ---------- */
   .rv { transition: opacity 0.35s ease-out, transform 0.4s cubic-bezier(.2, .8, .2, 1); }
   .rv:not(.in) { opacity: 0; }
@@ -610,7 +627,10 @@
   <div id="hud">
     <div id="hud-left">
       <button id="cog-btn">⚙️</button>
-      <div id="wave-label">Wave 1</div>
+      <div id="hud-level-wave">
+        <div id="level-label">Level 1</div>
+        <div id="wave-label">Wave 1</div>
+      </div>
     </div>
     <div id="lives-pill">15/15</div>
     <div id="currencies">

@@ -64,6 +64,7 @@
   aside details > summary { font-size: 15px; font-weight: 600; color: var(--ink); }
   .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .tile .d { color: var(--ink-2); font-size: 12px; }
+  .tile svg.donut { height: auto; aspect-ratio: 1; max-width: 150px; margin: 6px auto 0; }
   .chart { position: relative; width: 100%; }
   .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
   .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--ink-2); margin: 0 0 8px; }
@@ -116,7 +117,7 @@
   <main>
     <section class="panel">
       <h2>Campaign pressure</h2>
-      <p class="sub">Every wave of every level, left to right. Pressure is how hard the wave pushes against the firepower your Tokens can buy, with the Virus tax taken off. Above 1.0 the defence can't keep up and enemies leak. The dashed line is the target curve (set per level in the Level Editor). Shaded columns are waves with Viruses: the darker, the more of them.</p>
+      <p class="sub">Every wave of every level, left to right, five levels per row (all rows share one scale). Pressure is how hard the wave pushes against the firepower your Tokens can buy, with the Virus tax taken off. Above 1.0 the defence can't keep up and enemies leak. The dashed line is the target curve (set per level in the Level Editor). Shaded columns are waves with Viruses: the darker, the more of them.</p>
       <label class="toggle"><input type="checkbox" id="showParts"> Show the parts (throughput, tank, burst)</label>
       <div class="legend" id="campLegend"></div>
       <div class="chart" id="campaign"></div>
@@ -126,6 +127,14 @@
       <h2>Level summary</h2>
       <p class="sub">One card per level: its pressure (solid) against the target (dashed), and a verdict. Click a card to look at that level below.</p>
       <div class="tiles" id="tiles"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Token income</h2>
+      <p class="sub">Where a level's Tokens come from: the starting budget plus the reward for every enemy killed, assuming the player kills everything (the Ledger's expected enemy counts × each enemy's reward). The middle shows the level's total. Hover a slice for numbers; click a ring to look at that level.</p>
+      <div class="legend" id="incLegend"></div>
+      <div class="tiles" id="income"></div>
+      <div class="scroll" id="incomeTable" style="margin-top:12px"></div>
     </section>
 
     <section class="panel">
@@ -171,6 +180,7 @@
         <li><b>Burst pressure</b> = a full field of enemies (MAV) ÷ the damage your towers deal while it crosses the board. More entry points split your towers across routes (the "Entry split" assumption). Throughput is the average; burst is the peak, which is what a cold start on a short board feels like.</li>
         <li><b>Virus tax</b> = Tokens of towers each Virus costs you: towers it drains plus the Vaults you build to stop it. Measured by the sim's reactive bot (about 110 per Virus at damage 10). Half is taken off your firepower in the wave it arrives, all of it from the next wave on.</li>
         <li><b>Target curve</b>: per level a start and end pressure (set in the Level Editor, stored in <code>js/levels.js</code>), a straight climb between, and a dip on the wave after the middle one. The game never reads it.</li>
+        <li><b>Token income</b>: starting Tokens plus expected kills × reward per enemy, per level. It's what a player who kills everything earns; leaks and the Virus tax aren't taken off.</li>
         <li><b>Level summary verdict</b>: the level's average pressure minus the target's average. More than 0.1 below = <i>Too easy</i>, more than 0.1 above = <i>Too hard</i>, otherwise <i>On target</i>. "Off by" is the average distance from the curve, wave by wave, so a level can be on target on average but the wrong shape.</li>
         <li><b>Calibration</b>: how the ledger models a player. Build tower, grenade and pellet hit rates, tower distance and maze factor are hand guesses; Virus tax and Entry split were measured with the sim (E13, E7).</li>
         <li><b>Fill</b>: time to fill = MAV ÷ EV spawned per second. Full-field HP = the HP that MAV's worth of this wave's mix carries. Time to clear = full-field HP ÷ your DPS at that wave. A wave whose whole budget is below MAV never fills.</li>
@@ -233,7 +243,7 @@ document.getElementById('resetCalib').addEventListener('click', () => {
   buildCalibration(); update();
 });
 document.getElementById('showParts').addEventListener('change', () => drawCampaign());
-function setLevel(li) { level = li; drawTiles(); drawLevel(); drawFill(); }
+function setLevel(li) { level = li; drawTiles(); drawIncome(); drawLevel(); drawFill(); }
 
 // ---------------------------------------------------------------- tooltip
 const tip = document.getElementById('tip');
@@ -285,31 +295,51 @@ function legend(id, items) {
 }
 
 // ---------------------------------------------------------------- campaign chart
+// One row per PER_ROW levels (10 levels side by side were unreadable), all
+// rows on the same pressure scale so they compare at a glance.
+const PER_ROW = 5;
 function drawCampaign() {
   const host = document.getElementById('campaign'); host.innerHTML = '';
   const parts = document.getElementById('showParts').checked;
-  const rows = ledger.flatMap(l => l.waves);
-  const W = 1000, H = 300, m = { l: 40, r: 14, t: 14, b: 36 };
-  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Pressure per wave across all levels' }, host);
   const cap = 3;
   const peakOf = r => parts ? Math.max(r.pressure, r.target, r.throughput, r.tank, r.burst) : Math.max(r.pressure, r.target);
-  const yMax = Math.min(cap, niceMax(Math.max(1.2, ...rows.map(r => Math.min(cap, peakOf(r))))));
+  const all = ledger.flatMap(l => l.waves);
+  const yMax = Math.min(cap, niceMax(Math.max(1.2, ...all.map(r => Math.min(cap, peakOf(r))))));
+  const vMax = Math.max(1, ...all.map(r => r.viruses));
+  const vCol = enemyColor('virus');
+  const PARTS = [['throughput', '--s1', 'Throughput'], ['tank', '--s4', 'Tank'], ['burst', '--s2', 'Burst']];
+  for (let first = 0; first < ledger.length; first += PER_ROW) {
+    drawCampaignRow(host, ledger.slice(first, first + PER_ROW), { parts, yMax, vMax, vCol, PARTS });
+  }
+  legend('campLegend', [
+    [css('--accent'), 'Pressure', true], [css('--ink-2'), 'Target', true],
+    ...(parts ? PARTS.map(([, col, label]) => [css(col), label, true]) : []),
+    [vCol, 'Waves with Viruses'],
+  ]);
+}
+
+function drawCampaignRow(host, levels, { parts, yMax, vMax, vCol, PARTS }) {
+  const rows = levels.flatMap(l => l.waves);
+  const W = 1000, H = 240, m = { l: 40, r: 14, t: 14, b: 36 };
+  const wrap = document.createElement('div');
+  wrap.style.marginBottom = '14px';
+  host.appendChild(wrap);
+  const first = levels[0].index, last = levels[levels.length - 1].index;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Pressure per wave, levels ${first + 1} to ${last + 1}` }, wrap);
   const n = rows.length;
   const colW = (W - m.l - m.r) / n;
   const x = i => m.l + (i + 0.5) * colW;
   const y = v => H - m.b - (Math.min(v, yMax) / yMax) * (H - m.t - m.b);
   // level bands
   let i0 = 0;
-  ledger.forEach((l, li) => {
+  levels.forEach(l => {
     const xa = m.l + i0 * colW, xb = m.l + (i0 + l.waves.length) * colW;
-    if (li % 2 === 0) el('rect', { x: xa, y: m.t, width: xb - xa, height: H - m.t - m.b, fill: 'rgba(255,255,255,0.025)' }, svg);
+    if (l.index % 2 === 0) el('rect', { x: xa, y: m.t, width: xb - xa, height: H - m.t - m.b, fill: 'rgba(255,255,255,0.025)' }, svg);
     const t = el('text', { x: (xa + xb) / 2, y: H - 8, 'text-anchor': 'middle', class: 'lbl' }, svg);
-    t.textContent = `L${li + 1}`;
+    t.textContent = `L${l.index + 1}`;
     i0 += l.waves.length;
   });
-  // Virus columns: darker = more Viruses
-  const vMax = Math.max(1, ...rows.map(r => r.viruses));
-  const vCol = enemyColor('virus');
+  // Virus columns: darker = more Viruses (same scale on every row)
   rows.forEach((r, i) => {
     if (r.viruses > 0.05) el('rect', { x: m.l + i * colW + 1, y: m.t, width: colW - 2, height: H - m.t - m.b, fill: vCol, 'fill-opacity': 0.08 + 0.22 * r.viruses / vMax }, svg);
   });
@@ -320,21 +350,15 @@ function drawCampaign() {
   el('text', { x: W - m.r - 4, y: y(1) - 6, 'text-anchor': 'end', fill: '#ff8a80' }, svg).textContent = 'Break point: leaks above here';
   const path = (key, attrs) => {
     let off = 0;
-    for (const l of ledger) {   // separate segment per level — they don't connect
+    for (const l of levels) {   // separate segment per level — they don't connect
       const d = l.waves.map((r, j) => `${j ? 'L' : 'M'}${x(off + j).toFixed(1)},${y(r[key]).toFixed(1)}`).join('');
       el('path', { d, fill: 'none', 'stroke-linejoin': 'round', ...attrs }, svg);
       off += l.waves.length;
     }
   };
   path('target', { stroke: css('--ink-2'), 'stroke-width': 2, 'stroke-dasharray': '6 5', opacity: 0.85 });
-  const PARTS = [['throughput', '--s1', 'Throughput'], ['tank', '--s4', 'Tank'], ['burst', '--s2', 'Burst']];
   if (parts) for (const [key, col] of PARTS) path(key, { stroke: css(col), 'stroke-width': 1.5, opacity: 0.9 });
   path('pressure', { stroke: css('--accent'), 'stroke-width': 3 });
-  legend('campLegend', [
-    [css('--accent'), 'Pressure', true], [css('--ink-2'), 'Target', true],
-    ...(parts ? PARTS.map(([, col, label]) => [css(col), label, true]) : []),
-    [vCol, 'Waves with Viruses'],
-  ]);
   // hover
   const cross = el('line', { y1: m.t, y2: H - m.b, stroke: css('--axis'), 'stroke-width': 1, visibility: 'hidden' }, svg);
   const dot = el('circle', { r: 5, fill: css('--accent'), stroke: css('--surface'), 'stroke-width': 2, visibility: 'hidden' }, svg);
@@ -393,6 +417,76 @@ function drawTiles() {
       </div>`;
   }).join('');
   host.querySelectorAll('.tile').forEach(t => t.addEventListener('click', () => setLevel(+t.dataset.l)));
+}
+
+// ---------------------------------------------------------------- token income
+// Tokens a level pays out, by source: starting budget + kills × reward.
+function incomeOf(l) {
+  const Lv = C.LEVELS[l.index];
+  const kills = {};
+  for (const w of l.waves) for (const k in w.byType) kills[k] = (kills[k] ?? 0) + w.byType[k].count;
+  const parts = Object.keys(C.ENEMIES).filter(k => kills[k] > 0.05).map(k => ({
+    key: k, label: C.ENEMIES[k].name, color: enemyColor(k), kills: kills[k],
+    each: C.ENEMIES[k].reward * DEFAULT_KNOBS.rewards, tokens: kills[k] * C.ENEMIES[k].reward * DEFAULT_KNOBS.rewards,
+  }));
+  parts.unshift({ key: 'start', label: 'Starting Tokens', color: css('--muted'), kills: null, each: null,
+    tokens: Lv.startTokens ?? C.PLAYER.startTokens });
+  const total = parts.reduce((a, p) => a + p.tokens, 0);
+  for (const p of parts) p.share = total ? p.tokens / total : 0;
+  return { parts, total };
+}
+function donut(parts, total, size = 150) {
+  const c = size / 2, R = size / 2 - 4, r = R * 0.58;
+  const svg = el('svg', { viewBox: `0 0 ${size} ${size}`, class: 'donut', role: 'img' });
+  let a0 = -Math.PI / 2;
+  for (const p of parts) {
+    if (p.tokens <= 0) continue;
+    const a1 = a0 + (p.tokens / total) * Math.PI * 2;
+    const big = a1 - a0 > Math.PI ? 1 : 0;
+    const pt = (rad, a) => `${(c + rad * Math.cos(a)).toFixed(2)},${(c + rad * Math.sin(a)).toFixed(2)}`;
+    const d = a1 - a0 >= Math.PI * 2 - 1e-6
+      ? `M${pt(R, 0)}A${R},${R} 0 1 1 ${pt(R, Math.PI)}A${R},${R} 0 1 1 ${pt(R, 0)}M${pt(r, 0)}A${r},${r} 0 1 0 ${pt(r, Math.PI)}A${r},${r} 0 1 0 ${pt(r, 0)}Z`
+      : `M${pt(R, a0)}A${R},${R} 0 ${big} 1 ${pt(R, a1)}L${pt(r, a1)}A${r},${r} 0 ${big} 0 ${pt(r, a0)}Z`;
+    const seg = el('path', { d, fill: p.color, stroke: css('--surface'), 'stroke-width': 1.5 }, svg);
+    seg.addEventListener('mousemove', ev => showTip(ev, p.label, [
+      [p.color, 'Tokens', fmt(p.tokens)], [null, 'Share', `${fmt(p.share * 100)}%`],
+      ...(p.kills != null ? [[null, 'Kills (expected)', fmt(p.kills)], [null, 'Reward each', fmt(p.each)]] : []),
+    ]));
+    seg.addEventListener('mouseleave', hideTip);
+    a0 = a1;
+  }
+  el('text', { x: c, y: c - 2, 'text-anchor': 'middle', class: 'lbl', style: 'font-size:15px;font-weight:600;fill:var(--ink)' }, svg).textContent = fmt(total);
+  el('text', { x: c, y: c + 14, 'text-anchor': 'middle' }, svg).textContent = 'Tokens';
+  return svg;
+}
+function drawIncome() {
+  const host = document.getElementById('income'); host.innerHTML = '';
+  const all = ledger.map(incomeOf);
+  ledger.forEach((l, li) => {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    if (li === level) tile.style.borderColor = 'var(--accent)';
+    const top = all[li].parts.filter(p => p.key !== 'start').sort((a, b) => b.tokens - a.tokens)[0];
+    tile.innerHTML = `<div class="t">L${li + 1} · ${l.name.split(': ')[1] ?? l.name}</div>`;
+    tile.appendChild(donut(all[li].parts, all[li].total));
+    const d = document.createElement('div');
+    d.className = 'd';
+    d.textContent = top ? `Most from ${top.label}: ${fmt(top.share * 100)}%` : '';
+    tile.appendChild(d);
+    tile.addEventListener('click', () => setLevel(li));
+    host.appendChild(tile);
+  });
+  const keys = new Set(all.flatMap(a => a.parts.map(p => p.key)));
+  legend('incLegend', [[css('--muted'), 'Starting Tokens'],
+    ...Object.keys(C.ENEMIES).filter(k => keys.has(k)).map(k => [enemyColor(k), C.ENEMIES[k].name])]);
+  // the selected level in numbers
+  const { parts, total } = all[level];
+  const rows = parts.map(p => `<tr><td><span class="swatch" style="background:${p.color}"></span>${p.label}</td>
+    <td>${p.kills != null ? fmt(p.kills) : '–'}</td><td>${p.each != null ? fmt(p.each) : '–'}</td>
+    <td>${fmt(p.tokens)}</td><td>${fmt(p.share * 100)}%</td></tr>`).join('');
+  document.getElementById('incomeTable').innerHTML = `<table><thead><tr><th>L${level + 1} source</th><th>Kills (expected)</th>
+    <th>Reward each</th><th>Tokens</th><th>Share</th></tr></thead><tbody>${rows}
+    <tr><td><b>Total</b></td><td></td><td></td><td><b>${fmt(total)}</b></td><td>100%</td></tr></tbody></table>`;
 }
 
 // ---------------------------------------------------------------- level chart
@@ -591,7 +685,7 @@ function drawEnemies() {
 function update() {
   ledger = computeLedger(C, DEFAULT_KNOBS, assume);
   towers = towerTable(C, DEFAULT_KNOBS, assume);
-  drawCampaign(); drawTiles(); drawLevel(); drawFill();
+  drawCampaign(); drawTiles(); drawIncome(); drawLevel(); drawFill();
   drawTowerChart('towers', 'dpsPer100', 'DPS per 100 Tokens');
   drawTowerChart('towersPass', 'passPer100', 'Damage per pass per 100 Tokens');
 }

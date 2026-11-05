@@ -22,8 +22,8 @@ export const DEFAULT_AVATAR = 'Av_BLANK_S.png';
 // Screen strings used when Screen Text leaves one out.
 export const DEFAULT_STRINGS = {
   Archive_Heading: 'Archive Record',
-  Core_Memory_Heading: 'Core Memory',
-  Secondary_Memories_Heading: 'Secondary Memories',
+  Core_Memory_Heading: 'Core Memory',          // not shown since S20 (★ marks it); kept so the CSV key stays valid
+  Secondary_Memories_Heading: 'Secondary Memories',   // not shown since S20 (• marks them)
   Archive_Attack_Line1: 'Victim under attack',
   Archive_Attack_Line2: 'Defend their data!',
   Result_Win_Title: 'SUCCESS',
@@ -33,6 +33,15 @@ export const DEFAULT_STRINGS = {
   Result_Cores_Label: 'Cores protected',
   Memories_Lost_Heading: 'Memories Lost:',
   No_Memories_Lost: 'None. Every memory is safe.',
+  Analytics_Heading: 'Analytics Report',
+  Analytics_Built: 'Towers built',
+  Analytics_Lost: 'Towers lost',
+  Analytics_Upgraded: 'Towers upgraded',
+  Analytics_Earned: 'Tokens earned',
+  Analytics_Spent: 'Tokens spent',
+  Analytics_Kills: 'Enemies destroyed',
+  Analytics_Cores_Lost: 'Cores lost to',
+  Analytics_No_Cores_Lost: 'None. Every Core held.',
 };
 
 // RFC 4180 CSV: quoted fields may hold commas, quotes ("") and line breaks.
@@ -163,9 +172,9 @@ const pickN = (arr, n, rand) => {
   return a.slice(0, n);
 };
 
-export const SECONDARY_SHOWN = 3;
+export const SECONDARY_SHOWN = 2;   // S18: was 3 (Jogo: less text on the Archive screen)
 
-// One run's narrative: the archive, its one Core Memory and three Secondary
+// One run's narrative: the archive, its one Core Memory and SECONDARY_SHOWN Secondary
 // Memories (random), plus the order they'll be lost in: Secondaries first in
 // random order, the Core Memory last. Null if there's no usable archive.
 export function rollRun(content, levelNo, rand = Math.random) {
