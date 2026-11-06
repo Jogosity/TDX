@@ -95,8 +95,8 @@ export const WAVE_START_DELAY = 3;
 // Breach Surge (S21). A wave with `surge: x` in levels.js gets a second, extra
 // pack worth x × its TEV. Once `trigger` of the wave's budget has spawned, the
 // alert strip counts down `warning` seconds, then the surge pours from every
-// entry point in turn, one enemy per `gap` seconds, ignoring the MAV cap and
-// spawn cooldowns. The per-wave size is the dial; these are the shape.
+// entry point in turn, one enemy per `gap` seconds, ignoring the MAV cap but
+// not spawn cooldowns (so Viruses can't stack). The per-wave size is the dial; these are the shape.
 // ---------------------------------------------------------------------------
 export const SURGE = {
   trigger: 0.5,     // share of the wave's TEV spawned before the warning starts
@@ -197,10 +197,10 @@ export const TOWERS = {
   // Limiter is OP (wrecks TTK of everything nearby) — pulled from the UI
   // pending a balance rethink, but kept in code. Not in TOWER_ORDER.
   limiter: {
-    name: 'Limiter', cost: 600, health: 80,
+    name: 'Limiter', cost: 900, health: 80,
     weapon: null,
     aura: { type: 'slow', factor: 0.5, range: 1.8 },
-    tier4: { health: 350, slowFactor: 0.3 },
+    tier4: { health: 350, slowFactor: 0.2 },
     blueprints: 12,
     desc: 'Slow-field aura. Enemies inside crawl at half speed.',
     color: '#7f7bff', glow: '#a98bff',
@@ -291,9 +291,9 @@ export const ENEMIES = {
     color: '#ff6a4f', size: 0.40,
   },
   worm: {
-    name: 'Worm', ev: 500, health: 350, speed: SPEED.medium * 1.7, reward: 60,
+    name: 'Worm', ev: 500, health: 400, speed: SPEED.medium * 1.7, reward: 60,
     desc: 'Fast and heavy. Punishes thin defences.',
-    color: '#ffa03c', size: 0.40,
+    color: '#ffa03c', size: 0.50,
   },
   // S18 swarm rule: pack units pay by HP at Hack's rate (0.30 Tokens per HP),
   // reward = round(health × 0.3). They spawn in numbers, so paying per pick
@@ -311,7 +311,7 @@ export const ENEMIES = {
   // reward (90) far above every other unit's Tokens per threat. Repriced so
   // adding them keeps M3's balance. Was: bug ev 170, stinger ev 130 reward 90.
   bug: {
-    name: 'Bug', ev: 110, health: 90, speed: SPEED.fast, reward: 30,
+    name: 'Bug', ev: 110, health: 105, speed: SPEED.fast, reward: 30,
     // hunter: ignores the base, flies straight at a random tower and drains it;
     // retargets randomly when it dies. Only heads for the base once no towers remain.
     hunter: true,
@@ -320,7 +320,7 @@ export const ENEMIES = {
     color: '#ff8a1f', size: 0.30,
   },
   stinger: {
-    name: 'Stinger', ev: 90, health: 70, speed: SPEED.fast, reward: 21,   // S18 swarm rule (see Slice)
+    name: 'Stinger', ev: 90, health: 80, speed: SPEED.fast, reward: 24,   // S18 swarm rule (see Slice)
     // detour: routes via a random off-path cell partway down the board, then
     // takes the optimal path to the base. min/max = fraction of the start
     // cell's distance-to-exit where the detour cell may sit; extraSteps = how

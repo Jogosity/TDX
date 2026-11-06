@@ -125,8 +125,11 @@ export class WaveController {
     } else if (sg.state === 'pour') {
       sg.timer -= dt;
       while (sg.timer <= 0 && sg.state === 'pour') {
-        const pool = this.def.unlocked.filter(k => ENEMIES[k].ev <= sg.ev);
-        if (pool.length === 0) { sg.state = 'over'; break; }
+        const affordable = this.def.unlocked.filter(k => ENEMIES[k].ev <= sg.ev);
+        if (affordable.length === 0) { sg.state = 'over'; break; }
+        // spawn cooldowns still apply: no Virus stacks inside a surge (S21 playtest)
+        const pool = affordable.filter(k => !this.onCooldown(k));
+        if (pool.length === 0) { sg.timer += SURGE.gap; break; }
         const key = pickWeighted(pool, this.def.weights, Math.random);
         const spawns = this.grid.spawns;
         this.spawnOne(key, enemies, spawns[sg.door++ % spawns.length], false);
@@ -140,14 +143,13 @@ export class WaveController {
     return Math.min(...this.def.unlocked.map(k => ENEMIES[k].ev));
   }
 
-  // fromBudget = false for surge spawns: they come from the surge's own pool
-  // and don't start the type's spawn cooldown.
+  // fromBudget = false for surge spawns: they come from the surge's own pool.
   spawnOne(key, enemies, cell = null, fromBudget = true) {
     const spawns = this.grid.spawns;
     cell ??= spawns[Math.floor(Math.random() * spawns.length)];
     enemies.push(new Enemy(key, cell, this.field, this.grid, this.delta));
-    if (!fromBudget) return;
     this.lastSpawn[key] = this.clock;
+    if (!fromBudget) return;
     this.budgetLeft -= ENEMIES[key].ev;
   }
 }

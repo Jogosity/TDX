@@ -98,6 +98,17 @@ check('wave terminates', t < 600);
   check('surge: adds surge × TEV on top of the wave', ev === sdef.tev * (1 + sdef.surge));
   check('surge: ignores the MAV cap', peakEV > sdef.mav);
   check('surge: wave is not complete until the surge is over', sc.surge.state === 'over');
+  // a Virus-heavy surge still respects the Virus spawn cooldown
+  const vdef2 = { tev: 3000, mav: 600, rtv: 300, unlocked: ['hack', 'virus'], weights: { virus: 5 }, spawnInterval: 0.5, surge: 2 };
+  const vl = [], vc2 = new WaveController(vdef2, grid, field, LEVELS[0].enemyDelta);
+  const vt = []; let seen2 = 0, g2 = 0;
+  while (!vc2.isComplete(vl) && g2++ < 40000) {
+    vc2.update(0.05, vl);
+    for (; seen2 < vl.length; seen2++) if (vl[seen2].type === 'virus') vt.push(vc2.clock);
+    for (const e of vl) e.alive = false;   // keep the field empty so MAV never blocks
+  }
+  const vgaps = vt.slice(1).map((x, i) => x - vt[i]);
+  check('surge: Viruses keep their spawn cooldown inside a surge', vt.length >= 3 && vgaps.every(g => g >= ENEMIES.virus.spawnCooldown - 1e-6));
   const plain = new WaveController({ ...sdef, surge: undefined }, grid, field, LEVELS[0].enemyDelta);
   check('surge: waves without one have none', plain.surge === null);
 }

@@ -34,6 +34,12 @@ A wave with `surge: x` in `levels.js` gets an extra x × TEV of enemies. Once ha
 - Sim: works through WaveController unchanged. Sweep in Balance Notes F9. Tests 127 passing (6 new).
 - Applied (Jogo's go-ahead): one surge per level from L4, ~75% through. L4 W8 0.3, L5 W8 0.3, L6 W9 0.5, L7 W9 0.5, L8 W9 0.5, L9 W10 0.3, L10 W12 0.3.
 
+### F. Surge respects spawn cooldowns (Jogo's L8 playtest)
+L8's surge (0.6, Virus weight 1.5) poured a swarm of Viruses that mowed the defence down, and the run never got stable again. Surges ignored spawn cooldowns, so the Virus 4 s cooldown that stops drain stacking didn't apply. Now a surge still ignores MAV but keeps every type's cooldown. Skilled bot on the surge wave, L5–L10: Viruses roughly halve (L8 21 → 11) and towers lost to drain fall 35–65%. New test; 128 passing.
+
+### E. Fix: icons stacked top-left on the Towers and Enemies screens
+A global `canvas { position: absolute; inset: 0 }` rule (meant for the game board) caught every icon canvas, so each one needed its own `position: static` patch (tray, Analytics). The rule now targets `#game-canvas` only and the two patches are gone.
+
 ## Session 20 — 2026-11-05 — Slice pack cooldown
 
 Slices had no spawn cooldown, so packs landed back to back and the MAV squeeze favoured them (cheapest unit). `ENEMIES.slice.spawnCooldown: 5`. Skilled bot L5–L10: Slice share of spawns 55% → 35%, spawns −12%, L10 losses 6/8 → 2/8; Stingers take up some of the room (20% → 30%). Detail: `Docs/TDX_AI_Balance_Notes.md` F6.

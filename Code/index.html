@@ -64,7 +64,8 @@
   #tokens-swatch { background: var(--green); box-shadow: 0 0 8px var(--green); }
   #bits-swatch { background: var(--yellow); transform: rotate(45deg); box-shadow: 0 0 8px var(--yellow); }
   #canvas-wrap { position: relative; flex: 1; min-height: 0; }
-  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  canvas { display: block; }
+  #game-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   #tray {
     /* one row up to 5 towers; beyond that ui.js sets --tray-cols to double-stack */
     display: grid;
@@ -85,7 +86,7 @@
     cursor: pointer;
     font-family: inherit;
   }
-  .tray-btn canvas { position: static; width: 34px; height: 34px; }
+  .tray-btn canvas { width: 34px; height: 34px; }
   .tray-btn .t-name { font-size: 9px; letter-spacing: 0.4px; opacity: 0.85; white-space: nowrap; }
   #tray.stacked { gap: 6px 8px; }
   #tray.stacked .tray-btn { height: 58px; }
@@ -566,7 +567,7 @@
   .an-row.tok .an-value { color: var(--green); }
   .an-head { margin-top: 18px; margin-bottom: 4px; }
   .an-leak .an-value { color: rgb(247, 0, 93); }
-  .an-icon { position: static; width: 30px; height: 30px; flex: none; }
+  .an-icon { width: 30px; height: 30px; flex: none; }
   .an-none { font-size: 15px; opacity: 0.6; }
   /* --- story timing (M4): sequential reveals, see story.js TIMING ---------- */
   .rv { transition: opacity 0.35s ease-out, transform 0.4s cubic-bezier(.2, .8, .2, 1); }

@@ -301,3 +301,24 @@ So per-level balance now has three screwdrivers: **enemy delta** (power across t
 
 **Measurement caveat.** The Sim bots place towers greedily by path coverage and don't plan around CRASH. They feel the firepower ceiling but not the planning, so expect board pressure to read milder in the sims than it plays. This is a known gap for the write-up: the bots can't yet judge placement risk.
 
+## F10 — Jogo's tougher-units pass, before and after (S21, 2026-11-06)
+
+**Change (Jogo).** Worm HP 350 → 400, Bug 90 → 105, Stinger 70 → 80 (reward left at 21; the F1 rule gives 24). Enemy HP × raised: L4 1.5 → 1.6, L6 2.1 → 2.4, L7 2.2 → 2.8, L8 2.0 → 2.95, L9 2.1 → 2.8, L10 2.4 → 3.0. Several levels moved from "Too easy" to "On target" in the editor's Ledger view.
+
+**Method.** Skilled bot, 30 seeds per level, the committed version (surges in) against the working copy.
+
+| Level | Runs lost (before → after) | Cores left | Stinger + Bug leaks per run |
+|---|---|---|---|
+| L1 | 53% → 53% | 2.8 → 2.6 | – |
+| L2 | 0% → 3% | 12.7 → 12.1 | – |
+| L3 | 33% → 37% | 5.5 → 3.7 | 2.5 → 3.2 |
+| L4 | 17% → 27% | 8.8 → 6.5 | 4.0 → 26.5 |
+| L5 | 30% → 63% | 6.0 → 3.2 | 28.2 → 70.8 |
+| L6 | 20% → 60% | 7.7 → 2.6 | 0.7 → 19.1 |
+| L7 | 10% → 60% | 11.0 → 3.5 | 0.4 → 73.3 |
+| L8 | 13% → 83% | 12.2 → 0.7 | 3.3 → 178.0 |
+| L9 | 37% → 87% | 6.8 → 1.3 | 15.0 → 138.3 |
+| L10 | 40% → 90% | 6.0 → 0.9 | 91.1 → 182.5 |
+
+**Finding.** The Stinger and Bug now do real work: from L4 on, they leak 5–50× more than before. Stacked with the late-level HP rises, the sims put L5–L10 well past the bot's limit. The losses spread across the whole level, not just the W1–W2 openings, so this is a power problem, not just an opening problem. Calibration: the bot is harsher than Jogo (it loses 53% of L1 runs, which Jogo clears with 12–14 Cores), so its numbers rank levels rather than predict Jogo's result. The largest single jump is L8 (HP × +48%).
+

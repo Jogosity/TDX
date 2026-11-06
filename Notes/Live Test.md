@@ -23,6 +23,9 @@ With `serve.py` running:
 On your phone (optional): use the Mac’s LAN address in place of localhost, the same way you playtest. For example, [http://192.168.x.x:8000/](http://192.168.x.x:8000/) for the game.
 
 
+**[https://jogosity.github.io/TDX/](https://jogosity.github.io/TDX/)**,
+
+
 **Finish up**
 When you're done, click the Terminal window and press Ctrl+C.
 

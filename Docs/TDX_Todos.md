@@ -95,23 +95,26 @@ Jogo to do all the creative. (lots of design to be done for this MS)
 - [x] NEW - Add a pie chart to the Ledger for each level showing the typical token income from the various enemy types. I want to be able to see where the income is coming from when the balance skews to too easy. (Hypothesis: the swarm attacks reward too highly) - Claude to do on Tuesday mornng. ✅ S18 (Ledger → Token income)
 - [x] Swarm rewards overheating the economy: Slice 9, Stinger 21 by the per-HP rule ✅ S18 (see `TDX_AI_Balance_Notes.md`)
 - [ ] NEW - Stinger and Bug units not doing enough work. Maybe too easy to kill before they have an impact. Jogo to tweak.
-- [ ] Replace the L2–L5 `genWaves` scaffolds with hand-tuned waves; CRASH cost-cap and BP drop rates (from M3).
-- [ ] Work through the "M4 ideas" list at the end of `TDX_M3_Difficulty_Plan.md`: L5's early Virus count, unit EVs (Worms rare, Hacks uncommon), Defrag as an anti-virus tower, targeting rules, Virus behaviour, tower value (DDOS, Compressor, Pulse), the Ledger's Virus spiral, L3 layout.
-- [ ] Look at ebb and flow within waves - perhaps using flow rate and "invisible" sub waves during a single wave.
+- [x] Replace the L2–L5 `genWaves` scaffolds with hand-tuned waves; CRASH cost-cap and BP drop rates (from M3).
+- [x] Work through the "M4 ideas" list at the end of `TDX_M3_Difficulty_Plan.md`: L5's early Virus count, unit EVs (Worms rare, Hacks uncommon), Defrag as an anti-virus tower, targeting rules, Virus behaviour, tower value (DDOS, Compressor, Pulse), the Ledger's Virus spiral, L3 layout.
+- [x] Look at ebb and flow within waves - perhaps using flow rate and "invisible" sub waves during a single wave.
 - [x] Upgrade values from one rule (`UPGRADE.valueShare` 0.6) ✅ S19 (see `TDX_AI_Balance_Notes.md` F4)
 - [x] NEW (S21) - Blueprint spread across 10 levels: same system, but no level without BPs until every tower is unlocked. Now: L4, L7, L9, L10 have empty pools; each tower has one primary level. ✅ S21 (L1–L8 spread, see Devlog)
 - [x] NEW (S21) - Investigate a massive-attack mechanic: an overwhelming "panic moment" wave event. Built as Breach Surge (option 1).
 - [x] NEW (S21) - Place surges per level: one per level from L4, ~75% through, 0.3–0.5. Tune after playtest.
 - [ ] Watch the economy after the F4 upgrade change; revisit upgrade prices (`costMult`) if Tokens run hot or cold.
-- [ ] Expand on Tower Upgrade system - consider "abilities" as an upgrade as well as just firepower. Eg. Threaders can become more defensive of neighbours. DDOs can look for concentrated packs. If this doesn't work, purely numeric boosts is always a solid fallback.
+- [x] Expand on Tower Upgrade system - consider "abilities" as an upgrade as well as just firepower. Eg. Threaders can become more defensive of neighbours. DDOs can look for concentrated packs. If this doesn't work, purely numeric boosts is always a solid fallback.
 - [ ] Return to formal balance management to close Milestone
+- [ ] NEW (S21) - Missing avatar: `Av_OrgStyleB_7_S.png` is referenced in the content CSVs but not in `Code/assets/avatars/`.
+- [ ] Update QuickStart (still at Session 17) before banking v1.05.
+- [x] REMINDER (S21) - Stinger reward: HP is now 80, so the F1 swarm rule gives 24. ✅ S21 set to 24.
 
 
 
 ## M6 - "Goto" (v1.06) - Publishing to Github Pages
-- [ ] Set up a Github page
-- [ ] Get TDX deployed to that page automatically
-- [ ] Add my custom domain (punkarcade.net) to the site. Yes. I do own this!
+- [x] Set up a Github page ✅ S21 (live at https://jogosity.github.io/TDX/)
+- [x] Get TDX deployed to that page automatically ✅ S21 (`.github/workflows/pages.yml` publishes on every push to main)
+- ➜ Moved to backlog (S21): custom domain punkarcade.net.
 
 
 
@@ -120,9 +123,14 @@ Jogo to do all the creative. (lots of design to be done for this MS)
 Last of the main beats: onboarding teaches the *final* systems and depends on tuned difficulty.
 
 - [ ] FTUE / tutorial + new-player difficulty on-ramp.
+	- [ ] Create a new Level 0 for use as the tutorial level.
+	- [ ] Use the existing editor to define a custom shape for the level.
+	- [ ] Create Tutorial Box suite that includes a Text panel, pointer allows and button highlighters. (Screen design to be supplied.)
+	- [ ] Add a new Tutorial section to the Text Table to contain all tutorial text.
+	- [ ] Add a tutorial scripter to the Editor
 - [ ] Sound.
 - [ ] Polish backlog: lateral map asymmetry, effect variants, remaining small items.
-- [ ] Juicy Blueprint pickup FX (bigger collect effect), carried from M2 sign-off via the old M6.
+- [x] Juicy Blueprint pickup FX (bigger collect effect), carried from M2 sign-off via the old M6. ✅ S21 (Blueprint swoop to the tray button)
 
 
 
@@ -134,6 +142,10 @@ After the sim: quest/login rewards feed the economy, so they tune against a bala
 - [ ] Retention Module 4 — Re-engagement: daily logins, quests, BITS hooks.
 - [ ] Retention Module 5 — Collection (secondary).
 
+
+
+## Backlog — low priority (S21)
+- [ ] Add my custom domain (punkarcade.net) to the site. Yes. I do own this!
 
 
 ## Content backlog — ON HOLD (no milestone yet)
