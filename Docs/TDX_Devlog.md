@@ -3,6 +3,37 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 21 — 2026-11-06 — Blueprint spread, massive attack
+
+### A. Blueprint spread over L1–L8
+One new tower unlocks per level from L1 to L5, Deleter at L6–7; drops run to L8, and L9–L10 have none (everything is unlocked by then). Each tower is teased as a secondary or tertiary drop the level before its primary, with a catch-up drop the level after.
+
+| Level | Primary 15% | Secondary 5% | Tertiary 3% |
+|---|---|---|---|
+| L1 | Vault | Defrag | |
+| L2 | Defrag | Vault | DDOS |
+| L3 | DDOS | Defrag | Vault |
+| L4 | Compressor | DDOS | Pulse |
+| L5 | Pulse | Compressor | Deleter |
+| L6 | | Deleter | Pulse |
+| L7 | Deleter | | |
+| L8 | | Deleter | |
+
+Checked with a drop model (Ledger kill counts × drop rates × share of drops tapped, 1,500 runs). Median unlock level at 50% of drops tapped: Vault 1, Defrag 2, DDOS 3, Compressor 4, Pulse 5, Deleter 6. At 30% tapped, 1 player in 10 still lacks Vault or Defrag after L3.
+
+### B. Blueprint pickup swoop
+A tapped Blueprint rises, spins and dives to its tower's tray button (1.0 s, Jogo's call after first try at 0.7 s), which pulses in the tower's colour; then the count toast or TOWER UNLOCKED fires. The save is written at the tap, so nothing is lost mid-flight. `ui.flyBlueprint()`; skipped under reduced motion.
+
+### C. Level Select PLAY button
+BACK (dark) and PLAY (bright cyan, same as the main menu PLAY) now sit side by side under the list. PLAY starts the selected level, which is the latest unlocked one (`game.latestLevelIndex()`); that row gets a 2px cyan outline and glow. Tapping any unlocked row still starts that level.
+
+### D. Breach Surge (massive attack, option 1 of 3)
+A wave with `surge: x` in `levels.js` gets an extra x × TEV of enemies. Once half the wave's TEV has spawned, the alert strip counts down "BREACH DETECTED / Surge in 5…1" and the entry points throb red. Then "BREACH!" fires with a light shake, and the surge pours from every entry point in turn (one enemy per 0.12 s), ignoring MAV and spawn cooldowns. The wave isn't complete until the surge is out and dead. Shape constants: `SURGE` in config.js (trigger 0.5, warning 5 s, gap 0.12 s, editor default 0.3).
+- Editor: click a wave's bar on the Intensity chart to toggle a surge (red stack on the bar); the Surge size knob sets every surge in the level. Validator: 0 < surge ≤ 2.
+- Ledger: the surge adds to the wave's budget and lands on top of a full field in the burst check.
+- Sim: works through WaveController unchanged. Sweep in Balance Notes F9. Tests 127 passing (6 new).
+- Applied (Jogo's go-ahead): one surge per level from L4, ~75% through. L4 W8 0.3, L5 W8 0.3, L6 W9 0.5, L7 W9 0.5, L8 W9 0.5, L9 W10 0.3, L10 W12 0.3.
+
 ## Session 20 — 2026-11-05 — Slice pack cooldown
 
 Slices had no spawn cooldown, so packs landed back to back and the MAV squeeze favoured them (cheapest unit). `ENEMIES.slice.spawnCooldown: 5`. Skilled bot L5–L10: Slice share of spawns 55% → 35%, spawns −12%, L10 losses 6/8 → 2/8; Stingers take up some of the room (20% → 30%). Detail: `Docs/TDX_AI_Balance_Notes.md` F6.

@@ -259,3 +259,45 @@ Skilled bot sweeps on one dial at a time (8 seeds, confirmed at 16). Runs lost /
 **Finding.** Enemy delta is flat across a level, so it bites hardest in the opening, before upgrades are bought; late on, upgrades out-scale it. It's a good dial for overall level difficulty, but a weak one for "survivors coast in the late waves". The targeted dial for that is the curve's end handle (late-wave TEV) in the editor.
 
 **Applied (Jogo's go-ahead).** `js/levels.js`: L6 health 2.1, L7 health 2.2, L8 start 950, L9 start 1000, L10 start 1000. Starting Tokens still rise level to level, so the editor's ordering check stays quiet.
+
+## F9 — Breach Surge: a panic dial that bites without wiping (S21, 2026-11-06)
+
+**Question.** How big can a one-off mid-wave surge be before it stops being a scare and starts deciding the level?
+
+**Method.** Skilled bot, 30 seeds per cell, L4–L10. One surge per level, either at ~75% through the level or on the final wave, sizes 0.2 / 0.3 / 0.5 / 0.8 × that wave's TEV. Measured: runs lost, cores left, leaks on the surge wave.
+
+**Results (surge at ~75%).** Loss rate in percentage points over no surge, and leaks on the surge wave:
+
+| Level | 0.2 | 0.3 | 0.5 | 0.8 |
+|---|---|---|---|---|
+| L4 W8 | +0, 0.3 | +4, 1.2 | +7, 3.4 | +17, 6.6 |
+| L5 W8 | +0, 10.6 | +0, 12.5 | +3, 16.0 | +20, 23.5 |
+| L6 W9 | +0, 0.1 | +0, 0.3 | +7, 1.6 | +10, 3.7 |
+| L7 W9 | +0, 0.1 | +0, 0.3 | +3, 1.1 | +10, 4.0 |
+| L8 W9 | +0, 0.0 | +4, 0.3 | +10, 0.8 | +10, 8.9 |
+| L9 W10 | +3, 5.6 | +7, 6.7 | +10, 8.8 | +27, 17.7 |
+| L10 W12 | +7, 31.4 | +7, 34.5 | +10, 39.1 | +20, 51.1 |
+
+On the final wave the same sizes change the loss rate by 0–7 points: by then a bot that has survived has the guns, and the run ends before the leak bill compounds.
+
+**Finding.** Surge damage is roughly linear up to 0.5 × TEV and turns sharply around 0.8, where the surge's EV alone exceeds the MAV the defence was built for. Mid-level surges cost cores *and* the rebuild economy; last-wave surges mostly just cost cores. So placement is the drama dial and size is the danger dial. A good panic band for a defence built to the curve is 0.3–0.5.
+
+## Method note — a third screwdriver: board pressure (Jogo, S21, 2026-11-06)
+
+Jogo's edit in the editor before the surge work, in his words: "More blockers and Lockouts mean less firepower and high risk from crashes. This adds some oomph to the level and forces a little more planning."
+
+Board as saved (entry points / blockers / lockouts):
+
+| L1 | L2 | L3 | L4 | L5 | L6 | L7 | L8 | L9 | L10 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1/6/0 | 2/5/3 | 2/8/0 | 3/7/4 | 3/10/5 | 3/9/5 | 3/9/5 | 3/10/6 | 3/12/7 | 4/17/10 |
+
+**Why it is a separate dial.** Enemy delta and starting Tokens change the numbers on either side of the fight. Board pressure changes the *space*:
+- **Firepower ceiling.** Blockers and Lockouts remove buildable cells, so the cells that reach a lot of path become scarce. The player can afford more guns than there are good places to put them, which pushes them towards upgrades (F7) over sprawl.
+- **CRASH risk.** More blockers means more of them relocating on each CRASH, so a tower is more likely to be crushed (capped at 2 per crash). Jogo's framing: CRASH is a momentary spike of pressure, not a permanent debuff. The lasting cost of a dense board is the firepower ceiling above; CRASH adds a sharp moment on top of it, which a denser board makes sharper.
+- **Planning.** Entry points split the inflow (a mid-level Breach Surge pours from all of them, F9), and the extra ones move on CRASH, so a maze that works now may not work after the next shuffle.
+
+So per-level balance now has three screwdrivers: **enemy delta** (power across the campaign and the late waves), **starting Tokens** (the opening) and **board pressure** (blockers, lockouts and entry points: how much of the money becomes useful firepower, and how risky each placement is). The Breach Surge (F9) sits on top as a per-wave *drama* dial rather than a difficulty dial.
+
+**Measurement caveat.** The Sim bots place towers greedily by path coverage and don't plan around CRASH. They feel the firepower ceiling but not the planning, so expect board pressure to read milder in the sims than it plays. This is a known gap for the write-up: the bots can't yet judge placement risk.
+

@@ -13,10 +13,11 @@ Wait for `TDX serving ... on http://localhost:8000`, then leave that window open
 
 **Run the Game and Tools (Desktop)**
 To run the game and the ledger themselves, open both in your browser, in separate tabs:
+With `serve.py` running:
 
-- Game: **[http://localhost:8000/](http://localhost:8000/)**
-- Ledger: **[http://localhost:8000/tools/ledger/](http://localhost:8000/tools/ledger/)**
-
+- **Level Editor:** [http://localhost:8000/tools/editor/](http://localhost:8000/tools/editor/)
+- **Ledger:** [http://localhost:8000/tools/ledger/](http://localhost:8000/tools/ledger/)
+- **Game:** [http://localhost:8000/](http://localhost:8000/)
 
 **Run the Game (mobile)** 
 On your phone (optional): use the Mac’s LAN address in place of localhost, the same way you playtest. For example, [http://192.168.x.x:8000/](http://192.168.x.x:8000/) for the game.

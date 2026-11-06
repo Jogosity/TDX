@@ -149,6 +149,9 @@ export class UI {
     this.el.mmTowersBtn.addEventListener('click', () => this.showMenuScreen('mm-towers'));
     this.el.mmEnemiesBtn.addEventListener('click', () => this.showMenuScreen('mm-enemies'));
     this.el.mmLevelsBtn.addEventListener('click', () => this.showMenuScreen('mm-levels'));
+    // Level Select PLAY: plays the selected (latest unlocked) level; tapping a row still works too
+    document.getElementById('mm-levels-play')
+      .addEventListener('click', () => this.game.startRun(this.game.latestLevelIndex()));
     for (const b of document.querySelectorAll('.mm-back')) {
       b.addEventListener('click', () => this.showMenuScreen('mm-home'));
     }
@@ -308,10 +311,11 @@ export class UI {
   buildLevelsScreen() {
     const list = this.el.mmLevelList;
     const unlocked = this.game.save.levelsUnlocked;
+    const selected = this.game.latestLevelIndex();   // what the PLAY button starts
     list.innerHTML = '';
     LEVELS.forEach((lvl, i) => {
       const item = document.createElement('div');
-      item.className = 'mm-item';
+      item.className = i === selected ? 'mm-item selected' : 'mm-item';
       const body = document.createElement('div');
       body.className = 'mi-body';
       const name = document.createElement('div');
@@ -525,10 +529,49 @@ export class UI {
     this.alert('warn', 'WARNING!', `${ENEMIES[enemyType]?.name ?? 'Enemy'} attacking your units`);
   }
 
+  // Breach Surge (S21): one alert per countdown second (each re-pops the strip),
+  // then the breach itself.
+  surgeCountdown(secs) {
+    this.alert('warn', 'BREACH DETECTED', `Surge in ${secs}`, 1.2);
+  }
+
+  surgeBreach() {
+    this.alert('warn', 'BREACH!', 'Every entry point is flooding', 2.6);
+  }
+
   towerUnlocked(type) {
     this.alert('good', 'TOWER UNLOCKED', TOWERS[type].name.toUpperCase(), 3);
     const btn = this.trayBtns[type]?.btn;
-    if (btn) { btn.classList.remove('just-unlocked'); void btn.offsetWidth; btn.classList.add('just-unlocked'); }
+    if (btn) { btn.classList.remove('just-unlocked', 'bp-hit'); void btn.offsetWidth; btn.classList.add('just-unlocked'); }
+  }
+
+  // S21: a collected Blueprint swoops from the board down to its tower's tray
+  // button (rises, then dives), the button pulses, then onArrive runs.
+  // x, y: canvas coordinates of the drop.
+  flyBlueprint(x, y, type, color, onArrive) {
+    const btn = this.trayBtns[type]?.btn;
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (!btn || reduced || !document.body.animate) { onArrive(); return; }
+    const c = this.game.canvas.getBoundingClientRect();
+    const b = btn.getBoundingClientRect();
+    const x0 = c.left + x, y0 = c.top + y;
+    const x1 = b.left + b.width / 2, y1 = b.top + b.height / 2;
+    const fly = document.createElement('div');
+    fly.className = 'bp-fly';
+    fly.style.setProperty('--bp', color);
+    document.body.appendChild(fly);
+    const at = (px, py, s, r) => `translate(${px}px, ${py}px) translate(-50%, -50%) rotate(${r}deg) scale(${s})`;
+    const anim = fly.animate([
+      { transform: at(x0, y0, 1, 45), offset: 0 },
+      { transform: at(x0 + (x1 - x0) * 0.15, y0 - 56, 1.9, 225), offset: 0.35 },
+      { transform: at(x1, y1, 0.7, 405), offset: 1 },
+    ], { duration: 1000, easing: 'cubic-bezier(0.45, 0, 0.25, 1)', fill: 'forwards' });
+    anim.onfinish = () => {
+      fly.remove();
+      btn.style.setProperty('--bp', color);
+      btn.classList.remove('bp-hit'); void btn.offsetWidth; btn.classList.add('bp-hit');
+      onArrive();
+    };
   }
 
   toast(msg) {

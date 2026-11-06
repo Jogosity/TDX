@@ -64,6 +64,7 @@ export function validateLevel(level, index = 0) {
     const W = `W${i + 1}`;
     if (!(w.rtv > 0 && w.rtv < w.mav && w.mav <= w.tev)) err(`${W} needs 0 < RTV < MAV ≤ TEV`);
     if (!(w.spawnInterval > 0)) err(`${W} spawn interval must be above 0`);
+    if (w.surge !== undefined && !(w.surge > 0 && w.surge <= 2)) err(`${W} surge must be above 0 and at most 2 (× TEV)`);
     if (!w.unlocked?.length) err(`${W} has no enemies`);
     else if (!w.unlocked.every(k => ENEMIES[k])) err(`${W} has an unknown enemy`);
     else if (Math.min(...w.unlocked.map(k => ENEMIES[k].ev)) > w.mav) err(`${W}: MAV is below every enemy's EV, nothing can spawn`);

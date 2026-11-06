@@ -7,7 +7,7 @@
 // The MAV/RTV pair creates the sub-wave rhythm: spawning halts at MAV,
 // then kicks back in hard once actives drop under RTV.
 
-import { ENEMIES, WAVE_START_DELAY } from './config.js';
+import { ENEMIES, WAVE_START_DELAY, SURGE } from './config.js';
 import { Enemy } from './entities.js';
 
 // Roster pick: uniform unless the wave carries pick weights (M4 E15), e.g.
@@ -35,6 +35,10 @@ export class WaveController {
     this.done = false;           // budget fully spent
     this.clock = 0;              // seconds since the wave started
     this.lastSpawn = {};         // enemy key → clock time of its last spawn
+    // Breach Surge: wait → warn (countdown) → pour → over. See SURGE in config.
+    this.surge = waveDef.surge > 0
+      ? { state: 'wait', ev: waveDef.tev * waveDef.surge, timer: 0, next: 0 }
+      : null;
   }
 
   // ENEMIES[k].spawnCooldown: minimum seconds between two spawns of that type
@@ -52,11 +56,12 @@ export class WaveController {
 
   // Wave is complete when the budget is spent and the field is clear.
   isComplete(enemies) {
-    return this.done && enemies.every(e => !e.alive);
+    return this.done && (!this.surge || this.surge.state === 'over') && enemies.every(e => !e.alive);
   }
 
   update(dt, enemies) {
     this.clock += dt;
+    if (this.surge) this.updateSurge(dt, enemies);
     if (this.done) return;
     this.spawnTimer -= dt;
     if (this.spawnTimer > 0) return;
@@ -107,14 +112,41 @@ export class WaveController {
     if (this.budgetLeft < this.cheapestEV()) this.done = true;
   }
 
+  updateSurge(dt, enemies) {
+    const sg = this.surge;
+    if (sg.state === 'wait') {
+      if (this.budgetLeft <= this.def.tev * (1 - SURGE.trigger) || this.done) {
+        sg.state = 'warn';
+        sg.timer = SURGE.warning;
+      }
+    } else if (sg.state === 'warn') {
+      sg.timer -= dt;
+      if (sg.timer <= 0) { sg.state = 'pour'; sg.next = 0; sg.door = 0; }
+    } else if (sg.state === 'pour') {
+      sg.timer -= dt;
+      while (sg.timer <= 0 && sg.state === 'pour') {
+        const pool = this.def.unlocked.filter(k => ENEMIES[k].ev <= sg.ev);
+        if (pool.length === 0) { sg.state = 'over'; break; }
+        const key = pickWeighted(pool, this.def.weights, Math.random);
+        const spawns = this.grid.spawns;
+        this.spawnOne(key, enemies, spawns[sg.door++ % spawns.length], false);
+        sg.ev -= ENEMIES[key].ev;
+        sg.timer += SURGE.gap;
+      }
+    }
+  }
+
   cheapestEV() {
     return Math.min(...this.def.unlocked.map(k => ENEMIES[k].ev));
   }
 
-  spawnOne(key, enemies) {
+  // fromBudget = false for surge spawns: they come from the surge's own pool
+  // and don't start the type's spawn cooldown.
+  spawnOne(key, enemies, cell = null, fromBudget = true) {
     const spawns = this.grid.spawns;
-    const cell = spawns[Math.floor(Math.random() * spawns.length)];
+    cell ??= spawns[Math.floor(Math.random() * spawns.length)];
     enemies.push(new Enemy(key, cell, this.field, this.grid, this.delta));
+    if (!fromBudget) return;
     this.lastSpawn[key] = this.clock;
     this.budgetLeft -= ENEMIES[key].ev;
   }

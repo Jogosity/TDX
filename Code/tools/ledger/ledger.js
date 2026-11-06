@@ -133,7 +133,8 @@ export function towerTable(cfg, knobs = DEFAULT_KNOBS, a = DEFAULT_ASSUMPTIONS) 
 // ---------------------------------------------------------------------------
 export function rollWave(cfg, wave, knobs, rand) {
   const E = cfg.ENEMIES;
-  let budget = wave.tev * knobs.waveSize;
+  // a Breach Surge adds its budget on top (S21; it ignores MAV, see burst below)
+  let budget = wave.tev * (1 + (wave.surge ?? 0)) * knobs.waveSize;
   const cheapest = Math.min(...wave.unlocked.map(k => E[k].ev));
   const counts = {};
   let time = 0, events = 0;
@@ -194,7 +195,9 @@ export function waveLedger(cfg, level, wave, knobs, a, rand) {
   const evRate = time > 0 ? ev / time : 0;              // EV spawned per second
   const fills = ev >= wave.mav;                          // a small wave may never reach MAV
   const fillTime = fills && evRate > 0 ? wave.mav / evRate : null;
-  const fullHp = ev > 0 ? Math.min(ev, wave.mav) * (hp / ev) : 0;  // HP on the field at MAV
+  // HP on the field at MAV; a Breach Surge lands on top of a full field
+  const surgeEv = ev * (wave.surge ?? 0) / (1 + (wave.surge ?? 0));
+  const fullHp = ev > 0 ? (Math.min(ev - surgeEv, wave.mav) + surgeEv) * (hp / ev) : 0;
   return { byType, hp, reward, count, spawnTime: time, tank, ev, evRate, fillTime, fullHp };
 }
 

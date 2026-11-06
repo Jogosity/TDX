@@ -99,8 +99,9 @@ Jogo to do all the creative. (lots of design to be done for this MS)
 - [ ] Work through the "M4 ideas" list at the end of `TDX_M3_Difficulty_Plan.md`: L5's early Virus count, unit EVs (Worms rare, Hacks uncommon), Defrag as an anti-virus tower, targeting rules, Virus behaviour, tower value (DDOS, Compressor, Pulse), the Ledger's Virus spiral, L3 layout.
 - [ ] Look at ebb and flow within waves - perhaps using flow rate and "invisible" sub waves during a single wave.
 - [x] Upgrade values from one rule (`UPGRADE.valueShare` 0.6) ✅ S19 (see `TDX_AI_Balance_Notes.md` F4)
-- [ ] NEW (S21) - Blueprint spread across 10 levels: same system, but no level without BPs until every tower is unlocked. Now: L4, L7, L9, L10 have empty pools; each tower has one primary level.
-- [ ] NEW (S21) - Investigate a massive-attack mechanic: an overwhelming "panic moment" wave event. Exploratory; may not work.
+- [x] NEW (S21) - Blueprint spread across 10 levels: same system, but no level without BPs until every tower is unlocked. Now: L4, L7, L9, L10 have empty pools; each tower has one primary level. ✅ S21 (L1–L8 spread, see Devlog)
+- [x] NEW (S21) - Investigate a massive-attack mechanic: an overwhelming "panic moment" wave event. Built as Breach Surge (option 1).
+- [x] NEW (S21) - Place surges per level: one per level from L4, ~75% through, 0.3–0.5. Tune after playtest.
 - [ ] Watch the economy after the F4 upgrade change; revisit upgrade prices (`costMult`) if Tokens run hot or cold.
 - [ ] Expand on Tower Upgrade system - consider "abilities" as an upgrade as well as just firepower. Eg. Threaders can become more defensive of neighbours. DDOs can look for concentrated packs. If this doesn't work, purely numeric boosts is always a solid fallback.
 - [ ] Return to formal balance management to close Milestone

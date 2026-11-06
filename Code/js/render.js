@@ -4,6 +4,13 @@
 import { TOWERS, WEAPONS, GRID, UPGRADE } from './config.js';
 import { cellPx } from './entities.js';
 
+// Blend two #rrggbb colours (t = 0 → a, 1 → b).
+function mix(a, b, t) {
+  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(',')})`;
+}
+
 export const COL = {
   bg: '#050820',
   cellFill: '#0c1434',
@@ -115,12 +122,16 @@ export class Renderer {
     // per-level colour theme (subtle cool variants) merged over the defaults
     const col = { ...COL, ...(state.level?.theme || {}) };
     const s = grid.size * GRID.hexMargin;
+    // Breach Surge: entry points throb red, faster once the surge pours
+    const throb = state.surge
+      ? 0.5 + 0.5 * Math.sin(state.time * (state.surge === 'pour' ? 16 : 7))
+      : 0;
     for (const cell of grid.cells.values()) {
       if (cell.spawn) {
-        ctx.fillStyle = col.spawnFill;
-        ctx.strokeStyle = col.spawnLine;
-        ctx.shadowColor = col.spawnLine;
-        ctx.shadowBlur = 12;
+        ctx.fillStyle = state.surge ? mix(col.spawnFill, '#ff1a68', throb) : col.spawnFill;
+        ctx.strokeStyle = state.surge ? '#ff5c8f' : col.spawnLine;
+        ctx.shadowColor = state.surge ? '#ff1a68' : col.spawnLine;
+        ctx.shadowBlur = 12 + 26 * throb;
       } else if (cell.blocker) {
         ctx.fillStyle = col.blockerFill;
         ctx.strokeStyle = col.blockerLine;

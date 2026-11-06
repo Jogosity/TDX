@@ -147,7 +147,7 @@ export function setRosterLanes(level, lanes) {
 // ---------------------------------------------------------------------------
 const LEVEL_KEYS = ['name', 'grid', 'spawns', 'blockers', 'lockouts', 'startTokens', 'enemyDelta',
   'rewardBits', 'bpPool', 'theme', 'waves', 'design'];
-const WAVE_KEYS = ['tev', 'mav', 'rtv', 'spawnInterval', 'unlocked', 'weights'];
+const WAVE_KEYS = ['tev', 'mav', 'rtv', 'spawnInterval', 'unlocked', 'weights', 'surge'];
 const GRID_KEYS = ['rowWidths', 'spawnCells', 'entryRows', 'entryMinDist'];
 const CURVE_KEYS = ['start', 'mid', 'midAt', 'end', 'points', 'tev', 'mav', 'interval', 'opening'];
 

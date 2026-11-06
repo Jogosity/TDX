@@ -92,6 +92,20 @@ export const BUILD_TIME = 3;
 export const WAVE_START_DELAY = 3;
 
 // ---------------------------------------------------------------------------
+// Breach Surge (S21). A wave with `surge: x` in levels.js gets a second, extra
+// pack worth x × its TEV. Once `trigger` of the wave's budget has spawned, the
+// alert strip counts down `warning` seconds, then the surge pours from every
+// entry point in turn, one enemy per `gap` seconds, ignoring the MAV cap and
+// spawn cooldowns. The per-wave size is the dial; these are the shape.
+// ---------------------------------------------------------------------------
+export const SURGE = {
+  trigger: 0.5,     // share of the wave's TEV spawned before the warning starts
+  warning: 5,       // seconds of countdown
+  gap: 0.12,        // seconds between surge spawns
+  size: 0.3,        // the editor's default size for a new surge wave
+};
+
+// ---------------------------------------------------------------------------
 // CRASH events. Every everyMin–everyMax waves the battlefield resets:
 // all blockers jump to new cells (may crush up to maxTowerKills towers),
 // with screenshake, a glitching CRASH caption and a colour flash.

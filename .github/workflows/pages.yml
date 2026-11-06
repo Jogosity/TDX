@@ -1,0 +1,41 @@
+# Publishes the TDX game to GitHub Pages every time you push to main.
+# Only the playable game goes up: Code/index.html, js/, assets/, content/.
+# The Level Editor, Ledger, tests and serve.py stay local (the editor needs
+# serve.py to save, which GitHub Pages can't run).
+#
+# One-time setup on github.com: repo Settings > Pages > Source: "GitHub Actions".
+name: Publish game to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect the game files
+        run: |
+          mkdir _site
+          cp Code/index.html _site/
+          cp -R Code/js Code/assets Code/content _site/
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

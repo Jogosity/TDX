@@ -48,6 +48,7 @@ class Game {
       baseFlash: 0,
       shake: 0,             // 1 → 0 screenshake envelope
       crashFx: null,        // { t, dur } while the CRASH caption glitches
+      surge: null,          // 'warn' | 'pour' while a Breach Surge runs (entry points pulse)
       time: 0,
       stats: newLevelStats(),   // Analytics Report (S20)
     };
@@ -105,6 +106,7 @@ class Game {
     s.baseFlash = 0;
     s.shake = 0;
     s.crashFx = null;
+    s.surge = null;
     this.wave = null;
     this.pendingCrash = null;
     this.wavesToCrash = this.rollCrashInterval();
@@ -270,14 +272,15 @@ class Game {
         const n = (this.save.blueprints[d.tower] || 0) + 1;
         this.save.blueprints[d.tower] = n;
         this.state.effects.push({ kind: 'death', x: d.x, y: d.y, color: d.color, t: 0, dur: 0.4 });
-        if (n >= def.blueprints && !this.isTowerUnlocked(d.tower)) {
-          this.save.towersUnlocked.push(d.tower);   // instant unlock, mid-game
-          this.ui.towerUnlocked(d.tower);
-        } else {
-          this.ui.toast(`${def.name} Blueprint (${n}/${def.blueprints})`);
-        }
-        writeSave(this.save);
-        this.ui.refresh();
+        const unlocks = n >= def.blueprints && !this.isTowerUnlocked(d.tower);
+        if (unlocks) this.save.towersUnlocked.push(d.tower);   // instant unlock, mid-game
+        writeSave(this.save);                                   // saved now; the UI catches up on landing
+        // S21: the Blueprint swoops down to its tower's tray button, then counts
+        this.ui.flyBlueprint(d.x, d.y, d.tower, d.color, () => {
+          if (unlocks) this.ui.towerUnlocked(d.tower);
+          else this.ui.toast(`${def.name} Blueprint (${n}/${def.blueprints})`);
+          this.ui.refresh();
+        });
         return true;
       }
     }
@@ -409,6 +412,21 @@ class Game {
     } else if (s.phase === 'levelComplete' || s.phase === 'gameOver') {
       window.location.reload(); // fresh boot lands on the main menu
     }
+  }
+
+  // Breach Surge (S21): the alert strip counts down, then shouts as it pours.
+  syncSurge() {
+    const s = this.state, sg = this.wave.surge;
+    const phase = sg && (sg.state === 'warn' || sg.state === 'pour') ? sg.state : null;
+    if (phase === 'warn') {
+      const secs = Math.ceil(sg.timer);
+      if (secs !== this.surgeCount) { this.surgeCount = secs; this.ui.surgeCountdown(secs); }
+    } else if (phase === 'pour' && s.surge !== 'pour') {
+      this.ui.surgeBreach();
+      s.shake = Math.max(s.shake, 0.5);
+    }
+    if (!phase) this.surgeCount = null;
+    s.surge = phase;
   }
 
   onWaveComplete() {
@@ -563,6 +581,7 @@ class Game {
 
     // Debug: spawning can be paused (debug-spawned enemies still arrive)
     if (inWave && !this.spawnPaused) this.wave.update(dt, s.enemies);
+    if (inWave) this.syncSurge();
 
     for (const t of s.towers) t.update(dt, s.enemies, s.projectiles, this.grid);
     this.syncPopup();

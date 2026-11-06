@@ -3,7 +3,7 @@ import { HexGrid } from '../js/hex.js';
 import { PathField, smoothPath } from '../js/path.js';
 import { Tower, Projectile, cellPx } from '../js/entities.js';
 import { WaveController } from '../js/waves.js';
-import { LEVELS, WEAPONS, TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, PLAYER, VERSION, BLUEPRINTS, tierStat } from '../js/config.js';
+import { LEVELS, WEAPONS, TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, PLAYER, VERSION, BLUEPRINTS, SURGE, tierStat } from '../js/config.js';
 import { Enemy } from '../js/entities.js';
 import { loadSave } from '../js/save.js';
 import { relocateBlockers, crashShuffle } from '../js/crash.js';
@@ -75,6 +75,31 @@ check('wave terminates', t < 600);
   }
   const gaps = times.slice(1).map((x, i) => x - times[i]);
   check('Virus spawns respect spawnCooldown', times.length >= 3 && gaps.every(g => g >= ENEMIES.virus.spawnCooldown - 1e-6));
+}
+
+// Breach Surge (S21): warns once half the TEV has spawned, then pours surge × TEV
+// on top, past the MAV cap, round-robin over the entry points.
+{
+  const sdef = { tev: 3000, mav: 600, rtv: 300, unlocked: ['hack'], spawnInterval: 0.5, surge: 0.5 };
+  const list = [];
+  const sc = new WaveController(sdef, grid, field, LEVELS[0].enemyDelta);
+  let warnAt = null, pourAt = null, spentAtWarn = null, peakEV = 0, guard = 0;
+  while (!sc.isComplete(list) && guard++ < 20000) {
+    sc.update(0.05, list);
+    if (sc.surge.state === 'warn' && warnAt == null) { warnAt = sc.clock; spentAtWarn = sdef.tev - sc.budgetLeft; }
+    if (sc.surge.state === 'pour' && pourAt == null) pourAt = sc.clock;
+    peakEV = Math.max(peakEV, sc.activeValue(list));
+    if (sc.surge.state !== 'pour') for (const e of list) e.alive = false;   // hold the field until it pours
+  }
+  const ev = list.reduce((v, e) => v + e.def.ev, 0);
+  check('surge: warns once the trigger share of TEV has spawned',
+    spentAtWarn >= sdef.tev * SURGE.trigger && spentAtWarn < sdef.tev * SURGE.trigger + 2 * ENEMIES.hack.ev);
+  check('surge: pours after the countdown', Math.abs(pourAt - warnAt - SURGE.warning) < 0.11);
+  check('surge: adds surge × TEV on top of the wave', ev === sdef.tev * (1 + sdef.surge));
+  check('surge: ignores the MAV cap', peakEV > sdef.mav);
+  check('surge: wave is not complete until the surge is over', sc.surge.state === 'over');
+  const plain = new WaveController({ ...sdef, surge: undefined }, grid, field, LEVELS[0].enemyDelta);
+  check('surge: waves without one have none', plain.surge === null);
 }
 
 // Virus spread (M3 E14): a second Virus prefers a tower nobody is draining

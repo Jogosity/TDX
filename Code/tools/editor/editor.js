@@ -2,7 +2,7 @@
 // copy of js/levels.js); Save writes it back through serve.py. The game, the
 // Sim, the Ledger and the tests all read that one file.
 
-import { LEVELS, ENEMIES, TOWERS, TOWER_ORDER, BLUEPRINTS, GRID } from '../../js/config.js';
+import { LEVELS, ENEMIES, TOWERS, TOWER_ORDER, BLUEPRINTS, GRID, SURGE } from '../../js/config.js';
 import { COL } from '../../js/render.js';
 import { buildBoard, validateLevels, LIMITS } from './validate.js';
 import { formatLevels } from './format.js';
@@ -166,6 +166,11 @@ function buildKnobs() {
     note: 'Seconds between spawns at zero intensity.' });
   knob(k, { label: 'Spawn gap, peak', value: c.interval[1], min: 0.2, max: 3, step: 0.05, show: v => `${v.toFixed(2)} s`, set: reshape(v => { c.interval[1] = v; }),
     note: 'Seconds between spawns at full intensity.' });
+  // Breach Surge: one size for the level's surge waves (click a bar to add one)
+  const firstSurge = L.waves.find(w => w.surge)?.surge ?? SURGE.size;
+  knob(k, { label: 'Surge size', value: firstSurge, min: 0.05, max: 1, step: 0.05, show: v => `${Math.round(v * 100)}% of TEV`,
+    set: v => { for (const w of L.waves) if (w.surge) w.surge = v; },
+    note: 'Extra enemies in each surge wave (red). Click a wave\u2019s bar to add or remove a surge.' });
   $('opening').checked = !!c.opening;
   // economy
   const e = $('econKnobs'); e.innerHTML = '';
@@ -369,7 +374,7 @@ let curveDrag = null;
 function curveGeom(L) {
   const n = L.waves.length, c = L.design.curve;
   const bw = (CW - CP.l - CP.r) / n;
-  const top = curveTop ?? Math.max(c.tev * 1.15, ...L.waves.map(w => w.tev * 1.08));
+  const top = curveTop ?? Math.max(c.tev * 1.15, ...L.waves.map(w => w.tev * (1 + (w.surge ?? 0)) * 1.08));
   return {
     n, c, bw, top,
     x: i => CP.l + (i + 0.5) * bw,
@@ -389,8 +394,9 @@ function renderCurve() {
   }
   L.waves.forEach((w, i) => {
     const x0 = g.x(i) - g.bw * 0.34, bwid = g.bw * 0.68;
-    const tip = `W${i + 1}\nTEV ${fmt(w.tev)}   MAV ${fmt(w.mav)}   RTV ${fmt(w.rtv)}\nSpawn gap ${w.spawnInterval}s\n${w.unlocked.map(k => ENEMIES[k].name).join(', ')}${w.weights ? `\nWeights ${Object.entries(w.weights).map(([k, v]) => `${ENEMIES[k].name} ×${v}`).join(', ')}` : ''}`;
-    s += `<rect data-tip="${esc(tip)}" x="${x0}" y="${g.y(w.tev)}" width="${bwid}" height="${g.y(0) - g.y(w.tev)}" rx="3" fill="#3987e5" opacity="${c.opening && i === 0 ? 0.55 : 0.85}"/>`;
+    const tip = `W${i + 1}\nTEV ${fmt(w.tev)}   MAV ${fmt(w.mav)}   RTV ${fmt(w.rtv)}\nSpawn gap ${w.spawnInterval}s\n${w.unlocked.map(k => ENEMIES[k].name).join(', ')}${w.weights ? `\nWeights ${Object.entries(w.weights).map(([k, v]) => `${ENEMIES[k].name} ×${v}`).join(', ')}` : ''}${w.surge ? `\nSurge +${fmt(w.tev * w.surge)} (${Math.round(w.surge * 100)}%)` : ''}\nClick to ${w.surge ? 'remove the' : 'add a'} surge`;
+    s += `<rect data-tip="${esc(tip)}" data-surge="${i}" style="cursor:pointer" x="${x0}" y="${g.y(w.tev)}" width="${bwid}" height="${g.y(0) - g.y(w.tev)}" rx="3" fill="#3987e5" opacity="${c.opening && i === 0 ? 0.55 : 0.85}"/>`;
+    if (w.surge) s += `<rect data-tip="${esc(tip)}" data-surge="${i}" style="cursor:pointer" x="${x0}" y="${g.y(w.tev * (1 + w.surge))}" width="${bwid}" height="${g.y(w.tev) - g.y(w.tev * (1 + w.surge))}" rx="3" fill="#ff1a68" opacity="0.85"/>`;
     s += `<line x1="${x0}" x2="${x0 + bwid}" y1="${g.y(w.mav)}" y2="${g.y(w.mav)}" stroke="#ffd9c4" stroke-width="2" pointer-events="none"/>`;
     s += `<text x="${g.x(i)}" y="${CH - 8}" text-anchor="middle">W${i + 1}</text>`;
   });
@@ -440,6 +446,14 @@ curveHost.addEventListener('pointermove', e => {
 const dropCurve = () => { if (!curveDrag) return; curveDrag = null; curveTop = null; end(); renderCurve(); };
 curveHost.addEventListener('pointerup', dropCurve);
 curveHost.addEventListener('pointercancel', dropCurve);
+// a click on a wave's bar toggles its Breach Surge (size: the Surge size knob)
+curveHost.addEventListener('click', e => {
+  const bar = e.target.closest('[data-surge]');
+  if (!bar) return;
+  const L = level(), w = L.waves[+bar.dataset.surge];
+  const size = L.waves.find(x => x.surge)?.surge ?? SURGE.size;
+  edit(() => { if (w.surge) delete w.surge; else w.surge = size; });
+});
 curveHost.addEventListener('dblclick', e => {
   const h = e.target.closest('[data-h]');
   if (!h || h.dataset.h[0] !== 'w') return;

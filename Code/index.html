@@ -288,6 +288,12 @@
     padding: 8px 12px;
     text-align: left;
   }
+  /* the level the Level Select PLAY button starts */
+  .mm-item.selected {
+    border: 2px solid var(--cyan);
+    padding: 7px 11px;   /* keeps the row the same size as 1px rows */
+    box-shadow: 0 0 10px rgba(78, 243, 255, 0.35);
+  }
   .mm-item canvas { width: 34px; height: 34px; flex: 0 0 auto; }
   .mm-item .mi-body { flex: 1; min-width: 0; }
   .mm-item .mi-name { font-size: 13px; font-weight: 700; letter-spacing: 0.5px; }
@@ -398,6 +404,18 @@
   #alert-title { font-size: 17px; font-weight: 800; letter-spacing: 0.5px; }
   #alert-text { font-size: 15px; font-weight: 700; }
   .tray-btn.just-unlocked { animation: tray-unlock 0.6s ease-out 3; }
+  /* S21: Blueprint pickup swooping to its tray button */
+  .bp-fly {
+    position: fixed; left: 0; top: 0; z-index: 60; pointer-events: none;
+    width: 12px; height: 12px;
+    background: var(--bp); border: 1.5px solid #fff;
+    box-shadow: 0 0 14px var(--bp), 0 0 4px #fff;
+  }
+  .tray-btn.bp-hit { animation: bp-hit 0.45s ease-out; }
+  @keyframes bp-hit {
+    0% { transform: scale(1.18); box-shadow: 0 0 22px var(--bp), inset 0 0 12px var(--bp); border-color: var(--bp); }
+    100% { transform: scale(1); }
+  }
   @keyframes tray-unlock {
     0%   { border-color: var(--green); box-shadow: 0 0 18px var(--green); }
     100% { border-color: var(--line); box-shadow: none; }
@@ -682,7 +700,10 @@
     <div class="menu-screen" id="mm-levels">
       <h2>LEVEL SELECT</h2>
       <div id="mm-level-list" class="mm-list"></div>
-      <button class="menu-btn mm-back">BACK</button>
+      <div class="mm-row">
+        <button class="menu-btn mm-back">BACK</button>
+        <button id="mm-levels-play" class="neon-btn">PLAY</button>
+      </div>
     </div>
     <div class="menu-screen" id="mm-towers">
       <h2>TOWERS</h2>
