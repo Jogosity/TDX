@@ -62,7 +62,8 @@ class Game {
     this.narrativeReady = loadNarrative().then((c) => {
       this.narrative = c;
       // levels with no Level_N rows play without a Level Data screen (M5: 10 levels)
-      LEVELS.forEach((_, i) => { if (!c.levels[i + 1]) c.warnings.push(`Levels: no Level_${i + 1} rows yet (its Level Data screen is skipped)`); });
+      // S23: the level number is the index (Level 0 = Tutorial)
+      LEVELS.forEach((_, i) => { if (!c.levels[i]) c.warnings.push(`Levels: no Level_${i} rows yet (its Level Data screen is skipped)`); });
       if (c.warnings.length) console.warn('TDX narrative:', c.warnings);
       return c;
     });
@@ -333,7 +334,7 @@ class Game {
   // Show the Result screen for the current level without playing it.
   async debugPreviewResult(win, lives) {
     const content = await this.narrativeReady;
-    this.run ??= rollRun(content, this.state.levelIndex + 1);
+    this.run ??= rollRun(content, this.state.levelIndex);
     this.state.lives = lives;
     this.state.phase = win ? 'levelComplete' : 'gameOver';
     this.endLevel(win, '(debug preview)');
@@ -374,7 +375,7 @@ class Game {
   // A screen with no content in the CSVs is skipped.
   async startRun(levelIndex = this.latestLevelIndex()) {
     const content = await this.narrativeReady;
-    const levelNo = levelIndex + 1;
+    const levelNo = levelIndex;   // S23: level number = index (0 = Tutorial)
     this.run = rollRun(content, levelNo);
     const wallet = { tokens: LEVELS[levelIndex].startTokens ?? PLAYER.startTokens, bits: this.save.bits };
     const text = content.levels[levelNo];
@@ -404,7 +405,8 @@ class Game {
       const def = s.level.waves[s.waveIndex];
       this.wave = new WaveController(def, this.grid, this.field, s.level.enemyDelta);
       // CRASH cadence: every 3–4 waves, striking shortly after the wave opens
-      if (--this.wavesToCrash <= 0) {
+      // (S23: never in the Tutorial; it stays about the basics)
+      if (!s.level.tutorial && --this.wavesToCrash <= 0) {
         this.pendingCrash = CRASH.leadIn;
         this.wavesToCrash = this.rollCrashInterval();
       }
@@ -445,7 +447,8 @@ class Game {
       writeSave(this.save);
       s.bits = this.save.bits;
       this.ui.refresh();
-      this.endLevel(true, `+${s.level.rewardBits} BITS earned.${unlockNote}`);
+      const bitsNote = s.level.rewardBits ? `+${s.level.rewardBits} BITS earned.` : '';   // Tutorial: no rewards
+      this.endLevel(true, `${bitsNote}${unlockNote}`.trim());
     } else {
       s.phase = 'build';
       this.ui.refresh();

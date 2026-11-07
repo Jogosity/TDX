@@ -41,7 +41,7 @@ export function boardProblems(level, tries = 12) {
 
 export function validateLevel(level, index = 0) {
   const errors = [], warnings = [];
-  const L = `L${index + 1}`;
+  const L = `L${index}`;
   const err = m => errors.push(`${L}: ${m}`), warn = m => warnings.push(`${L}: ${m}`);
 
   if (!level.name?.trim()) err('needs a name');
@@ -80,7 +80,7 @@ export function validateLevels(levels) {
     const r = validateLevel(l, i);
     errors.push(...r.errors);
     warnings.push(...r.warnings);
-    if (i > 0 && l.startTokens < levels[i - 1].startTokens) warnings.push(`L${i + 1}: starts with fewer Tokens than L${i}`);
+    if (i > 0 && !levels[i - 1].tutorial && l.startTokens < levels[i - 1].startTokens) warnings.push(`L${i}: starts with fewer Tokens than L${i - 1}`);
   });
   if (!levels.length) errors.push('needs at least one level');
   // every lockable tower in the tray should drop somewhere

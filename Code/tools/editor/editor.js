@@ -197,7 +197,7 @@ function renderStrip() {
   host.innerHTML = levels.map((L, i) => {
     const [cls, label] = verdictOf(campaign?.[i]);
     return `<div class="card${i === cur ? ' on' : ''}" draggable="true" data-i="${i}">
-      <span class="n">L${i + 1} · ${esc(shortName(L))}</span><span class="pill ${cls}">${label}</span>
+      <span class="n">L${i} · ${esc(shortName(L))}</span><span class="pill ${cls}">${label}</span>
       <span class="m">${L.waves.length} waves · ${L.spawns} entr${L.spawns > 1 ? 'ies' : 'y'} · ${L.grid.rowWidths.length} rows · ${fmt(L.startTokens)} T</span></div>`;
   }).join('');
 }
@@ -228,7 +228,7 @@ strip.addEventListener('drop', e => {
 });
 strip.addEventListener('dragend', () => { dragCard = null; renderStrip(); });
 
-$('addLevel').addEventListener('click', () => edit(() => { levels.splice(cur + 1, 0, blankLevel(cur + 2)); cur++; live = null; buildKnobs(); }));
+$('addLevel').addEventListener('click', () => edit(() => { levels.splice(cur + 1, 0, blankLevel(cur + 1)); cur++; live = null; buildKnobs(); }));
 $('dupLevel').addEventListener('click', () => edit(() => {
   const copy = structuredClone(level()); copy.name += ' copy';
   levels.splice(cur + 1, 0, copy); cur++; live = null; buildKnobs();
@@ -659,14 +659,14 @@ function renderUnlocks() {
       : '<span style="color:var(--muted);font-size:12px">Drop a tower here</span>'}</div>`;
   }).join('');
   const track = unlockTrack();
-  const head = levels.map((_, i) => `<th class="${i === cur ? 'on' : ''}" data-level="${i}" style="cursor:pointer">L${i + 1}</th>`).join('');
+  const head = levels.map((_, i) => `<th class="${i === cur ? 'on' : ''}" data-level="${i}" style="cursor:pointer">L${i}</th>`).join('');
   const body = track.map(t => `<tr><td><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${TOWERS[t.k].color};margin-right:6px"></i>${TOWERS[t.k].name} <span style="color:var(--muted)">(${t.need})</span></td>${t.perLevel.map((p, i) => {
     const cls = i === cur ? 'on' : '';
     const letter = p.slot ? p.slot[0].toUpperCase() : '';
-    if (t.at === i) return `<td class="${cls}" title="~${fmt(p.bp, 1)} Blueprints by the end of L${i + 1}"><span class="u" style="background:${TOWERS[t.k].color}">${letter} ✓</span></td>`;
+    if (t.at === i) return `<td class="${cls}" title="~${fmt(p.bp, 1)} Blueprints by the end of L${i}"><span class="u" style="background:${TOWERS[t.k].color}">${letter} ✓</span></td>`;
     if (t.at != null && i > t.at) return `<td class="${cls}" style="color:var(--muted)">${letter ? `<span title="Already unlocked: this slot drops nothing">${letter}</span>` : ''}</td>`;
     return `<td class="${cls}" title="${p.slot ? `~${fmt(p.bp, 1)} of ${t.need} Blueprints so far` : ''}"><span class="s">${letter}${p.slot && campaign ? ` ${fmt(p.bp, 0)}` : ''}</span></td>`;
-  }).join('')}<td>${t.at != null ? `L${t.at + 1}` : campaign ? '<span style="color:var(--warn)">never</span>' : '…'}</td></tr>`).join('');
+  }).join('')}<td>${t.at != null ? `L${t.at}` : campaign ? '<span style="color:var(--warn)">never</span>' : '…'}</td></tr>`).join('');
   $('track').innerHTML = `<table><thead><tr><th>Tower (BPs)</th>${head}<th>Unlocks</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 const setSlot = (slot, k, from) => edit(() => {

@@ -231,7 +231,7 @@ export function computeLedger(cfg, knobs = DEFAULT_KNOBS, a = DEFAULT_ASSUMPTION
       const burst = dps > 0 ? (w.fullHp * split) / (dps * crossTime) : Infinity;
       const row = {
         ...w, tankUnit: w.tank,
-        level: li, wave: wi, label: `L${li + 1}·W${wi + 1}`,
+        level: li, wave: wi, label: `L${li}·W${wi + 1}`,
         tokens, towers, dps, inflow, window, throughput, tank: tankP, burst, crossTime, viruses, tax,
         pressure: Math.max(throughput, tankP, burst),
         tev: wave.tev * knobs.waveSize, mav: wave.mav, spawnInterval: wave.spawnInterval,

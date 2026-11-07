@@ -40,7 +40,7 @@ const sum = (xs) => xs.reduce((a, b) => a + b, 0);
 
 export function report(li, name, opts, levels, seeds) {
   const r = runScenario(li, { ...opts, levels }, seeds);
-  return `L${li + 1} ${name.padEnd(9)} lost ${String(Math.round(r.lossRate * 100)).padStart(3)}%  lives ${r.livesEnd.toFixed(1).padStart(6)}  leaks ${sum(r.waves.map(w => w.leaks)).toFixed(1).padStart(5)}  towersLostDrain ${sum(r.waves.map(w => w.lostDrain)).toFixed(1).padStart(5)}  viruses ${sum(r.waves.map(w => w.viruses)).toFixed(1).padStart(5)}`;
+  return `L${li} ${name.padEnd(9)} lost ${String(Math.round(r.lossRate * 100)).padStart(3)}%  lives ${r.livesEnd.toFixed(1).padStart(6)}  leaks ${sum(r.waves.map(w => w.leaks)).toFixed(1).padStart(5)}  towersLostDrain ${sum(r.waves.map(w => w.lostDrain)).toFixed(1).padStart(5)}  viruses ${sum(r.waves.map(w => w.viruses)).toFixed(1).padStart(5)}`;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

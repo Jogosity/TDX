@@ -336,7 +336,7 @@ function drawCampaignRow(host, levels, { parts, yMax, vMax, vCol, PARTS }) {
     const xa = m.l + i0 * colW, xb = m.l + (i0 + l.waves.length) * colW;
     if (l.index % 2 === 0) el('rect', { x: xa, y: m.t, width: xb - xa, height: H - m.t - m.b, fill: 'rgba(255,255,255,0.025)' }, svg);
     const t = el('text', { x: (xa + xb) / 2, y: H - 8, 'text-anchor': 'middle', class: 'lbl' }, svg);
-    t.textContent = `L${l.index + 1}`;
+    t.textContent = `L${l.index}`;
     i0 += l.waves.length;
   });
   // Virus columns: darker = more Viruses (same scale on every row)
@@ -410,7 +410,7 @@ function drawTiles() {
     const peak = l.waves.reduce((a, b) => (b.pressure > a.pressure ? b : a));
     const [cls, label] = verdict(l);
     return `<div class="tile" data-l="${li}" style="${li === level ? 'border-color:var(--accent)' : ''}">
-      <div class="t">L${li + 1} · ${l.name.split(': ')[1] ?? l.name}</div>
+      <div class="t">L${li} · ${l.name.split(': ')[1] ?? l.name}</div>
       <div class="v ${cls}">${label}</div>
       ${spark(l)}
       <div class="d">off by ${fmt(l.gap, 2)} avg · hardest W${peak.wave + 1} ${fmt(peak.pressure, 2)}</div>
@@ -467,7 +467,7 @@ function drawIncome() {
     tile.className = 'tile';
     if (li === level) tile.style.borderColor = 'var(--accent)';
     const top = all[li].parts.filter(p => p.key !== 'start').sort((a, b) => b.tokens - a.tokens)[0];
-    tile.innerHTML = `<div class="t">L${li + 1} · ${l.name.split(': ')[1] ?? l.name}</div>`;
+    tile.innerHTML = `<div class="t">L${li} · ${l.name.split(': ')[1] ?? l.name}</div>`;
     tile.appendChild(donut(all[li].parts, all[li].total));
     const d = document.createElement('div');
     d.className = 'd';
@@ -494,7 +494,7 @@ function drawLevel() {
   const L = ledger[level];
   document.getElementById('lvlTitle').textContent = L.name;
   const tabs = document.getElementById('lvlTabs');
-  tabs.innerHTML = ledger.map((l, li) => `<button aria-pressed="${li === level}" data-l="${li}">L${li + 1}</button>`).join('');
+  tabs.innerHTML = ledger.map((l, li) => `<button aria-pressed="${li === level}" data-l="${li}">L${li}</button>`).join('');
   tabs.querySelectorAll('button').forEach(b => b.addEventListener('click', () => setLevel(+b.dataset.l)));
 
   const present = ENEMY_KEYS.filter(k => L.waves.some(w => w.byType[k]?.count > 0));

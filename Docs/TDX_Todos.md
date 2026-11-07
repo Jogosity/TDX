@@ -66,17 +66,17 @@ Last of the main beats: onboarding teaches the *final* systems and depends on tu
 
 
 - [ ] UI/UX improvement to narrative screens
-	- [ ] READY - Add small, pale grey "Data at risk" header above the Data class line on the Archive Details screen (see new screen mockup Archive_Details_Screen-UPDATE_7th_Nov.png)
-	- [ ] READY - Remove the "Victim Under Attack" banner and chevrons from the Archive Details screen.
-	- [ ] READY - Fix max height of Archive details screen to not overflow on iPhone. Add a scroll bar for long text blocks. The Scroll bar should be invisible when not used. (The Tail Feathers data set is particularly long and useful as a test case)
-	- [ ] READY - Increase the granularity in which  Archives as assigned to levels. Initially this will be "Human Early" "Human Late" "Business Early" and "Business Late"- which allows more in depth narratives to be hold over to later in the game.
-	- [ ] READY - Add an "Archive Class" column to the Levels tab, to define what Archive Classes can be used on that level. Later levels can use more than one phases, separated by commas.
+	- [x] READY - Add small, pale grey "Data at risk" header above the Data class line on the Archive Details screen (see new screen mockup Archive_Details_Screen-UPDATE_7th_Nov.png)
+	- [x] READY - Remove the "Victim Under Attack" banner and chevrons from the Archive Details screen.
+	- [x] READY - Fix max height of Archive details screen to not overflow on iPhone. Add a scroll bar for long text blocks. The Scroll bar should be invisible when not used. (The Tail Feathers data set is particularly long and useful as a test case)
+	- [x] READY - Increase the granularity in which  Archives as assigned to levels. Initially this will be "Human Early" "Human Late" "Business Early" and "Business Late"- which allows more in depth narratives to be hold over to later in the game.
+	- [x] READY - Add an "Archive Class" column to the Levels tab, to define what Archive Classes can be used on that level. Later levels can use more than one phases, separated by commas.
 - [ ] TUTORIAL LEVEL
-	- [ ] READY - Create a new Level 0 for use as the tutorial level.
+	- [x] READY - Create a new Level 0 for use as the tutorial level.
 		- [ ] Use the Level 0 description and Tutorial Archive
 	- [ ] READY - Use the existing editor to define a custom shape for the level (Jogo to do this, long and narrow)
-	- [ ] READY - Customise the settings for Tutorial level. Just 3 waves, 500 starting tokens, small TEV and MAV
-	- [ ] The Tutorial level can be played normally, before the formal FTUE is implemented.
+	- [x] READY - Customise the settings for Tutorial level. Just 3 waves, 500 starting tokens, small TEV and MAV
+	- [x] The Tutorial level can be played normally, before the formal FTUE is implemented. ✅ S23
 - [ ] FTUE SEQUENCE
 	- [ ] NOT READY - Create a formal, step-by-step tutorial that directs players what to press and what will happen. Will take place on the new Tutorial map.
 	- [ ] NOT READY - Create Tutorial Box suite that includes a Text panel, pointer allows and button highlighters. (Screen design to be supplied.)

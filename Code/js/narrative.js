@@ -24,8 +24,9 @@ export const DEFAULT_STRINGS = {
   Archive_Heading: 'Archive Record',
   Core_Memory_Heading: 'Core Memory',          // not shown since S20 (★ marks it); kept so the CSV key stays valid
   Secondary_Memories_Heading: 'Secondary Memories',   // not shown since S20 (• marks them)
-  Archive_Attack_Line1: 'Victim under attack',
+  Archive_Attack_Line1: 'Victim under attack',   // not shown since S23 (banner removed); kept so the CSV key stays valid
   Archive_Attack_Line2: 'Defend their data!',
+  Archive_Data_Risk: 'Data at Risk:',           // S23: small grey header above the Sub-Class line
   Result_Win_Title: 'SUCCESS',
   Result_Lose_Title: 'FAILURE',
   Result_Win_Label: 'Archive defended',
@@ -129,8 +130,8 @@ export function parseContent({ archives = '', levels = '', strings = '' } = {}) 
 
   for (const row of table(levels)) {
     const raw = row[LEVEL_COLS.number] ?? '';
-    const n = Number(raw);
-    if (!Number.isInteger(n) || n < 1) { warnings.push(`Levels: "${raw}" in ${LEVEL_COLS.number} isn't a level number`); continue; }
+    const n = Number(raw);   // S23: Level 0 = the Tutorial
+    if (raw === '' || !Number.isInteger(n) || n < 0) { warnings.push(`Levels: "${raw}" in ${LEVEL_COLS.number} isn't a level number`); continue; }
     if (out.levels[n]) { warnings.push(`Levels: Level ${n} has more than one row (the first is used)`); continue; }
     out.levels[n] = {
       label: row[LEVEL_COLS.label] ?? '',
@@ -150,20 +151,27 @@ export function parseContent({ archives = '', levels = '', strings = '' } = {}) 
   const classes = new Set(out.archives.map(a => norm(a.type)));
   for (const [n, lv] of Object.entries(out.levels)) {
     for (const c of lv.classes) if (!classes.has(norm(c))) warnings.push(`Level ${n} draws from Class "${c}", which no archive has`);
+    // S23: a level whose Classes have no Active archive falls back to any archive; flag it
+    if (lv.classes.length && classes.size && !archivePool(out, Number(n), { strict: true }).length)
+      warnings.push(`Level ${n}: no Active archive in ${lv.classes.join(', ')} yet (it borrows from the other Classes)`);
   }
   return out;
 }
 
 const usable = (a) => a.active && a.name && a.core.length > 0;
 
-// Archives that can be picked for a level (1-based level number): Active ones
+// Archives that can be picked for a level (level number; 0 = Tutorial): Active ones
 // of the level's Classes; if the level names none (or none of its Classes has
 // an Active archive yet), any Active archive.
-export function archivePool(content, levelNo) {
+// S23: the Tutorial Class is only ever used by a level that names it, never as a fallback.
+export const TUTORIAL_CLASS = 'tutorial';
+export function archivePool(content, levelNo, { strict = false } = {}) {
   const classes = (content.levels[levelNo]?.classes ?? []).map(norm);
   const all = content.archives.filter(usable);
   const named = all.filter(a => classes.includes(norm(a.type)));
-  return named.length ? named : all;
+  if (named.length || strict) return named;
+  const general = all.filter(a => norm(a.type) !== TUTORIAL_CLASS);
+  return general.length ? general : all;
 }
 
 const pickN = (arr, n, rand) => {

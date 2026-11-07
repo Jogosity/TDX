@@ -29,6 +29,29 @@ Banked by Jogo after the S21 playtests (L1–L4 "better than ever"; L8 "VERY int
 Carried forward to M7 "Fortran" (Onboarding & Presentation): Tutorial level (L0) and FTUE, narrative-screen UX items, Deleter fire light-up, polish backlog. Balance keeps rolling: L8–L10 retests after the surge fix.
 
 ---
+## Session 23 — 2026-11-07 — M7 "Fortran" starts: Archive Record UX, Level 0 (Tutorial)
+
+Plan: `Docs/TDX_M7_Plan.md`. Jogo's calls: Level 0 lives in `levels.js` as LEVELS[0]; new players still boot to the main menu, but PLAY goes straight into the Tutorial until it's cleared; the Tutorial gives **no rewards** (no BITS, no Blueprints) to keep it about learning; it's losable for now.
+
+### A. Archive Record screen (Jogo's 7 Nov mockup)
+- Small grey **"Data at Risk:"** header above the Sub-Class line (Screen Text key `Archive_Data_Risk`, default "Data at Risk:").
+- "Victim under attack" banner and chevrons removed (CSV keys kept so old exports stay valid).
+- The card always fits the screen (min 460px); only the memories scroll, with a soft fade at the bottom edge and a scroll bar that only shows while scrolling. START stays visible. Checked with Tail Feathers at iPhone 13 size.
+
+### B. Archive Classes
+- The finer Classes (Human Early/Late, Business Early/Late) and multi-Class `Level_Archives` were already in Jogo's CSVs. Code side: Level 0 is now a valid row; the **Tutorial** Class is never used as a fallback (it was leaking into L1 and L5); a level whose Classes have no Active archive is flagged in the debug STORY tab (currently L1 Business Early, L5 Organisation).
+
+### C. Level 0: Tutorial
+- `LEVELS[0]` = `Level 0: Tutorial` (`tutorial: true`): 3 waves (TEV 300/600/900, Hack then Hack + Slice), 500 Tokens, 1 entry point, 2 blockers, no Lockouts, no BITS, no Blueprint drops, no CRASH. Placeholder long-narrow board (12 rows, 4–5 wide) for Jogo to reshape in the editor.
+- **Level number = array index** everywhere: narrative lookup, HUD ("Tutorial", then "Level N"), editor/Ledger/Sim labels, validator (the Tokens-order warning skips the Tutorial).
+- **Save v2:** saves from before the Tutorial move up one level (Tutorial counted as cleared). New saves start at 0.
+- **PLAY** goes straight into the Tutorial while `levelsUnlocked === 0`; after that it opens Level Select as before. Level Select hides "+0 BITS"; the Result note drops "+0 BITS earned".
+- Sim: every bot clears the Tutorial with 15/15 Cores.
+- Tests 128 → **136**.
+
+### Next
+Jogo reshapes Level 0 in the editor and playtests. FTUE waits for the Tutorial Box screen designs.
+
 ## Session 21 — 2026-11-06 — Blueprint spread, massive attack
 
 ### A. Blueprint spread over L1–L8

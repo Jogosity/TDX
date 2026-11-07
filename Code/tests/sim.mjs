@@ -14,9 +14,9 @@ import { pickWeighted } from '../js/waves.js';
 let pass = 0, fail = 0;
 const check = (name, cond) => { cond ? pass++ : fail++; console.log(cond ? ' PASS' : ' FAIL', name); };
 
-const grid = new HexGrid();
+const grid = new HexGrid(LEVELS[1].grid);   // S23: LEVELS[0] is the Tutorial; the core checks run on Level 1
 grid.layout(390, 620);
-check('cell count matches row widths', grid.cells.size === LEVELS[0].grid.rowWidths.reduce((a,b)=>a+b,0));
+check('cell count matches row widths', grid.cells.size === LEVELS[1].grid.rowWidths.reduce((a,b)=>a+b,0));
 check('has spawns and exits', grid.spawns.length >= 1 && grid.exits.length >= 1);
 
 // tall-viewport layout: play space shifts down into the spare bottom space
@@ -40,9 +40,9 @@ for (let i = 1; i < row5.length; i++) row5[i].tower = null;
 field.recompute();
 
 // Wave rhythm: big wave, fixed dps, expect MAV halt then RTV resume
-const wdef = LEVELS[0].waves[7];
+const wdef = LEVELS[1].waves[7];
 const enemies = [];
-const wc = new WaveController(wdef, grid, field, LEVELS[0].enemyDelta);
+const wc = new WaveController(wdef, grid, field, LEVELS[1].enemyDelta);
 let t = 0, kills = 0, peak = 0, halted = false, resumed = false;
 while (t < 600 && !(wc.done && enemies.length === 0)) {
   const dt = 0.1; t += dt;
@@ -65,7 +65,7 @@ check('wave terminates', t < 600);
 {
   const vdef = { tev: 6000, mav: 3000, rtv: 1500, unlocked: ['virus', 'hack'], spawnInterval: 0.5 };
   const list = [];
-  const vc = new WaveController(vdef, grid, field, LEVELS[0].enemyDelta);
+  const vc = new WaveController(vdef, grid, field, LEVELS[1].enemyDelta);
   const times = [];
   let seen = 0;
   for (let vt = 0; vt < 120 && !vc.done; vt += 0.1) {
@@ -82,7 +82,7 @@ check('wave terminates', t < 600);
 {
   const sdef = { tev: 3000, mav: 600, rtv: 300, unlocked: ['hack'], spawnInterval: 0.5, surge: 0.5 };
   const list = [];
-  const sc = new WaveController(sdef, grid, field, LEVELS[0].enemyDelta);
+  const sc = new WaveController(sdef, grid, field, LEVELS[1].enemyDelta);
   let warnAt = null, pourAt = null, spentAtWarn = null, peakEV = 0, guard = 0;
   while (!sc.isComplete(list) && guard++ < 20000) {
     sc.update(0.05, list);
@@ -100,7 +100,7 @@ check('wave terminates', t < 600);
   check('surge: wave is not complete until the surge is over', sc.surge.state === 'over');
   // a Virus-heavy surge still respects the Virus spawn cooldown
   const vdef2 = { tev: 3000, mav: 600, rtv: 300, unlocked: ['hack', 'virus'], weights: { virus: 5 }, spawnInterval: 0.5, surge: 2 };
-  const vl = [], vc2 = new WaveController(vdef2, grid, field, LEVELS[0].enemyDelta);
+  const vl = [], vc2 = new WaveController(vdef2, grid, field, LEVELS[1].enemyDelta);
   const vt = []; let seen2 = 0, g2 = 0;
   while (!vc2.isComplete(vl) && g2++ < 40000) {
     vc2.update(0.05, vl);
@@ -109,21 +109,21 @@ check('wave terminates', t < 600);
   }
   const vgaps = vt.slice(1).map((x, i) => x - vt[i]);
   check('surge: Viruses keep their spawn cooldown inside a surge', vt.length >= 3 && vgaps.every(g => g >= ENEMIES.virus.spawnCooldown - 1e-6));
-  const plain = new WaveController({ ...sdef, surge: undefined }, grid, field, LEVELS[0].enemyDelta);
+  const plain = new WaveController({ ...sdef, surge: undefined }, grid, field, LEVELS[1].enemyDelta);
   check('surge: waves without one have none', plain.surge === null);
 }
 
 // Virus spread (M3 E14): a second Virus prefers a tower nobody is draining
 {
   const px = cellPx(grid);
-  const a = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[0].enemyDelta);
-  const b = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[0].enemyDelta);
+  const a = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[1].enemyDelta);
+  const b = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[1].enemyDelta);
   const fake = (dx) => ({ alive: true, x: a.x + dx * px, y: a.y, damage() {} });
   const near = fake(1), far = fake(1.8);
   a.update(0.01, grid, [near, far]);
   b.update(0.01, grid, [near, far]);
   check('second Virus picks an undrained tower', a.attackTarget === near && b.attackTarget === far);
-  const c = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[0].enemyDelta);
+  const c = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[1].enemyDelta);
   c.update(0.01, grid, [near]);
   check('Virus still stacks when every tower in range is taken', c.attackTarget === near);
 }
@@ -288,6 +288,26 @@ check('level bpPool only references real, lockable towers',
   delete globalThis.localStorage;
 }
 
+// S23: Level 0 (Tutorial) — save migration, level data, PLAY routing
+{
+  const mk = (data) => {
+    const store = data ? { 'tdx-save-v1': JSON.stringify(data) } : {};
+    globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
+    const s = loadSave();
+    delete globalThis.localStorage;
+    return s;
+  };
+  check('save: a new player starts on Level 0 (Tutorial), save v2', (() => { const s = mk(null); return s.levelsUnlocked === 0 && s.saveVersion === 2; })());
+  check('save: a pre-Tutorial save moves up one level (Tutorial counts as cleared)',
+    mk({ bits: 3, levelsUnlocked: 0 }).levelsUnlocked === 1 && mk({ levelsUnlocked: 4 }).levelsUnlocked === 5);
+  check('save: a v2 save is left alone', mk({ levelsUnlocked: 0, saveVersion: 2 }).levelsUnlocked === 0
+    && mk({ levelsUnlocked: 3, saveVersion: 2 }).levelsUnlocked === 3);
+  const T = LEVELS[0];
+  check('Level 0 is the Tutorial: 3 waves, 500 Tokens, no BITS, no Blueprints',
+    T.tutorial === true && T.waves.length === 3 && T.startTokens === 500 && T.rewardBits === 0 && Object.keys(T.bpPool).length === 0);
+  check('only Level 0 is a Tutorial', LEVELS.slice(1).every(l => !l.tutorial));
+}
+
 // --- CRASH: blocker relocation invariants --------------------------------------
 {
   const blockerCount = 6;
@@ -401,7 +421,7 @@ check('every level defines a starting budget',
   LEVELS.every(l => Number.isFinite(l.startTokens) && l.startTokens > 0));
 {
   // enemy delta actually scales spawned enemies (health + attack damage)
-  const d = LEVELS[4].enemyDelta;
+  const d = LEVELS[5].enemyDelta;
   const e = new Enemy('hack', grid.spawns[0], field, grid, d);
   check('enemy delta scales spawn health',
     e.maxHealth === Math.round(ENEMIES.hack.health * d.health));
@@ -477,7 +497,7 @@ check('every level defines a starting budget',
 {
   for (const c of grid.cells.values()) { c.blocker = false; c.tower = null; }
   field.recompute();
-  const D = LEVELS[0].enemyDelta;
+  const D = LEVELS[1].enemyDelta;
   const spawn = grid.spawns[0];
 
   // Bug: hunts a far tower (well outside Virus scan range), never walks to base
@@ -619,6 +639,17 @@ check('every level defines a starting budget',
     c.warnings.some(w => w.includes('Bogus_Key')) && c.warnings.some(w => w.includes('Spaceship')) && c.warnings.some(w => w.includes('Di is Active')));
   check('pool: a level draws only Active archives of its Classes', archivePool(c, 1).map(a => a.name).join() === 'Bo');
   check('pool: a level with no Class picks from every Active archive', archivePool(c, 2).map(a => a.name).join() === 'Ann,Bo');
+  {
+    // S23: Level 0 (Tutorial) parses; the Tutorial Class is never a fallback; empty Classes are flagged
+    const tArch = 'Name,Active,Archive Class,Archive Sub-Class,Archive Desc,Core Memory 1\nTut,YES,Tutorial,Sample,Tutorial,t\nEd,YES,Human Early,Memories,Teacher,e\n';
+    const tLv = 'Level_Number,Level_Label,Level_Archives\n0,Tutorial,Tutorial\n1,Archive 001,Business Early\n2,Archive 002,Human Early\n';
+    const t = parseContent({ archives: tArch, levels: tLv });
+    check('content: Level 0 (Tutorial) is a level', t.levels[0]?.label === 'Tutorial' && !t.warnings.some(w => w.includes('"0"')));
+    check('pool: Tutorial draws its own Class; the fallback never picks the Tutorial archive',
+      archivePool(t, 0).map(a => a.name).join() === 'Tut' && archivePool(t, 1).map(a => a.name).join() === 'Ed');
+    check('content: a level whose Classes have no Active archive is flagged',
+      t.warnings.some(w => w.startsWith('Level 1: no Active archive')) && !t.warnings.some(w => w.startsWith('Level 2:')));
+  }
   let ok = true;
   for (let i = 0; i < 50; i++) {
     const run = rollRun(c, 3);
@@ -659,7 +690,7 @@ check('every level defines a starting budget',
   check('every level carries design.curve and design.target', LEVELS.every(l => l.design?.curve && l.design?.target));
 
   // curve → waves: sane numbers, opening rule on wave 1, rosters untouched
-  const L = structuredClone(LEVELS[1]);
+  const L = structuredClone(LEVELS[2]);
   const before = L.waves.map(w => w.unlocked.join());
   delete L.design.curve.points;
   M.applyCurve(L);
@@ -674,12 +705,12 @@ check('every level defines a starting budget',
   check('curve: a pinned wave takes its own intensity', L.waves[3].tev === Math.round(L.design.curve.tev * 0.5 / 100) * 100);
 
   // roster lanes round-trip and rewrite only rosters
-  const R = structuredClone(LEVELS[3]);
+  const R = structuredClone(LEVELS[4]);
   const nums = R.waves.map(w => w.tev).join();
   const lanes = M.rosterLanes(R);
   M.setRosterLanes(R, lanes);
   check('lanes: round-trip leaves rosters and weights unchanged',
-    JSON.stringify(R.waves.map(w => [w.unlocked, w.weights ?? null])) === JSON.stringify(LEVELS[3].waves.map(w => [w.unlocked, w.weights ?? null])));
+    JSON.stringify(R.waves.map(w => [w.unlocked, w.weights ?? null])) === JSON.stringify(LEVELS[4].waves.map(w => [w.unlocked, w.weights ?? null])));
   lanes.virus = { from: 5, to: R.waves.length - 1, weight: 2 };
   M.setRosterLanes(R, lanes);
   check('lanes: moving a lane moves the enemy, weights follow',
@@ -689,7 +720,7 @@ check('every level defines a starting budget',
   check('wave count: lanes that ran to the end still do', R.waves[R.waves.length - 1].unlocked.includes('virus'));
 
   // entry point rules
-  const E = structuredClone(LEVELS[4]);
+  const E = structuredClone(LEVELS[5]);
   E.grid.entryRows = 3; E.grid.entryMinDist = 8; E.spawns = 3;
   let entryOk = true;
   for (let i = 0; i < 20; i++) {

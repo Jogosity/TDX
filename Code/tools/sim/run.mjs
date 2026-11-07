@@ -48,7 +48,7 @@ export function runScenario(levelIndex, opts, seeds = SEEDS) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const f = (x, d = 1) => x.toFixed(d).padStart(5);
   for (let li = 0; li < LEVELS.length; li++) {
-    console.log(`\n=== L${li + 1} ${LEVELS[li].name} (${SEEDS} seeds) ===`);
+    console.log(`\n=== L${li} ${LEVELS[li].name} (${SEEDS} seeds) ===`);
     for (const [name, opts] of Object.entries(SCENARIOS)) {
       const r = runScenario(li, opts);
       console.log(`-- ${name}: lost ${(r.lossRate * 100).toFixed(0)}% of runs, lives left ${r.livesEnd.toFixed(1)}`);

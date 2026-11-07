@@ -228,8 +228,14 @@ export class Story {
     who.appendChild(av);
     const facts = h('div', 'archive-facts');
     const factEls = [rv(h('div', 'archive-name', run.archive.name), 'right')];
-    for (const k of ['bio', 'description'])   // Archive Class (type) is a writing aid, not shown (S18)
-      if (run.archive[k]) factEls.push(rv(h('div', 'archive-fact', run.archive[k]), 'right'));
+    // Archive Class (type) is a writing aid, not shown (S18).
+    // S23: the Sub-Class line gets a small grey "Data at Risk:" header (Jogo's 7 Nov mockup).
+    if (run.archive.bio) factEls.push(rv(h('div', 'archive-fact', run.archive.bio), 'right'));
+    if (run.archive.description) {
+      const risk = h('div', 'archive-fact risk');
+      risk.append(h('div', 'archive-risk-head', strings.Archive_Data_Risk), h('div', '', run.archive.description));
+      factEls.push(rv(risk, 'right'));
+    }
     facts.append(...factEls);
     who.appendChild(facts);
     body.appendChild(who);
@@ -242,30 +248,36 @@ export class Story {
       if (first) first.prepend(h('span', 'mem-mark', mark));
       return el;
     };
+    // S23: the memories scroll inside the card so the card never runs off an iPhone
+    // screen; the scroll bar only shows while scrolling (see .archive-scroll).
+    const scroll = h('div', 'archive-scroll');
+    let idle = 0;
+    scroll.addEventListener('scroll', () => {
+      scroll.classList.add('scrolling');
+      clearTimeout(idle);
+      idle = setTimeout(() => scroll.classList.remove('scrolling'), 900);
+    }, { passive: true });
     const memEls = [memory(run.core, '\u2605\uFE0E')];
-    body.appendChild(memEls[0]);
+    scroll.appendChild(memEls[0]);
     if (run.secondary.length) {
       const list = h('div', 'mem-list');
       for (const m of run.secondary) { const el = memory(m, '\u2022'); list.appendChild(el); memEls.push(el); }
-      body.appendChild(list);
+      scroll.appendChild(list);
     }
+    body.appendChild(scroll);
     card.appendChild(body);
 
+    // S23: the "Victim under attack" banner and chevrons are gone (Jogo's 7 Nov mockup).
     const tail = [];
     if (onStart) {
-      const warn = rv(h('div', 'story-warning'), 'fade');
-      const words = h('div', 'sw-text');
-      words.append(h('div', '', strings.Archive_Attack_Line1), h('div', '', strings.Archive_Attack_Line2));
-      warn.append(h('span', 'chev teal'), words, h('span', 'chev teal'));
       const btn = rv(blueBtn('Start >>', onStart), 'up');
-      card.append(warn, btn);
-      tail.push(warn, btn);
+      card.append(btn);
+      tail.push(btn);
     }
 
     const order = [card.querySelector('.story-back'), bar, info, heading, av, ...factEls, ...memEls, ...tail];
     if (!onStart) { for (const el of order) el?.classList.add('in'); card.classList.add('in'); return; }   // pop-up: instant
-    const t = this.seq(order, TIMING.cardIn);
-    this.later(() => tail[0]?.classList.add('pulse'), t + 300);
+    this.seq(order, TIMING.cardIn);
   }
 
   // 3a. Verdict over the board: icon + SUCCESS / FAILURE, then onDone.

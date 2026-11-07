@@ -8,6 +8,7 @@ const IDENT = /^[A-Za-z_$][\w$]*$/;
 
 const HEADER = `// TDX — level data. Written by the Level Editor (tools/editor/, Save button).
 // Hand edits are fine: the editor reads this file back as it is.
+// LEVELS[0] is Level 0, the Tutorial (tutorial: true); the level number is the index.
 //
 // Per level: grid shape (rowWidths; entry points sit in the top entryRows rows
 // and at least entryMinDist steps from the base), entry points, blockers and

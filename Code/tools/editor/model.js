@@ -145,7 +145,7 @@ export function setRosterLanes(level, lanes) {
 // ---------------------------------------------------------------------------
 // File order. Every level is written in this key order so saves diff cleanly.
 // ---------------------------------------------------------------------------
-const LEVEL_KEYS = ['name', 'grid', 'spawns', 'blockers', 'lockouts', 'startTokens', 'enemyDelta',
+const LEVEL_KEYS = ['name', 'tutorial', 'grid', 'spawns', 'blockers', 'lockouts', 'startTokens', 'enemyDelta',
   'rewardBits', 'bpPool', 'theme', 'waves', 'design'];
 const WAVE_KEYS = ['tev', 'mav', 'rtv', 'spawnInterval', 'unlocked', 'weights', 'surge'];
 const GRID_KEYS = ['rowWidths', 'spawnCells', 'entryRows', 'entryMinDist'];

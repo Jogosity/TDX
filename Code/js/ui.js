@@ -145,7 +145,9 @@ export class UI {
     this.el.cogBtn.addEventListener('click', () => this.showDebugMenu());
     this.el.mmCog.addEventListener('click', () => this.showDebugMenu());
     this.el.debugClose.addEventListener('click', () => this.hideDebugMenu());
-    this.el.mmPlay.addEventListener('click', () => this.showMenuScreen('mm-levels'));   // M4: PLAY → Level Select
+    // M4: PLAY → Level Select. S23: until the Tutorial (Level 0) is cleared, PLAY goes straight into it.
+    this.el.mmPlay.addEventListener('click', () => (this.game.save.levelsUnlocked === 0 && LEVELS[0]?.tutorial
+      ? this.game.startRun(0) : this.showMenuScreen('mm-levels')));
     this.el.mmTowersBtn.addEventListener('click', () => this.showMenuScreen('mm-towers'));
     this.el.mmEnemiesBtn.addEventListener('click', () => this.showMenuScreen('mm-enemies'));
     this.el.mmLevelsBtn.addEventListener('click', () => this.showMenuScreen('mm-levels'));
@@ -159,7 +161,7 @@ export class UI {
 
   refresh() {
     const s = this.game.state;
-    this.el.level.textContent = `Level ${s.levelIndex + 1}`;
+    this.el.level.textContent = s.level.tutorial ? 'Tutorial' : `Level ${s.levelIndex}`;   // S23: number = index
     this.el.wave.textContent = `Wave ${Math.min(s.waveIndex + 1, s.level.waves.length)}/${s.level.waves.length}`;
     this.el.lives.textContent = `${s.lives}/${s.maxLives}`;
     this.el.tokens.textContent = s.tokens;
@@ -323,7 +325,8 @@ export class UI {
       name.textContent = lvl.name.toUpperCase();
       const desc = document.createElement('div');
       desc.className = 'mi-desc';
-      desc.textContent = `${lvl.waves.length} waves · ${lvl.spawns} entry point${lvl.spawns > 1 ? 's' : ''} · +${lvl.rewardBits} BITS`;
+      desc.textContent = `${lvl.waves.length} waves · ${lvl.spawns} entry point${lvl.spawns > 1 ? 's' : ''}`
+        + (lvl.rewardBits ? ` · +${lvl.rewardBits} BITS` : '');
       const delta = document.createElement('div');
       delta.className = 'mi-desc';
       delta.textContent = `Δ HP ×${lvl.enemyDelta.health.toFixed(2)} · DMG ×${lvl.enemyDelta.damage.toFixed(2)} · START ${lvl.startTokens} TOKENS`;

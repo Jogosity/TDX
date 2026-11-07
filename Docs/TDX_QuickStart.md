@@ -14,11 +14,11 @@ Before doing anything else, read these files in `1_projects/05_TDX/`:
 4. `Docs/TDX_Initial_Design.md` — the original design doc (reference).
 5. `Code/js/config.js` (balance: towers, weapons, enemies) and `Code/js/levels.js` (the 10 levels, written by the Level Editor). I may have changed either since the last session; treat them as the current source of truth.
 
-The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (128 checks passing as of Session 22; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
+The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (136 checks passing as of Session 23; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
 
 The project is a git repo (root of `05_TDX/`) — Jogo commits at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap is at the bottom of `TDX_Todos.md`.
 
-Where we left off (Session 22): **M5 and M6 are banked (v1.06 Goto).** The game is live on GitHub Pages. Tools: Level Editor at http://localhost:8000/tools/editor/ (Save only from the Mac, via `serve.py`), Ledger at /tools/ledger/, Sim with `node tools/sim/run.mjs [seeds]` from Code/ (the 'skilled' bot is the closest to a real player, but still harsher than Jogo). Balance is turned with three screwdrivers per level (enemy delta, starting Tokens, board pressure) plus the per-wave Breach Surge. Jogo prefers one-dial "screwdriver" fixes and commits himself with GitHub Desktop. Next: M7, starting with the READY items (narrative-screen UX, Tutorial Level 0), then the FTUE once Jogo's screen designs land.
+Where we left off (Session 23): **M7 is under way** (plan: `Docs/TDX_M7_Plan.md`). Done: the Archive Record UX items and **Level 0: Tutorial** (`LEVELS[0]`, level number = index, save v2 migration, first PLAY goes into the Tutorial, no rewards). Next: Jogo reshapes Level 0 in the Level Editor and playtests; then the FTUE once Jogo's Tutorial Box screen designs land. Tools: Level Editor at http://localhost:8000/tools/editor/ (Save only from the Mac, via `serve.py`), Ledger at /tools/ledger/, Sim with `node tools/sim/run.mjs [seeds]` from Code/. Jogo prefers one-dial "screwdriver" fixes and commits with GitHub Desktop.
 
 Today: [state the step from the M7 list]
 

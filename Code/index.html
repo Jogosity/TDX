@@ -500,6 +500,27 @@
   .mem-list { margin-top: 1.3em; }
   .mem-mark { margin-right: 0.4em; }
   .mem-text.gone { color: rgb(247, 0, 93); }                  /* lost this run (Result → Info) */
+  /* S23: Archive Record fits the screen; only the memories scroll */
+  .story-card.archive { flex: 1 1 auto; min-height: 460px; }
+  .archive .story-body { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; padding-right: 14px; }
+  .archive .archive-who { flex: 0 0 auto; }
+  .archive-scroll {
+    flex: 1 1 auto; min-height: 0;
+    overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    padding: 0 14px 18px 0;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
+            mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
+    scrollbar-width: thin; scrollbar-color: transparent transparent;
+  }
+  .archive-scroll.scrolling { scrollbar-color: var(--teal) rgba(0, 255, 204, 0.12); }
+  .archive-scroll::-webkit-scrollbar { width: 6px; }
+  .archive-scroll::-webkit-scrollbar-track { background: transparent; border-radius: 3px; }
+  .archive-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+  .archive-scroll.scrolling::-webkit-scrollbar-track { background: rgba(0, 255, 204, 0.12); }
+  .archive-scroll.scrolling::-webkit-scrollbar-thumb { background: var(--teal); }
+  .archive-scroll > .mem-text { margin-top: 2px; }
+  .archive-fact.risk { margin-top: 10px; }
+  .archive-risk-head { font-size: 13px; font-weight: 400; color: #9aa3b5; margin-bottom: 1px; }
   .story-warning {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     color: var(--teal);

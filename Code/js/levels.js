@@ -1,5 +1,6 @@
 // TDX — level data. Written by the Level Editor (tools/editor/, Save button).
 // Hand edits are fine: the editor reads this file back as it is.
+// LEVELS[0] is Level 0, the Tutorial (tutorial: true); the level number is the index.
 //
 // Per level: grid shape (rowWidths; entry points sit in the top entryRows rows
 // and at least entryMinDist steps from the base), entry points, blockers and
@@ -11,6 +12,37 @@
 // intensity curve's handles, target = the Ledger's target pressure.
 
 export const LEVELS = [
+  {
+    name: 'Level 0: Tutorial',
+    tutorial: true,
+    grid: { rowWidths: [4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 3], spawnCells: 1, entryRows: 2, entryMinDist: 0 },
+    spawns: 1,
+    blockers: 2,
+    lockouts: 0,
+    startTokens: 500,
+    enemyDelta: { health: 1, damage: 1 },
+    rewardBits: 0,
+    bpPool: {},
+    theme: {},
+    waves: [
+      { tev: 300, mav: 150, rtv: 75, spawnInterval: 1.8, unlocked: ['hack'] },
+      { tev: 600, mav: 250, rtv: 125, spawnInterval: 1.3, unlocked: ['hack', 'slice'] },
+      { tev: 900, mav: 330, rtv: 165, spawnInterval: 1.1, unlocked: ['hack', 'slice'] },
+    ],
+    design: {
+      curve: {
+        start: 0.333,
+        mid: 0.667,
+        midAt: 0.5,
+        end: 1,
+        tev: 900,
+        mav: 330,
+        interval: [1.8, 1.1],
+        opening: false,
+      },
+      target: { start: 0.3, end: 0.5 },
+    },
+  },
   {
     name: 'Level 1: Shallow Breach',
     grid: { rowWidths: [7, 8, 8, 8, 8, 8, 7, 6, 5, 4, 3], spawnCells: 1, entryRows: 5, entryMinDist: 0 },
