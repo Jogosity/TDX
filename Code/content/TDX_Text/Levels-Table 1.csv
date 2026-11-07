@@ -1,12 +1,13 @@
-Level_Number,Level_Label,Level_Narrative_Label,Level_Narrative_Desc,Level_Archives,
+Level_Number,Level_Label,Level_Narrative_Label,Level_Narrative_Desc,Level_Archives
+0,Tutorial,Press Play,"Learn how to play the game. Place towers, read the battlefield. Defend the Core",Tutorial
 1,Archive 001,Mischief Makers,"Data thieves are targeting small businesses. There's no extortion, no threats. It's just a bit of fun.
-It's not like the victims lives are being completely ruined…",Business,
-2,Archive 002,Trouble Starters,"Data thieves are targeting small to medium sized businesses, mostly in the UK and EU. The authorities are not concerned at this point.",Business,
-3,Archive 003,Amber Alrt,Cyber crime is on the rise across several sectors in the UK. The authorities are monitoring the issues but stress that there is no cause for alarm.,Business,
-4,Archive 004,Invasion,Individuals are beginning to report more serious side effects. Affected users may be utilising memory implants.,Human,
-5,Archive 005,Descent,The corporations are starting to be affected. San escalation protocol has been initiated.,Corporation,
-6,Archive 006,Code Red,The security of all business and personal memory storage may be under threat. Individuals are advised to secure their memories.,Corporation,
-7,Archive 007,Freefall,The threat against national infrastructure and even national security is now real. All contingency measures are now on the table.,Organisation,
-8,Archive 008,Broken Hearts,Memory implants are being hacked. Information is now being removed from people’s human memory. ,Organisation,
-9,Archive 009,Destruction,This is the long description for Level 9. No one is safe. No government. No individual.,Human,
-10,Archive 010,Collateral Damage,Stand down. National security has been stabilised. It’s just individuals now under attack. Acceptable losses.,Human,
+It's not like the victims lives are being completely ruined…",Business Early
+2,Archive 002,Trouble Starters,"Data thieves are targeting small to medium sized businesses, mostly in the UK and EU. The authorities are not concerned at this point.","Business Early, Business Late"
+3,Archive 003,Amber Alert,Cyber crime is on the rise across several sectors in the UK. The authorities are monitoring the issues but stress that there is no cause for alarm.,Corporation
+4,Archive 004,Invasion,Individuals are beginning to report more serious side effects. Affected users may be utilising memory implants.,Human Early
+5,Archive 005,Descent,The corporations are starting to be affected. An escalation protocol has been initiated.,Organisation
+6,Archive 006,Code Red,The security of all business and personal memory storage may be under threat. Individuals are advised to secure their memories.,"Organisation, Corporation"
+7,Archive 007,Freefall,The threat against national infrastructure and even national security is now real. All contingency measures are now on the table.,"Organisation, Human Late"
+8,Archive 008,Broken Hearts,Memory implants are being hacked. Information is now being removed from people’s human memory. ,"Human Early, Human Late"
+9,Archive 009,Destruction,This is the long description for Level 9. No one is safe. No government. No individual.,"Human Early, Human Late"
+10,Archive 010,Collateral Damage,Stand down. National security has been stabilised. It’s just individuals now under attack. Acceptable losses.,"Human Early, Human Late"

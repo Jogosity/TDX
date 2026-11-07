@@ -4,24 +4,25 @@ Paste the prompt below into a fresh session (with the JogoHome folder connected)
 
 ---
 
-We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestones 1 (v1.01 Altair), 2 (v1.02 Basic — Tower & Enemy Expansion), 3 (v1.03 Cobol — Difficulty Management) and 4 (v1.04 Disc Drive — Narrative and Content) are complete.** Next is **M5 "Elm" — Balance and Expansion**. The full roadmap lives at the bottom of TDX_Todos.md; the repo is private at github.com/Jogosity/TDX.
+We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestones 1 (v1.01 Altair), 2 (v1.02 Basic — Tower & Enemy Expansion), 3 (v1.03 Cobol — Difficulty Management), 4 (v1.04 Disc Drive — Narrative and Content), 5 (v1.05 Elm — Balance and Expansion) and 6 (v1.06 Goto — Publishing) are complete.** Next is **M7 "Fortran" — Onboarding & Presentation** (tutorial level and FTUE). The full roadmap lives at the bottom of TDX_Todos.md; the repo is at github.com/Jogosity/TDX and the game is live at https://jogosity.github.io/TDX/ (every push to main publishes it).
 
 Before doing anything else, read these files in `1_projects/05_TDX/`:
-1. `Docs/TDX_Devlog.md` — session history and decisions. Read the MILESTONE 4 COMPLETE summary and the newest session entry first.
-2. `Docs/TDX_Todos.md` — the milestone roadmap (M5 objectives) at the bottom.
+1. `Docs/TDX_Devlog.md` — session history and decisions. Read the MILESTONE 5 and 6 COMPLETE summaries and the newest session entry first.
+2. `Docs/TDX_Todos.md` — the milestone roadmap (M7 objectives) at the bottom.
+   Also: `Docs/TDX_AI_Balance_Notes.md` — balance findings (F1–F10) for the agentic difficulty-balancing write-up. Add new findings there.
 3. `Docs/TDX_Retention_Modules.md` — retention module designs and their current status.
 4. `Docs/TDX_Initial_Design.md` — the original design doc (reference).
 5. `Code/js/config.js` (balance: towers, weapons, enemies) and `Code/js/levels.js` (the 10 levels, written by the Level Editor). I may have changed either since the last session; treat them as the current source of truth.
 
-The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (104 checks passing as of Session 17; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
+The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (128 checks passing as of Session 22; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
 
-The project is a git repo (root of `05_TDX/`) — commit at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap (M3–M6) is at the bottom of `TDX_Todos.md`.
+The project is a git repo (root of `05_TDX/`) — Jogo commits at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap is at the bottom of `TDX_Todos.md`.
 
-Where we left off (Session 17): **M5 "Elm" has started.** Levels moved out of config.js into `Code/js/levels.js`, written by the new **Level Editor** at `Code/tools/editor/` (http://localhost:8000/tools/editor/ while `python3 Code/serve.py` runs; Save only works from the Mac itself, via localhost). The game now has **10 levels**: L1–L5 play as before, L6–L10 are first drafts, and tower unlocks are spread across them. The editor shows the Ledger's pressure live and an unlock track; the Ledger's Shaping dials are gone (the editor replaces them). Sim: `node tools/sim/run.mjs [seeds]` from Code/. Plan: `Docs/TDX_M5_Plan.md`. Next: Jogo shapes L6–L10 in the editor and playtests, then the balance pass (drop rates vs kill counts, wave 2 spikes on L8–L10).
+Where we left off (Session 22): **M5 and M6 are banked (v1.06 Goto).** The game is live on GitHub Pages. Tools: Level Editor at http://localhost:8000/tools/editor/ (Save only from the Mac, via `serve.py`), Ledger at /tools/ledger/, Sim with `node tools/sim/run.mjs [seeds]` from Code/ (the 'skilled' bot is the closest to a real player, but still harsher than Jogo). Balance is turned with three screwdrivers per level (enemy delta, starting Tokens, board pressure) plus the per-wave Breach Surge. Jogo prefers one-dial "screwdriver" fixes and commits himself with GitHub Desktop. Next: M7, starting with the READY items (narrative-screen UX, Tutorial Level 0), then the FTUE once Jogo's screen designs land.
 
-Today: [state the step from the plan's Order of work]
+Today: [state the step from the M7 list]
 
-Update the devlog and commit to git at the end of the session.
+Update the devlog at the end of the session (Jogo commits).
 
 ---
 

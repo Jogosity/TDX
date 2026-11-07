@@ -3,6 +3,32 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+# ✅ MILESTONE 6 COMPLETE — v1.06 "Goto" — 2026-11-07
+
+Banked by Jogo with M5. M6 was Publishing: the game is live at **https://jogosity.github.io/TDX/**.
+- `.github/workflows/pages.yml` publishes on every push to `main`. Only the playable game goes up (`Code/index.html`, `js/`, `assets/`, `content/`); the Level Editor, Ledger, tests and `serve.py` stay local.
+- The custom domain (punkarcade.net) moved to the low-priority backlog.
+- `VERSION` → **1.06 Goto** (one bump covers both milestones).
+
+---
+# ✅ MILESTONE 5 COMPLETE — v1.05 "Elm" — 2026-11-07
+
+Banked by Jogo after the S21 playtests (L1–L4 "better than ever"; L8 "VERY intense… loads of fun, perfectly on the edge" once its surge stopped stacking Viruses). M5 was Balance and Expansion, and like M3 it was as much about **method** as results: every balance change went through a rule, the Sim or the Ledger, and the findings are written up for the agentic difficulty-balancing write-up in `Docs/TDX_AI_Balance_Notes.md` (F1–F10 plus method notes). Plan: `Docs/TDX_M5_Plan.md`.
+
+- **Level Editor** (`tools/editor/`, S17): drag-and-drop board, intensity curve with pins, roster lanes, Blueprint slots and unlock track, live Ledger pressure against a target, Save with checks, undo. Levels live in `js/levels.js`.
+- **10 levels** (S17–S21), shaped by Jogo in the editor: more entry points, blockers and Lockouts later on ("board pressure", the third screwdriver).
+- **Economy by rule:** swarm units pay per HP (F1: Slice 9, Stinger 24); tower value measured as HP removed per second per 100 Tokens (F3); upgrades from one rule, `UPGRADE.valueShare` 0.6 (F4).
+- **Special Powers**, one per tower from a tier: Self Defence, Self Repair, Long Choke, AntiVirus, Cluster Bomb, Overclock (S19).
+- **Sim 'skilled' bot** that diversifies and upgrades (F5); Ledger Token-income pies (S18).
+- **Spawning:** Slice pack cooldown, "horde mode" (F6); tougher Worm, Bug and Stinger (F10).
+- **Breach Surge** (S21): a per-wave panic moment. Countdown on the alert strip, entry points throb, then an extra x × TEV pours from every entry point past the MAV cap (keeping spawn cooldowns). One per level from L4. Editor: click a bar to toggle, Surge size knob. Sweep in F9.
+- **Blueprints** spread over L1–L8, with a swoop from the board to the tower's tray button.
+- **UX:** Analytics Report after each level, ★/• memory marks with lost memories in red, "Level N" in the HUD, Level Select PLAY button, icon layout fix.
+- Tests 104 → **128**.
+
+Carried forward to M7 "Fortran" (Onboarding & Presentation): Tutorial level (L0) and FTUE, narrative-screen UX items, Deleter fire light-up, polish backlog. Balance keeps rolling: L8–L10 retests after the surge fix.
+
+---
 ## Session 21 — 2026-11-06 — Blueprint spread, massive attack
 
 ### A. Blueprint spread over L1–L8

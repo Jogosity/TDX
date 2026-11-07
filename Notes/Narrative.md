@@ -1,3 +1,46 @@
+**Intro Screen**
+
+Welcome to the secure zone, Agent 57
+
+The world’s data is not safe. 
+Cyber criminals are attacking systems and stealing  - and deleting - vital data cores.
+
+Your job is simple.
+Stop the attack. Save the data.
+
+
+**Test Data for Tutorial Level**
+
+Archive 00
+Name: Red Room
+Class: Test Facility
+Data at risk:
+
+Staff financial details
+
+Management emails 2025-2027
+
+HR records identifying “problem” employees
+
+
+Photographs of the staff Xmas party 2027
+
+Source code for the “Project Zarjaz” security upgrade
+
+CEO’s web browser history 
+
+Company Slack's "Shitposting" channel
+
+Auth credential for office fridge remote access
+
+
+
+Peoples save games 
+Stardew Valley
+
+
+
+
 
 The enemies are invasive agents attacking important memory cores and literally stealing memories.
 

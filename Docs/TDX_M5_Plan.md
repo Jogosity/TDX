@@ -1,6 +1,6 @@
 # TDX M5 "Elm" (v1.05): Plan
 
-Status: **steps 1–7 built in Session 17** (see the devlog). Jogo said go: "build it, we'll iterate faster that way". First goals: a drag-and-drop Level Editor, then 10 levels with the tower unlocks spread across them. The balance pass comes after.
+Status: **complete. Banked as v1.05 Elm on 2026-11-07** (together with M6, the game ships as v1.06 Goto). Steps 1–7 were built in Session 17 (see the devlog). Jogo said go: "build it, we'll iterate faster that way". First goals: a drag-and-drop Level Editor, then 10 levels with the tower unlocks spread across them. The balance pass comes after.
 Sources: `TDX_Todos.md` (M5 + the MAD IDEA notes), `TDX_QuickStart.md`, the M4 close in the devlog, the code as of v1.04.
 
 ## What this first stretch delivers
