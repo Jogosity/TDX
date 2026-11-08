@@ -1,5 +1,6 @@
 // TDX — game state machine and main loop.
 
+import { Tutorial, tutorialTowers } from './tutorial.js';
 import { PLAYER, TOWERS, TOWER_ORDER, ENEMIES, LEVELS, UPGRADE, BLUEPRINTS, CRASH } from './config.js';
 import { loadSave, writeSave, clearSave } from './save.js';
 import { crashShuffle } from './crash.js';
@@ -194,6 +195,7 @@ class Game {
     this.state.towers.push(tower);
     this.onPathChanged();
     this.ui.refresh();
+    this.tutorial?.event('build', type);
   }
 
   selectTower(tower) {
@@ -205,7 +207,7 @@ class Game {
   // --- upgrades (Retention Module 1) ------------------------------------------
   // Tier access is per tower TYPE: unlocking Tier 3 for Threaders doesn't
   // touch Deleters. Absent from the save = Tier 1 only.
-  tierUnlockOf(type) { return this.save.tierUnlocks[type] || 1; }
+  tierUnlockOf(type) { return this.inTutorial ? 1 : (this.save.tierUnlocks[type] || 1); }   // S24: Tutorial = Tier 1
 
   // Can this tower take its next tier right now? Returns { ok, reason }.
   upgradeStatus(tower) {
@@ -249,7 +251,11 @@ class Game {
   }
 
   // --- blueprints (Collection Core) ---------------------------------------------
-  isTowerUnlocked(type) { return this.save.towersUnlocked.includes(type); }
+  isTowerUnlocked(type) {
+    // S24: the Tutorial overrides the save: Threader on wave 1, + Vault from wave 2
+    if (this.inTutorial) return tutorialTowers(this.state.waveIndex).includes(type);
+    return this.save.towersUnlocked.includes(type);
+  }
 
   bpCount(type) { return this.save.blueprints[type] || 0; }
 
@@ -384,17 +390,31 @@ class Game {
       ? this.story.showLevelData(text, { wallet, onBack: () => this.story.hide(), onContinue: toArchive })
       : toArchive());
     const toArchive = () => (this.run
-      ? this.story.showArchive(this.run, content.strings, { wallet, onBack: text ? toLevel : () => this.story.hide(), onStart: go })
+      ? this.story.showArchive(this.run, content.strings, { wallet, onBack: text ? toLevel : () => this.story.hide(), onStart: go,
+        tutorial: LEVELS[levelIndex].tutorial ? content.tutorial : null })   // S24: Tutorial overlay
       : go());
     toLevel();
   }
 
   beginLevel(levelIndex) {
     this.initLevel(levelIndex);
+    // S24: Level 0 runs the Tutorial (FTUE), the same way every time it's played
+    this.tutorial?.destroy();
+    this.inTutorial = !!this.state.level.tutorial;
+    this.tutorial = this.inTutorial && this.narrative ? new Tutorial(this, this.narrative.tutorial) : null;
     this.ui.hideMainMenu();
     this.ui.refresh();
-    this.ui.showBanner(this.state.level.name.toUpperCase(),
-      'Viral agents are inbound. Deploy towers to defend the data repo, then start the wave.', 'START WAVE');
+    this.buildPhaseBanner(this.state.level.name.toUpperCase(),
+      'Viral agents are inbound. Deploy towers to defend the data repo, then start the wave.');
+  }
+
+  // The START WAVE banner; in the Tutorial, the wave's tutorial boxes come first.
+  buildPhaseBanner(title, text) {
+    const show = () => this.ui.showBanner(title, text, 'START WAVE');
+    if (this.tutorial?.hasSteps(this.state.waveIndex, 'build')) {
+      this.ui.hideBanner();
+      this.tutorial.runWave(this.state.waveIndex, show);
+    } else show();
   }
 
   onBannerButton() {
@@ -404,6 +424,7 @@ class Game {
       s.phase = 'wave';
       const def = s.level.waves[s.waveIndex];
       this.wave = new WaveController(def, this.grid, this.field, s.level.enemyDelta);
+      this.tutorial?.waveStarted(s.waveIndex);   // S24: the wave's in-wave tutorial boxes
       // CRASH cadence: every 3–4 waves, striking shortly after the wave opens
       // (S23: never in the Tutorial; it stays about the basics)
       if (!s.level.tutorial && --this.wavesToCrash <= 0) {
@@ -452,7 +473,7 @@ class Game {
     } else {
       s.phase = 'build';
       this.ui.refresh();
-      this.ui.showBanner(`WAVE ${s.waveIndex} CLEARED`, 'Rebuild and reinforce, then launch the next wave.', 'START WAVE');
+      this.buildPhaseBanner(`WAVE ${s.waveIndex} CLEARED`, 'Rebuild and reinforce, then launch the next wave.');
     }
   }
 
@@ -546,6 +567,8 @@ class Game {
 
     // level over (M4): the board holds still under the verdict and Result screen
     if (s.phase === 'levelComplete' || s.phase === 'gameOver') return;
+    // S24: a Tutorial box during a running wave freezes the board until it's dealt with
+    if (s.phase === 'wave' && this.tutorial?.update(dt, s.enemies.length)) return;
 
     // blueprint drops fade whether or not a wave is running
     for (const d of s.drops) d.age += dt;

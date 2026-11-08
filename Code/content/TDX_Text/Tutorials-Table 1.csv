@@ -1,0 +1,15 @@
+Tutorial_Message,Text,,,
+Screen_1,Tap the “Threader” button to select the tower,,,
+Screen_2,"Tap and empty cell to place the Threader.
+Threaders are attack towers.",,,
+Screen_3,Place two more Threader towers.,,,
+Screen_4,Tap to select a “Vault” tower,,,
+Screen_5,Vaults are defences towers. Use them to create walls and mazes to slow down enemies,,,
+Screen_6,"Defend the Repo from enemy agents.
+If an enemy reaches the Repo you will lose a Core.",,,
+Screen_7,"If you lose too many Cores, the Repo will start to permanently lose data.
+If you lose them all, the level will be failed.",,,
+Screen _8,"Tap to collect a Blueprint.
+Blueprints unlock new towers.",,,
+Screen _9,"Earn “Bits” for completing levels.
+You can use Bits to unlock tower upgrades.",,,

@@ -71,6 +71,9 @@ Last of the main beats: onboarding teaches the *final* systems and depends on tu
 	- [x] READY - Fix max height of Archive details screen to not overflow on iPhone. Add a scroll bar for long text blocks. The Scroll bar should be invisible when not used. (The Tail Feathers data set is particularly long and useful as a test case)
 	- [x] READY - Increase the granularity in which  Archives as assigned to levels. Initially this will be "Human Early" "Human Late" "Business Early" and "Business Late"- which allows more in depth narratives to be hold over to later in the game.
 	- [x] READY - Add an "Archive Class" column to the Levels tab, to define what Archive Classes can be used on that level. Later levels can use more than one phases, separated by commas.
+	- [x] READY - Add an overlay to the Archive Details screen when players play the Tutorial level. The overlay will explain what the various bits of text mean. (Screen mockup at Archive_Details_Screen_Tut.png)
+		- [x] Tap the "Continue" button on that overlay in order to reveal the standard Archive Details Screen.
+		- [x] The overlay will show everyt ime the player starts the tutorial level.
 - [ ] TUTORIAL LEVEL
 	- [x] READY - Create a new Level 0 for use as the tutorial level.
 		- [ ] Use the Level 0 description and Tutorial Archive
@@ -78,11 +81,20 @@ Last of the main beats: onboarding teaches the *final* systems and depends on tu
 	- [x] READY - Customise the settings for Tutorial level. Just 3 waves, 500 starting tokens, small TEV and MAV
 	- [x] The Tutorial level can be played normally, before the formal FTUE is implemented. ✅ S23
 - [ ] FTUE SEQUENCE
-	- [ ] NOT READY - Create a formal, step-by-step tutorial that directs players what to press and what will happen. Will take place on the new Tutorial map.
-	- [ ] NOT READY - Create Tutorial Box suite that includes a Text panel, pointer allows and button highlighters. (Screen design to be supplied.)
-	- [ ] NOT READY - Add a new Tutorial tab to the Text Table to contain all tutorial text.
-	- [ ] NOT READY - Add a tutorial scripter to the Editor
-- [ ] Add a light-up sequence to the 3 arrows on the Deleter unit to show when it will fire.
+	- [x] READY - Create a formal, step-by-step tutorial that directs players what to press and what will happen. Will take place on the new Tutorial map. ✅ S24 (js/tutorial.js)
+	- [x] READY - Override all of the players unlocks and upgrades the Tutorial mission. Lock all towers apart from Threader in wave1, and Threader and Vault in wave 2)
+	- [x] READY - Place the Threader selection and placement tutorials on Wave 1 of the Tutorial mission.
+	- [x] READY - Place the Vault selection and use tutorials on wave 2.
+	- [x] READY - Place the Repo defence tutorials on Wave 3 of the tutorial.
+	- [x] READY - Create Tutorial Box suite that includes a Text panel, pointer allows and button highlighters. (Screen design found in the Screens folder.)
+	- [x] READY - Add a special overlay over the Archive Details Screen before the the Tutorial Mission - see the mockup "Archive_Details_Screen_Tut.png"
+		- [x] This overlay should always show when the player selects the Tutorial mission. When the player taps "continue" the overlay will dispel and the normal Archive Details screen is now visible.
+	- [x] READY - Add a new Tutorial tab to the Text Table to contain all tutorial text.
+		- [x] READY - Pull the tutorial text in from the Tutorial CSV - it should match the Tutorial screen mockups. But I may edit the text in the CSV to make changes.
+	- [ ] NOT READY - Improved Tower Upgrade screen with tutorial panels
+	- [ ] NOT READY - Add a red-dot notification icon to the Towers button on the main menu if the player has enough Bits to buy an upgrade. Use a 1,2,3 or 3+ digit in the red dot to show how many upgrades the player can afford.
+	- [ ] NOT READY - Put the same kind of Red-Dot notification icon on each tower entry in the towers menu.
+- [ ] READY - Add a light-up sequence to the 3 arrows on the Deleter unit to show when it will fire. (One... two... three... fire)
 - [ ] Polish backlog: lateral map asymmetry, effect variants, remaining small items.
 - [x] Juicy Blueprint pickup FX (bigger collect effect), carried from M2 sign-off via the old M6. ✅ S21 (Blueprint swoop to the tray button)
 

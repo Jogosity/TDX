@@ -29,6 +29,30 @@ Banked by Jogo after the S21 playtests (L1–L4 "better than ever"; L8 "VERY int
 Carried forward to M7 "Fortran" (Onboarding & Presentation): Tutorial level (L0) and FTUE, narrative-screen UX items, Deleter fire light-up, polish backlog. Balance keeps rolling: L8–L10 retests after the surge fix.
 
 ---
+## Session 24 — 2026-11-08 — FTUE: the Tutorial sequence
+
+Built to Jogo's `Assets/Screens/Tutorial_Screen_1–7.png` and `Archive_Details_Screen_Tut.png`. Jogo's calls: Screens 8 (Blueprint) and 9 (Bits) wait for a later level; the Tutorial plays the same way every time, with a Skip button.
+
+### A. Tutorial sequence (`js/tutorial.js`)
+- Every box shows in a wave's build phase, before START WAVE, so nothing pauses. Wave 1: Screen_1 select Threader → Screen_2 place it → Screen_3 place 2 more (counter, then tick). Wave 2: Screen_4 select Vault → Screen_5 place it. Wave 3: Screen_6 and Screen_7 point at the Repo (tick each).
+- A box without a tick closes when the player does what it asks; a box with a tick closes on the tick. While a box is up, taps outside its target are blocked (capture-phase guard); the debug cog and SKIP TUTORIAL always work.
+- Tutorial Box suite: text panel (teal border, glow), Icon_Button_Tick, bobbing teal arrow (tray card / board / Repo), glowing tray card, SKIP TUTORIAL pill under the HUD. Respects reduced motion.
+- `TutorialScript` is the DOM-free step machine; steps live in `TUTORIAL_STEPS`.
+- **Unlock override:** during the Tutorial, Threader only on wave 1, Threader + Vault from wave 2, all Tier 1. The save is never touched.
+
+### B. Archive Record overlay
+- Opening the Tutorial shows the Archive Record under the overlay: captions, red outlines, dimmed content, Continue. Continue clears it and leaves the normal card with Start. Shows every time.
+
+### C. Text
+- New CSV `Tutorials-Table 1.csv` (Tutorial_Message, Text) read by `narrative.js`; IDs ignore spaces. Defaults in `TUTORIAL_DEFAULTS`, including the overlay captions (`Archive_Tut_Top`, `Archive_Tut_Bottom`) and `Tut_Continue`, `Tut_Skip`, which Jogo can add as rows to reword.
+
+### D. Jogo's first playtest fixes
+- A finished box no longer comes back when more towers are placed (the step machine keeps a `live` flag).
+- The Vault boxes (wave 2) and Repo boxes (wave 3) now show **during** the wave: 1.5 s after the wave's first enemy is on the board (`TUTORIAL_WAVE_DELAY`), and the board freezes while the box is up. Wave 1's boxes stay before START WAVE.
+
+### Tests
+136 → **151** (step machine, blocked targets, Skip, tower override, CSV text, every step has text). Browser run-through at iPhone 13 size: all 7 boxes, blocked taps, ticks, overlay.
+
 ## Session 23 — 2026-11-07 — M7 "Fortran" starts: Archive Record UX, Level 0 (Tutorial)
 
 Plan: `Docs/TDX_M7_Plan.md`. Jogo's calls: Level 0 lives in `levels.js` as LEVELS[0]; new players still boot to the main menu, but PLAY goes straight into the Tutorial until it's cleared; the Tutorial gives **no rewards** (no BITS, no Blueprints) to keep it about learning; it's losable for now.

@@ -119,6 +119,7 @@ export class UI {
     this.selectedType = key;
     btn.classList.add('selected');
     this.game.startPlacing(key);
+    this.game.tutorial?.event('select', key);
   }
 
   clearSelection() {

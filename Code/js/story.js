@@ -211,7 +211,10 @@ export class Story {
   // 2. Archive Record: who the enemies are attacking this run.
   // onStart null = pop-up mode (from the Result screen): Back only, no build-up.
   // lost: memories lost this run (from the Result screen's Info button), shown in red.
-  showArchive(run, strings, { wallet, onBack, onStart, host = this.root, lost = [] }) {
+  // tutorial: the Tutorial text table (S24). When given, the card opens under Jogo's
+  // Archive_Details_Screen_Tut overlay: captions + red outlines + Continue, which
+  // clears it and leaves the normal Archive Record with Start.
+  showArchive(run, strings, { wallet, onBack, onStart, host = this.root, lost = [], tutorial = null }) {
     const card = this.card(host, { onBack, wallet });
     card.classList.add('archive');
     const bar = rv(h('div', 'story-bar with-icon'), 'bar');
@@ -269,7 +272,22 @@ export class Story {
 
     // S23: the "Victim under attack" banner and chevrons are gone (Jogo's 7 Nov mockup).
     const tail = [];
-    if (onStart) {
+    if (onStart && tutorial) {
+      card.classList.add('tut-mode');
+      const capTop = rv(h('div', 'tut-cap top', tutorial.Archive_Tut_Top), 'fade');
+      const capBottom = rv(h('div', 'tut-cap bottom', tutorial.Archive_Tut_Bottom), 'fade');
+      body.prepend(capTop);
+      body.appendChild(capBottom);
+      const start = rv(blueBtn('Start >>', onStart), 'up');
+      const cont = rv(blueBtn(tutorial.Tut_Continue, () => {
+        card.classList.remove('tut-mode');
+        capTop.remove(); capBottom.remove(); cont.remove();
+        card.appendChild(start);
+        this.later(() => start.classList.add('in'), 20);
+      }), 'up');
+      card.append(cont);
+      tail.push(capTop, capBottom, cont);
+    } else if (onStart) {
       const btn = rv(blueBtn('Start >>', onStart), 'up');
       card.append(btn);
       tail.push(btn);

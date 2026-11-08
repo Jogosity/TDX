@@ -14,7 +14,7 @@ Before doing anything else, read these files in `1_projects/05_TDX/`:
 4. `Docs/TDX_Initial_Design.md` — the original design doc (reference).
 5. `Code/js/config.js` (balance: towers, weapons, enemies) and `Code/js/levels.js` (the 10 levels, written by the Level Editor). I may have changed either since the last session; treat them as the current source of truth.
 
-The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (136 checks passing as of Session 23; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
+The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (151 checks passing as of Session 24; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
 
 The project is a git repo (root of `05_TDX/`) — Jogo commits at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap is at the bottom of `TDX_Todos.md`.
 

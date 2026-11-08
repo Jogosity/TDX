@@ -6,6 +6,7 @@ import { WaveController } from '../js/waves.js';
 import { LEVELS, WEAPONS, TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, PLAYER, VERSION, BLUEPRINTS, SURGE, tierStat } from '../js/config.js';
 import { Enemy } from '../js/entities.js';
 import { loadSave } from '../js/save.js';
+import { TutorialScript, TUTORIAL_STEPS, tutorialTowers } from '../js/tutorial.js';
 import { relocateBlockers, crashShuffle } from '../js/crash.js';
 import { placeBlockers, placeLockouts, placeExtraSpawns, rollBlueprints } from '../js/board.js';
 import { parseCSV, parseContent, archivePool, rollRun, memoriesLost, DEFAULT_AVATAR, CONTENT_FILES, SECONDARY_SHOWN } from '../js/narrative.js';
@@ -306,6 +307,40 @@ check('level bpPool only references real, lockable towers',
   check('Level 0 is the Tutorial: 3 waves, 500 Tokens, no BITS, no Blueprints',
     T.tutorial === true && T.waves.length === 3 && T.startTokens === 500 && T.rewardBits === 0 && Object.keys(T.bpPool).length === 0);
   check('only Level 0 is a Tutorial', LEVELS.slice(1).every(l => !l.tutorial));
+}
+
+// S24: Tutorial (FTUE) step machine and text
+{
+  const t = new TutorialScript();
+  check('tutorial: wave 1 teaches before START WAVE, waves 2 and 3 once the wave runs',
+    t.hasSteps(0) && !t.hasSteps(0, 'wave') && !t.hasSteps(1) && t.hasSteps(1, 'wave') && !t.hasSteps(2) && t.hasSteps(2, 'wave')
+    && !t.hasSteps(3, 'wave') && TUTORIAL_STEPS.every(s => s.wave < LEVELS[0].waves.length));
+  let s = t.begin(0);
+  check('tutorial: wave 1 opens on Screen_1, only the Threader card is tappable',
+    s.id === 'Screen_1' && t.allows('tray', 'threader') && !t.allows('tray', 'vault') && !t.allows('board') && !t.allows('tick'));
+  check('tutorial: the wrong card does nothing', t.event('select', 'vault') === null && t.step.id === 'Screen_1');
+  check('tutorial: selecting the Threader moves to Screen_2 (place it)', t.event('select', 'threader') === 'next' && t.next().id === 'Screen_2' && t.allows('board'));
+  check('tutorial: placing it moves to Screen_3', t.event('build', 'threader') === 'next' && t.next().id === 'Screen_3');
+  const r1 = t.event('build', 'threader');
+  check('tutorial: Screen_3 waits for both towers, then shows the tick', r1 === null && !t.allows('tick')
+    && t.event('build', 'threader') === 'tick' && t.allows('tick') && !t.allows('board'));
+  check('tutorial: the tick ends wave 1\'s steps', t.next() === null && !t.hasSteps(0));
+  check('tutorial: after a wave\'s steps, more towers don\'t bring a box back (S24 fix)',
+    t.step === null && t.event('build', 'threader') === null && t.event('select', 'threader') === null && t.allows('tray', 'vault'));
+  check('tutorial: no build-phase steps on wave 2', t.begin(1) === null);
+  s = t.begin(1, 'wave');
+  check('tutorial: wave 2 is the Vault (Screen_4, Screen_5)', s.id === 'Screen_4' && t.event('select', 'vault') === 'next'
+    && t.next().id === 'Screen_5' && t.event('build', 'vault') === 'next' && t.next() === null);
+  s = t.begin(2, 'wave');
+  check('tutorial: wave 3 is the Repo and Cores, tick-only (Screen_6, Screen_7)', s.id === 'Screen_6' && t.allows('tick')
+    && !t.allows('board') && !t.allows('tray', 'threader') && t.next().id === 'Screen_7' && t.next() === null && t.begin(3, 'wave') === null);
+  const k = new TutorialScript(); k.begin(0); k.skip();
+  check('tutorial: Skip ends every step', !k.hasSteps(0) && !k.hasSteps(2, 'wave') && k.begin(1, 'wave') === null && k.allows('board'));
+  check('tutorial: towers allowed — Threader on wave 1, + Vault from wave 2',
+    tutorialTowers(0).join() === 'threader' && tutorialTowers(1).join() === 'threader,vault' && tutorialTowers(2).join() === 'threader,vault');
+  const c = parseContent({ tutorials: 'Tutorial_Message,Text\nScreen _3,Place 2 more.\nScreen_1,\n' });
+  check('tutorial text: CSV rows win, spaces in IDs ignored, blanks keep the default',
+    c.tutorial.Screen_3 === 'Place 2 more.' && c.tutorial.Screen_1.startsWith('Tap the') && !!c.tutorial.Archive_Tut_Top);
 }
 
 // --- CRASH: blocker relocation invariants --------------------------------------
@@ -666,8 +701,9 @@ check('every level defines a starting budget',
   if (globalThis.process?.versions?.node) {
     const fs = await import('node:fs');
     const read = (f) => fs.readFileSync(new URL(`../content/TDX_Text/${f}`, import.meta.url), 'utf8');
-    const real = parseContent({ archives: read(CONTENT_FILES.archives), levels: read(CONTENT_FILES.levels), strings: read(CONTENT_FILES.strings) });
+    const real = parseContent({ archives: read(CONTENT_FILES.archives), levels: read(CONTENT_FILES.levels), strings: read(CONTENT_FILES.strings), tutorials: read(CONTENT_FILES.tutorials) });
     check('content/TDX_Text CSVs parse with at least one Active archive', archivePool(real, 1).length > 0);
+    check('content/TDX_Text: every Tutorial step has text', TUTORIAL_STEPS.every(st => real.tutorial[st.id]?.trim()));
   }
 
   check('roster pick: uniform without weights', pickWeighted(['a', 'b'], undefined, () => 0.6) === 'b');

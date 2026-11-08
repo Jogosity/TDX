@@ -7,6 +7,7 @@
 //                            Level_Narrative_Label, Level_Narrative_Desc,
 //                            Level_Archives (the Classes the level draws from)
 //   Screen Text-Table 1.csv  StringID, Text: fixed wording on the screens
+//   Tutorials-Table 1.csv    Tutorial_Message, Text: the Tutorial's boxes (S24)
 // This module parses them (DOM-free, Node-testable), picks the archive and
 // memories for a run, and works out which memories are lost.
 
@@ -15,6 +16,7 @@ export const CONTENT_FILES = {
   archives: 'Archives-Table 1.csv',
   levels: 'Levels-Table 1.csv',
   strings: 'Screen Text-Table 1.csv',
+  tutorials: 'Tutorials-Table 1.csv',
 };
 export const AVATAR_DIR = 'assets/avatars/';
 export const DEFAULT_AVATAR = 'Av_BLANK_S.png';
@@ -93,14 +95,37 @@ const LEVEL_COLS = {
   narrativeDesc: 'Level_Narrative_Desc', archives: 'Level_Archives',
 };
 
-// Parse the three CSV exports. Returns { levels, archives, strings, warnings }.
+// Tutorial text (S24), used when the Tutorials table leaves one out. Screen_N
+// match Jogo's Tutorial_Screen_N mockups; Archive_Tut_* caption the Archive
+// Record overlay. IDs are matched ignoring spaces ("Screen _8" = "Screen_8").
+export const TUTORIAL_DEFAULTS = {
+  Screen_1: 'Tap the “Threader” button to select the tower',
+  Screen_2: 'Tap an empty cell to place the Threader.\nThreaders are attack towers.',
+  Screen_3: 'Place two more Threader towers.',
+  Screen_4: 'Tap to select a “Vault” tower',
+  Screen_5: 'Vaults are defence towers. Use them to create walls and mazes to slow down enemies',
+  Screen_6: 'Defend the Repo from enemy agents.\nIf an enemy reaches the Repo you will lose a Core.',
+  Screen_7: 'If you lose too many Cores, the Repo will start to permanently lose data.\nIf you lose them all, the level will be failed.',
+  Archive_Tut_Top: 'This is the name of the person, or organisation you are protecting',
+  Archive_Tut_Bottom: 'This is the data or memories that the cyber attackers are trying to steal - or delete!',
+  Tut_Continue: 'Continue',
+  Tut_Skip: 'Skip tutorial',
+};
+export const tutorialId = (id) => (id || '').replace(/\s+/g, '');
+
+// Parse the CSV exports. Returns { levels, archives, strings, warnings }.
 //   levels[n]   = { label, narrativeLabel, narrativeDesc, classes: [Class names] }
 //   archives    = [{ id, active, icon, name, bio, type, description, winLabel, loseLabel,
 //                    core: [{ text, summary }], secondary: [{ text, summary }] }]
 // Only Active = YES archives are ever picked.
-export function parseContent({ archives = '', levels = '', strings = '' } = {}) {
+export function parseContent({ archives = '', levels = '', strings = '', tutorials = '' } = {}) {
   const warnings = [];
-  const out = { levels: {}, archives: [], strings: { ...DEFAULT_STRINGS }, warnings };
+  const out = { levels: {}, archives: [], strings: { ...DEFAULT_STRINGS }, tutorial: { ...TUTORIAL_DEFAULTS }, warnings };
+
+  for (const row of table(tutorials)) {
+    const id = tutorialId(row.Tutorial_Message ?? row.StringID);
+    if (id && row.Text) out.tutorial[id] = row.Text;
+  }
 
   table(archives).forEach((row, i) => {
     const get = (f) => { for (const k of ARCHIVE_COLS[f]) if (row[k]) return row[k]; return ''; };

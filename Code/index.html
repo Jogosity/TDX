@@ -521,6 +521,24 @@
   .archive-scroll > .mem-text { margin-top: 2px; }
   .archive-fact.risk { margin-top: 10px; }
   .archive-risk-head { font-size: 13px; font-weight: 400; color: #9aa3b5; margin-bottom: 1px; }
+  /* S24: Tutorial overlay on the Archive Record (Archive_Details_Screen_Tut mockup) */
+  .tut-mode .story-bar { display: none; }
+  .tut-cap { font-size: 17px; font-weight: 800; line-height: 1.2; text-align: center; color: #fff; }
+  .tut-cap.top { margin: 40px 0 8px; }
+  .tut-cap.top::after, .tut-cap.bottom::before {
+    content: ''; display: block; width: 3px; height: 16px; margin: 6px auto 0;
+    background: #f7005d; clip-path: none;
+  }
+  .tut-cap.bottom { margin-top: 8px; }
+  .tut-cap.bottom::before { margin: 0 auto 6px; }
+  .tut-mode .archive-who, .tut-mode .archive-scroll {
+    border: 3px solid #f7005d; border-radius: 14px; padding: 8px 10px;
+  }
+  .tut-mode .archive-scroll { min-height: 90px; }
+  .tut-mode .archive-avatar { width: 84px; height: 84px; }
+  .tut-mode .archive-who { margin-top: 0; }
+  .tut-mode .archive-who > *, .tut-mode .archive-scroll > * { opacity: 0.55; }
+  .tut-mode .archive-scroll { -webkit-mask-image: none; mask-image: none; }
   .story-warning {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     color: var(--teal);
@@ -659,6 +677,66 @@
     pointer-events: none;
     z-index: 12;
     white-space: nowrap;
+  }
+
+  /* --- Tutorial Box suite (M7, S24): js/tutorial.js ----------------------------- */
+  .tut-layer {
+    --teal: #00ffcc;
+    position: absolute; inset: 0; z-index: 22;   /* over board + banner, under menus (30) and story (35) */
+    display: none; pointer-events: none;
+  }
+  .tut-layer.show { display: block; }
+  .tut-box {
+    position: absolute; left: 50%; width: min(82%, 380px); transform: translateX(-50%);
+    box-sizing: border-box; padding: 22px 22px 24px; min-height: 104px;
+    display: flex; flex-direction: column; justify-content: center;
+    background: #050820; color: #fff;
+    border: 3px solid var(--teal); border-radius: 16px;
+    box-shadow: 0 0 22px rgba(0, 255, 204, 0.65), inset 0 0 10px rgba(0, 255, 204, 0.2);
+    font-size: 16px; font-weight: 700; line-height: 1.3; text-align: center;
+    pointer-events: none;
+  }
+  .tut-box.in { animation: tut-in 0.28s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes tut-in { from { opacity: 0; transform: translateX(-50%) scale(0.92); } }
+  .tut-msg p + p { margin-top: 6px; }
+  .tut-count { color: var(--teal); font-size: 14px; margin-top: 8px; }
+  .tut-count:empty { display: none; }
+  .tut-tick {
+    position: absolute; right: -18px; bottom: -18px; width: 52px; height: 52px;
+    padding: 0; border: none; background: none; cursor: pointer;
+    display: none; pointer-events: auto;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 204, 0.8));
+  }
+  .tut-tick.show { display: block; animation: tut-pop 0.3s ease-out, tut-pulse 1.4s ease-in-out 0.3s infinite; }
+  .tut-tick img { width: 100%; height: 100%; display: block; }
+  @keyframes tut-pop { from { transform: scale(0.3); } }
+  @keyframes tut-pulse { 50% { transform: scale(1.08); } }
+  .tut-arrow {
+    position: absolute; width: 44px; height: 48px; margin-left: -22px;
+    background: var(--teal);
+    clip-path: polygon(30% 0, 70% 0, 70% 50%, 100% 50%, 50% 100%, 0 50%, 30% 50%);
+    filter: drop-shadow(0 0 6px rgba(0, 255, 204, 0.9));
+  }
+  .tut-arrow.down { animation: tut-bob-down 0.9s ease-in-out infinite; }
+  .tut-arrow.up { transform: rotate(180deg); animation: tut-bob-up 0.9s ease-in-out infinite; }
+  .tut-arrow.none { display: none; }
+  @keyframes tut-bob-down { 50% { transform: translateY(8px); } }
+  @keyframes tut-bob-up { 0%, 100% { transform: rotate(180deg); } 50% { transform: rotate(180deg) translateY(8px); } }
+  .tut-skip {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    pointer-events: auto; cursor: pointer;
+    font: inherit; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7); background: rgba(5, 8, 32, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 14px; padding: 5px 12px;
+  }
+  .tray-btn.tut-glow {
+    border-color: var(--teal, #00ffcc) !important;
+    box-shadow: 0 0 14px #00ffcc;
+    animation: tut-glow 1.2s ease-in-out infinite;
+  }
+  @keyframes tut-glow { 50% { box-shadow: 0 0 4px #00ffcc; } }
+  @media (prefers-reduced-motion: reduce) {
+    .tut-box.in, .tut-tick.show, .tut-arrow.down, .tut-arrow.up, .tray-btn.tut-glow { animation: none; }
   }
 </style>
 </head>
