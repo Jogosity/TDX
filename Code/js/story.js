@@ -291,6 +291,12 @@ export class Story {
       const btn = rv(blueBtn('Start >>', onStart), 'up');
       card.append(btn);
       tail.push(btn);
+    } else if (onBack) {
+      // S26: pop-up from the Result screen — a normal Back button at the bottom
+      // as well as the arrow at the top (Jogo's redundancy ask)
+      const btn = rv(blueBtn(strings.Archive_Back ?? 'Back', onBack), 'up');
+      card.append(btn);
+      tail.push(btn);
     }
 
     const order = [card.querySelector('.story-back'), bar, info, heading, av, ...factEls, ...memEls, ...tail];
@@ -368,7 +374,9 @@ export class Story {
 
   // 4. Analytics Report (S20): the level in numbers, after the Result screen.
   // stats from game.js newLevelStats(); labels from Screen Text (narrative.js).
-  showAnalytics(stats, strings, { wallet, onContinue }) {
+  // S25: onNext given (a won level with a level after it) → Main Menu (left, dark) +
+  // Next Level (right, bright blue) instead of Continue. onContinue = Main Menu.
+  showAnalytics(stats, strings, { wallet, onContinue, onNext = null }) {
     const card = this.card(this.root, { wallet });
     card.classList.add('analytics');
     card.appendChild(h('div', 'story-spacer'));
@@ -409,7 +417,13 @@ export class Story {
       order.push(r);
     }
     card.appendChild(body);
-    const btn = rv(blueBtn('Continue', onContinue), 'up');
+    let btn;
+    if (onNext) {
+      btn = rv(h('div', 'story-btn-row'), 'up');
+      const menu = h('button', 'story-btn dark', strings.Report_Main_Menu);
+      menu.addEventListener('click', onContinue);
+      btn.append(menu, blueBtn(strings.Report_Next_Level, onNext));
+    } else btn = rv(blueBtn('Continue', onContinue), 'up');
     card.appendChild(btn);
     const t = this.seq(order, TIMING.cardIn, TIMING.step);
     this.later(() => btn.classList.add('in'), t + 300);

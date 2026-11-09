@@ -291,7 +291,7 @@ export const ENEMIES = {
     color: '#ff6a4f', size: 0.40,
   },
   worm: {
-    name: 'Worm', ev: 500, health: 400, speed: SPEED.medium * 1.7, reward: 60,
+    name: 'Worm', ev: 500, health: 380, speed: SPEED.medium * 1.7, reward: 60,
     desc: 'Fast and heavy. Punishes thin defences.',
     color: '#ffa03c', size: 0.50,
   },
@@ -346,3 +346,28 @@ export { LEVELS } from './levels.js';
 export const GRID = {
   hexMargin: 0.97,    // visual gap between cells
 };
+
+// S25 Towers Info screen: what unlocking `tier` gives a tower, as display lines,
+// e.g. ['T2: HP 100 → 220 · Damage 9 → 20', 'Special Ability: Self Defence. Returns fire …'].
+export function tierOffer(key, tier) {
+  const def = TOWERS[key];
+  if (!def || tier < 2 || tier > UPGRADE.maxTier) return [];
+  const parts = [];
+  const hp0 = Math.round(tierStat(def, 'health', def.health, tier - 1)), hp1 = Math.round(tierStat(def, 'health', def.health, tier));
+  if (hp1 !== hp0) parts.push(`HP ${hp0} → ${hp1}`);
+  const w = def.weapon && WEAPONS[def.weapon];
+  if (w) {
+    const d0 = Math.round(tierStat(def, 'damage', w.damage, tier - 1)), d1 = Math.round(tierStat(def, 'damage', w.damage, tier));
+    if (d1 !== d0) parts.push(`Damage ${d0} → ${d1}`);
+  }
+  for (const k of ['slowFactor']) {
+    const b = def.aura?.[k];
+    if (b !== undefined && def.tier4?.[k] !== undefined) {
+      const a0 = tierStat(def, k, b, tier - 1), a1 = tierStat(def, k, b, tier);
+      if (a1 !== a0) parts.push(`Slow ${Math.round(a0 * 100)}% → ${Math.round(a1 * 100)}%`);
+    }
+  }
+  const lines = [`T${tier}: ${parts.length ? parts.join(' · ') : 'Stronger'}`];
+  if (def.power?.tier === tier) lines.push(`Special Ability: ${def.power.name}. ${def.power.desc}`);
+  return lines;
+}

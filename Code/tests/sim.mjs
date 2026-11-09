@@ -5,7 +5,8 @@ import { Tower, Projectile, cellPx } from '../js/entities.js';
 import { WaveController } from '../js/waves.js';
 import { LEVELS, WEAPONS, TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, PLAYER, VERSION, BLUEPRINTS, SURGE, tierStat } from '../js/config.js';
 import { Enemy } from '../js/entities.js';
-import { loadSave } from '../js/save.js';
+import { tierOffer } from '../js/config.js';
+import { loadSave, affordableTiers, upgradesAffordable, dotLabel } from '../js/save.js';
 import { TutorialScript, TUTORIAL_STEPS, tutorialTowers } from '../js/tutorial.js';
 import { relocateBlockers, crashShuffle } from '../js/crash.js';
 import { placeBlockers, placeLockouts, placeExtraSpawns, rollBlueprints } from '../js/board.js';
@@ -115,18 +116,64 @@ check('wave terminates', t < 600);
 }
 
 // Virus spread (M3 E14): a second Virus prefers a tower nobody is draining
+// (S26: real towers now — Viruses must be able to walk up to them)
 {
-  const px = cellPx(grid);
-  const a = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[1].enemyDelta);
-  const b = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[1].enemyDelta);
-  const fake = (dx) => ({ alive: true, x: a.x + dx * px, y: a.y, damage() {} });
-  const near = fake(1), far = fake(1.8);
+  const spawn = grid.spawns[0];
+  const hexD = c => Math.hypot(c.x - spawn.x, c.y - spawn.y) / cellPx(grid);
+  const open = [...grid.cells.values()].filter(c => !c.occupied && !c.spawn && !c.exit);
+  const nearCell = open.filter(c => hexD(c) < 1.1).sort((a, b) => hexD(a) - hexD(b))[0];
+  const farCell = open.filter(c => hexD(c) > 1.6 && hexD(c) < 2.2 && !grid.neighbors(nearCell).includes(c))[0];
+  const near = new Tower('vault', nearCell), far = new Tower('vault', farCell);
+  nearCell.tower = near; farCell.tower = far; field.recompute();
+  const a = new Enemy('virus', spawn, field, grid, LEVELS[1].enemyDelta);
+  const b = new Enemy('virus', spawn, field, grid, LEVELS[1].enemyDelta);
+  a.x = b.x = spawn.x; a.y = b.y = spawn.y;
   a.update(0.01, grid, [near, far]);
   b.update(0.01, grid, [near, far]);
   check('second Virus picks an undrained tower', a.attackTarget === near && b.attackTarget === far);
-  const c = new Enemy('virus', grid.spawns[0], field, grid, LEVELS[1].enemyDelta);
+  const c = new Enemy('virus', spawn, field, grid, LEVELS[1].enemyDelta);
+  c.x = spawn.x; c.y = spawn.y;
   c.update(0.01, grid, [near]);
   check('Virus still stacks when every tower in range is taken', c.attackTarget === near);
+  nearCell.tower = null; farCell.tower = null; field.recompute();
+}
+
+// S26 (Jogo's bug): Viruses never move onto Blocked cells to reach a tower
+{
+  const spawn = grid.spawns[0];
+  const saved = [...grid.cells.values()].map(c => [c, c.blocker]);
+  // a tower two cells in from the spawn, walled in by blockers on every side
+  const cells = [...grid.cells.values()].filter(c => !c.occupied && !c.spawn && !c.exit);
+  const pxs = cellPx(grid);
+  const tc = cells.filter(c => { const d = Math.hypot(c.x - spawn.x, c.y - spawn.y) / pxs; return d > 1.6 && d < 2.2; })
+    .find(c => grid.neighbors(c).every(n => !n.spawn && !n.exit));
+  const prey = new Tower('vault', tc); tc.tower = prey;
+  const ring = grid.neighbors(tc);
+  for (const n of ring) n.blocker = true;
+  field.recompute();
+  const v = new Enemy('virus', spawn, field, grid, LEVELS[1].enemyDelta);
+  v.x = spawn.x; v.y = spawn.y; v.buildPath(field, grid);
+  v.update(0.01, grid, [prey]);
+  check('Virus ignores a tower walled in by Blocked cells', v.attackTarget === null);
+  // open one side: it walks round to that free cell, never across a blocker
+  for (const n of ring) n.blocker = false;
+  const blocked = ring.filter(n => Math.hypot(n.x - spawn.x, n.y - spawn.y) < Math.hypot(tc.x - spawn.x, tc.y - spawn.y) + pxs * 0.6);
+  for (const n of blocked) n.blocker = true;
+  field.recompute();
+  const w = new Enemy('virus', spawn, field, grid, LEVELS[1].enemyDelta);
+  w.x = spawn.x; w.y = spawn.y; w.buildPath(field, grid);
+  let onBlock = false;
+  for (let i = 0; i < 400; i++) {
+    w.update(0.05, grid, [prey]);
+    let best = null, bd = Infinity;
+    for (const c of grid.cells.values()) { const d = (c.x - w.x) ** 2 + (c.y - w.y) ** 2; if (d < bd) { bd = d; best = c; } }
+    if (best.blocker) onBlock = true;
+  }
+  check('Virus walks round to a free cell to drain (never onto a Blocked cell)',
+    !onBlock && prey.health < prey.maxHealth && blocked.length > 0 && blocked.length < ring.length);
+  tc.tower = null;
+  for (const [c, b] of saved) c.blocker = b;
+  field.recompute();
 }
 
 // --- scatterShot (Defrag): radial ring of pellets, dead at range edge --------
@@ -301,6 +348,10 @@ check('level bpPool only references real, lockable towers',
   check('save: a new player starts on Level 0 (Tutorial), save v2', (() => { const s = mk(null); return s.levelsUnlocked === 0 && s.saveVersion === 2; })());
   check('save: a pre-Tutorial save moves up one level (Tutorial counts as cleared)',
     mk({ bits: 3, levelsUnlocked: 0 }).levelsUnlocked === 1 && mk({ levelsUnlocked: 4 }).levelsUnlocked === 5);
+  check('save: one-time hints start unseen for a new player', (() => { const s = mk(null); return !s.hints.blueprint && !s.hints.bits; })());
+  check('save: players who collected Blueprints / earned Bits skip those hints',
+    mk({ blueprints: { vault: 2 } }).hints.blueprint === true && mk({ towersUnlocked: ['threader', 'vault'] }).hints.blueprint === true
+    && mk({ bits: 4 }).hints.bits === true && !mk({ bits: 0 }).hints.bits);
   check('save: a v2 save is left alone', mk({ levelsUnlocked: 0, saveVersion: 2 }).levelsUnlocked === 0
     && mk({ levelsUnlocked: 3, saveVersion: 2 }).levelsUnlocked === 3);
   const T = LEVELS[0];
@@ -341,6 +392,35 @@ check('level bpPool only references real, lockable towers',
   const c = parseContent({ tutorials: 'Tutorial_Message,Text\nScreen _3,Place 2 more.\nScreen_1,\n' });
   check('tutorial text: CSV rows win, spaces in IDs ignored, blanks keep the default',
     c.tutorial.Screen_3 === 'Place 2 more.' && c.tutorial.Screen_1.startsWith('Tap the') && !!c.tutorial.Archive_Tut_Top);
+}
+
+// S25: Deleter charge (drives the chevron light-up): 0 just after a shot, rising to 1 when ready
+{
+  const d = new Tower('deleter', grid.cells.values().next().value);
+  const w = d.weapon, total = w.reloadTime + 1 / w.fireRate;
+  d.cooldown = 0; d.reloading = 0;
+  const ready = d.charge;
+  d.reloading = w.reloadTime; d.cooldown = 1 / w.fireRate;       // just fired
+  const fired = d.charge;
+  d.reloading = 0; d.cooldown = 1 / w.fireRate - (total / 2 - w.reloadTime);   // halfway
+  check('Deleter charge: 1 when ready, 0 just after firing, 0.5 halfway', ready === 1 && fired === 0 && Math.abs(d.charge - 0.5) < 1e-9);
+  check('towers without a weapon read full charge', new Tower('vault', grid.cells.values().next().value).charge === 1);
+}
+
+// S25: Towers Info next-tier text
+check('tier offer: HP/damage step + the Special Ability at its tier',
+  tierOffer('threader', 2)[0].startsWith('T2: HP 100 → 220') && tierOffer('threader', 2)[1]?.startsWith('Special Ability: Self Defence')
+  && tierOffer('threader', 3).length === 1 && tierOffer('vault', 3)[0] === 'T3: HP 333 → 467' && tierOffer('threader', 5).length === 0);
+
+// S25: red-dot counts (affordable tier unlocks; costs T2 3, T3 8, T4 15 Bits)
+{
+  const sv = (bits, tierUnlocks = {}, towersUnlocked = ['threader', 'vault']) => ({ bits, tierUnlocks, towersUnlocked });
+  check('red dot: tiers affordable in a row, per tower', affordableTiers(sv(2), 'threader') === 0 && affordableTiers(sv(3), 'threader') === 1
+    && affordableTiers(sv(11), 'threader') === 2 && affordableTiers(sv(26), 'threader') === 3 && affordableTiers(sv(99, { threader: 4 }), 'threader') === 0);
+  check('red dot: from the tower\'s current tier; locked towers never count',
+    affordableTiers(sv(8, { vault: 2 }), 'vault') === 1 && affordableTiers(sv(99), 'ddos') === 0);
+  check('red dot: main menu shows the total of the tower dots, 3+ cap',
+    upgradesAffordable(sv(3)) === 2 && upgradesAffordable(sv(11)) === 4 && upgradesAffordable(sv(0)) === 0 && dotLabel(2) === '2' && dotLabel(5) === '3+');
 }
 
 // --- CRASH: blocker relocation invariants --------------------------------------
@@ -694,9 +774,9 @@ check('every level defines a starting budget',
   check(`run: 1 Core + ${SECONDARY_SHOWN} Secondary from the level\'s Class, Core Memory lost last`, ok);
   check('run: no usable archive → no run', rollRun(parseContent({}), 1) === null);
 
-  const lost = [0, 3, 4, 7, 8, 11, 12, 13, 14, 15].map(n => memoriesLost(n, 15, 4)).join();
-  check('memory loss (15 Cores): 1 per 4 lost, Core Memory at one Core left', lost === '0,0,1,1,2,2,3,3,4,4');
-  check('memory loss: fewer memories shown never over-counts', memoriesLost(12, 15, 2) === 1 && memoriesLost(14, 15, 2) === 2);
+  const lost = [0, 2, 3, 6, 7, 12, 13, 14].map(n => memoriesLost(n, 3)).join();
+  check('memory loss (S26): 1st at 3 Cores lost, 2nd at 7, Core Memory at 13', lost === '0,0,1,1,2,2,3,3');
+  check('memory loss: fewer memories shown never over-counts', memoriesLost(13, 2) === 2 && memoriesLost(7, 1) === 1);
 
   if (globalThis.process?.versions?.node) {
     const fs = await import('node:fs');

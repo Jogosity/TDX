@@ -2,7 +2,7 @@
 // Holds the meta-layer: BITS balance, unlocked upgrade tier, blueprint counts.
 // Safe in headless/node contexts (no localStorage → in-memory only).
 
-import { TOWER_ORDER } from './config.js';
+import { TOWER_ORDER, UPGRADE } from './config.js';
 
 const KEY = 'tdx-save-v1';
 export const SAVE_VERSION = 2;   // S23: 2 = Level 0 (Tutorial) added at LEVELS[0]
@@ -14,6 +14,7 @@ const DEFAULTS = () => ({
   towersUnlocked: ['threader'], // Collection (Core): everything else starts locked
   levelsUnlocked: 0,            // Area Unlock: index of the highest playable level (0 = Tutorial)
   saveVersion: SAVE_VERSION,
+  hints: {},                    // S25 one-time hints shown: { blueprint, bits }
 });
 
 export function loadSave() {
@@ -40,8 +41,24 @@ export function loadSave() {
   // S23 (v2): Level 0 (Tutorial) slid in front of Level 1. A save from before it
   // moves up one level and counts the Tutorial as cleared, so nobody loses progress.
   if (s.saveVersion < 2) { s.levelsUnlocked += 1; s.saveVersion = 2; }
+  // S25: one-time hints. Players who already collected Blueprints / earned Bits skip them.
+  if (typeof s.hints !== 'object' || s.hints === null) s.hints = {};
+  if (Object.values(s.blueprints).some(n => n > 0) || s.towersUnlocked.length > 1) s.hints.blueprint = true;
+  if (s.bits > 0 || Object.keys(s.tierUnlocks).length > 0) s.hints.bits = true;
   return s;
 }
+
+// S25 red dots: how many of a tower's next tiers the player could unlock in a
+// row with the Bits they hold (0 for a locked tower or one at max tier).
+export function affordableTiers(save, type, costs = UPGRADE.tierUnlockBits, maxTier = UPGRADE.maxTier) {
+  if (!save.towersUnlocked.includes(type)) return 0;
+  let bits = save.bits, n = 0;
+  for (let t = (save.tierUnlocks[type] || 1) + 1; t <= maxTier && costs[t] !== undefined && bits >= costs[t]; t++) { bits -= costs[t]; n++; }
+  return n;
+}
+// The main menu's Towers dot: the total of the Towers menu's dots (Jogo, 9 Nov).
+export const upgradesAffordable = (save) => TOWER_ORDER.reduce((n, k) => n + affordableTiers(save, k), 0);
+export const dotLabel = (n) => (n > 3 ? '3+' : String(n));
 
 export function clearSave() {
   try { globalThis.localStorage?.removeItem(KEY); } catch { /* ignore */ }

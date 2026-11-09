@@ -1,7 +1,10 @@
 // TDX — DOM HUD, tower tray, and touch/mouse input.
 
-import { TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, LEVELS, VERSION } from './config.js';
+import { TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, LEVELS, VERSION, tierOffer } from './config.js';
 import { drawTowerShape, drawEnemyShape } from './render.js';
+import { affordableTiers, upgradesAffordable, dotLabel } from './save.js';
+
+const redDot = (text) => { const d = document.createElement('span'); d.className = 'red-dot'; d.textContent = text; return d; };
 
 const ALERT_REARM = 6;   // seconds before another under-attack warning can show
 
@@ -296,6 +299,15 @@ export class UI {
       sc.classList.toggle('show', sc.id === id);
     }
     this.buildMenuScreen(id);
+    this.refreshTowerDot();
+  }
+
+  // S25: red dot on the main menu's TOWERS button: the total of the Towers menu's dots.
+  refreshTowerDot() {
+    const btn = this.el.mmTowersBtn;
+    btn.querySelector('.red-dot')?.remove();
+    const n = upgradesAffordable(this.game.save);
+    if (n > 0) btn.appendChild(redDot(dotLabel(n)));
   }
 
   buildMenuScreen(id) {
@@ -309,6 +321,7 @@ export class UI {
   refreshMenu() {
     const open = this.el.mainMenu.querySelector('.menu-screen.show');
     if (open) this.buildMenuScreen(open.id);
+    this.refreshTowerDot();
   }
 
   buildLevelsScreen() {
@@ -349,13 +362,18 @@ export class UI {
     });
   }
 
+  // S25: Towers Info screen (Jogo's Towers_Info.png): Bits held, then per tower
+  // its tier chevrons (owned solid; the next one outlined and pulsing if the Bits
+  // cover it, pale if not), what the next tier offers, and the red dot.
   buildTowersScreen() {
     const list = this.el.mmTowerList;
+    const keep = list.scrollTop;
     list.innerHTML = '';
+    document.getElementById('mm-towers-bits').textContent = this.game.save.bits;
     for (const key of TOWER_ORDER) {
       const def = TOWERS[key];
       const item = document.createElement('div');
-      item.className = 'mm-item';
+      item.className = 'mm-item tower-card';
       item.appendChild(this.towerIcon(key, 48, 12));
       const body = document.createElement('div');
       body.className = 'mi-body';
@@ -374,16 +392,59 @@ export class UI {
         status.classList.add('unlocked');
         status.textContent = `TIER ${this.game.tierUnlockOf(key)}/${UPGRADE.maxTier}`;
         side.appendChild(status);
-        const ctl = this.tierControl(key, () => this.buildTowersScreen());
+        const ctl = this.tierControl(key, () => { this.buildTowersScreen(); this.refreshTowerDot(); });
         if (ctl.tagName === 'BUTTON') side.appendChild(ctl); // MAX already shown above
+        // S25: red dot = upgrades this tower can take with the Bits held
+        const n = affordableTiers(this.game.save, key);
+        if (n > 0) { item.classList.add('has-dot'); item.appendChild(redDot(String(n))); }
       } else {
         status.classList.add('locked');
         status.textContent = `BP ${this.game.bpCount(key)}/${def.blueprints}`;
         side.appendChild(status);
       }
       item.append(body, side);
+      item.append(...this.tierDetails(key));
       list.appendChild(item);
     }
+    list.scrollTop = keep;
+    this.syncScrollbar(list);
+  }
+
+  // Chevron row + next-tier text for one tower on the Towers Info screen.
+  tierDetails(key) {
+    const unlocked = this.game.isTowerUnlocked(key);
+    const cur = this.game.tierUnlockOf(key);
+    const nextCost = UPGRADE.tierUnlockBits[cur + 1];
+    const canBuy = unlocked && nextCost !== undefined && this.game.save.bits >= nextCost;
+    const chev = document.createElement('div');
+    chev.className = 'tier-chevrons' + (unlocked ? '' : ' locked');
+    for (let t = 1; t <= UPGRADE.maxTier; t++) {
+      const c = document.createElement('span');
+      c.className = 'chev-seg ' + (t <= cur && unlocked ? 'owned' : t === cur + 1 && canBuy ? 'next' : 'pale');
+      chev.appendChild(c);
+    }
+    const info = document.createElement('div');
+    info.className = 'tier-offer';
+    const lines = !unlocked ? [`Collect ${TOWERS[key].name} Blueprints to unlock this tower.`]
+      : cur >= UPGRADE.maxTier ? ['All tiers unlocked.'] : tierOffer(key, cur + 1);
+    for (const l of lines) { const p = document.createElement('div'); p.textContent = l; info.appendChild(p); }
+    return [chev, info];
+  }
+
+  // Always-visible scroll bar beside a list (iOS hides native ones when idle).
+  syncScrollbar(list) {
+    const track = list.parentElement.querySelector('.list-track');
+    if (!track) return;
+    const thumb = track.firstElementChild;
+    const update = () => {
+      const { scrollHeight: sh, clientHeight: ch, scrollTop: st } = list;
+      track.style.display = sh > ch + 2 ? '' : 'none';
+      const h = Math.max(30, (ch / sh) * track.clientHeight);
+      thumb.style.height = `${h}px`;
+      thumb.style.transform = `translateY(${(st / Math.max(1, sh - ch)) * (track.clientHeight - h)}px)`;
+    };
+    if (!list.dataset.sb) { list.dataset.sb = '1'; list.addEventListener('scroll', update, { passive: true }); window.addEventListener('resize', update); }
+    requestAnimationFrame(update);
   }
 
   buildEnemiesScreen() {

@@ -29,6 +29,20 @@ Banked by Jogo after the S21 playtests (L1–L4 "better than ever"; L8 "VERY int
 Carried forward to M7 "Fortran" (Onboarding & Presentation): Tutorial level (L0) and FTUE, narrative-screen UX items, Deleter fire light-up, polish backlog. Balance keeps rolling: L8–L10 retests after the surge fix.
 
 ---
+## Session 25 — 2026-11-09 — READY batch: Battle Report buttons, red dots, Deleter light-up, Towers Info
+
+- **Tutorial Screen 5** (place a Vault) has no arrow now, so the player picks the spot.
+- **Battle Report after a win:** Main Menu (left, dark outline) + Next Level (right, bright cyan), like Level Select's BACK/PLAY. Next Level reloads (the clean reset) and starts the next level's story screens (`sessionStorage` note `tdx-next-level`). A loss, or the last level, keeps Continue. Labels: Screen Text `Report_Main_Menu`, `Report_Next_Level`.
+- **Red dots** (`save.js`: `affordableTiers`, `upgradesAffordable`): each tower in the Towers menu shows how many of its next tiers the Bits held could unlock in a row; the main menu's TOWERS button shows the total of those dots (1, 2, 3, 3+; Jogo's call). Locked towers never count.
+- **Deleter light-up:** the 3 back chevrons light one, two, three across the fire cycle (reload + cooldown, `Tower.charge`), then it fires and they go dark; the front chevron stays lit. Tray and menu icons draw fully lit.
+- **Towers Info screen** (Jogo's `Towers_Info.png`): Bits held + explainer line under TOWERS; each tower card has 4 tier chevrons (owned = solid yellow, next = outlined and pulsing if the Bits cover it, pale otherwise), what the next tier gives (`tierOffer` in config.js: HP/damage before → after, plus the Special Ability at its tier, in green), the red dot, and a list that scrolls with an always-visible cyan bar (iOS hides native bars when idle). Locked towers show pale chevrons and "Collect Blueprints".
+- **One-time hints** (`HintBox` in tutorial.js, `save.hints`): the first Blueprint a player ever sees freezes the board under Screen_8 with an arrow on the drop; only the Blueprint can be tapped, and collecting it closes the box. The first Result screen that pays Bits shows Screen_9 with an arrow up at the Bits count and a tick. Each shows once per save; older saves that already have Blueprints / Bits skip them.
+- **Archive tutorial overlay** (Jogo's tweak mockup): the red pointers have arrowheads, and the red box round the memories hugs the text instead of filling the empty screen (CSS only, `.tut-mode .archive-scroll`).
+- **Bug fix (Jogo): Viruses no longer cross or stand on Blocked cells.** They used to fly straight at a tower and stop wherever they touched it. Now they walk open cells (Lockouts included) to a free cell beside the tower, like the Bug, and ignore a tower they can't reach (`Enemy.pickVirusTarget` in entities.js). When the tower dies they re-plan to the base from where they stand.
+- **Archive pop-up** (the (i) on the Battle Report): a normal BACK button at the bottom as well as the arrow at the top. Label: Screen Text `Archive_Back` (default "Back").
+- **Memory loss curve** (Jogo): on a win, the 1st memory goes at 3 Cores lost, the 2nd at 7, the Core Memory at 13; losing the level (15) takes all. One dial: `MEMORY_LOSS_AT = [3, 7, 13]` in narrative.js (was one per ceil(14/3) = 5 Cores).
+- Tests 151 → **161**.
+
 ## Session 24 — 2026-11-08 — FTUE: the Tutorial sequence
 
 Built to Jogo's `Assets/Screens/Tutorial_Screen_1–7.png` and `Archive_Details_Screen_Tut.png`. Jogo's calls: Screens 8 (Blueprint) and 9 (Bits) wait for a later level; the Tutorial plays the same way every time, with a Skip button.

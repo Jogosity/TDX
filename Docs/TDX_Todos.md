@@ -76,7 +76,7 @@ Last of the main beats: onboarding teaches the *final* systems and depends on tu
 		- [x] The overlay will show everyt ime the player starts the tutorial level.
 - [ ] TUTORIAL LEVEL
 	- [x] READY - Create a new Level 0 for use as the tutorial level.
-		- [ ] Use the Level 0 description and Tutorial Archive
+		- [x] Use the Level 0 description and Tutorial Archive
 	- [ ] READY - Use the existing editor to define a custom shape for the level (Jogo to do this, long and narrow)
 	- [x] READY - Customise the settings for Tutorial level. Just 3 waves, 500 starting tokens, small TEV and MAV
 	- [x] The Tutorial level can be played normally, before the formal FTUE is implemented. ✅ S23
@@ -91,10 +91,17 @@ Last of the main beats: onboarding teaches the *final* systems and depends on tu
 		- [x] This overlay should always show when the player selects the Tutorial mission. When the player taps "continue" the overlay will dispel and the normal Archive Details screen is now visible.
 	- [x] READY - Add a new Tutorial tab to the Text Table to contain all tutorial text.
 		- [x] READY - Pull the tutorial text in from the Tutorial CSV - it should match the Tutorial screen mockups. But I may edit the text in the CSV to make changes.
-	- [ ] NOT READY - Improved Tower Upgrade screen with tutorial panels
-	- [ ] NOT READY - Add a red-dot notification icon to the Towers button on the main menu if the player has enough Bits to buy an upgrade. Use a 1,2,3 or 3+ digit in the red dot to show how many upgrades the player can afford.
-	- [ ] NOT READY - Put the same kind of Red-Dot notification icon on each tower entry in the towers menu.
-- [ ] READY - Add a light-up sequence to the 3 arrows on the Deleter unit to show when it will fire. (One... two... three... fire)
+	- [x] READY - Improved Tower Upgrade screen.
+		- [x] Screen mockup in the usual place called, "Towers_Info.png"
+		- [x] Include chevrons to indicate current Tier, highlighted chevron to indicated an available upgrade, pale chevrons to indicate non-avilable upgrades. (Because you don't have enough Bits.)
+		- [x] Add a description of what the next upgrade will offer
+		- [x] Display the current number of bits the player owns.
+		- [x] Use a scroll-bar because the list is too long for the screen.
+		- [x] READY - Put a of Red-Dot notification icon on each tower entry in the towers menu counting the number of upgrades the player can afford to that tower.
+	- [x] READY - Add a red-dot notification icon to the Towers button on the main menu if the player has enough Bits to buy an upgrade. Use a 1,2,3 or 3+ digit in the red dot to show how many upgrades the player can afford.
+- [x] READY - Add a light-up sequence to the 3 arrows on the Deleter unit to show when it will fire. (One... two... three... fire)
+- [x] READY - Screenflow update. After a successful level, the Battle report screen should have two buttons “Next Level” (right and side, bright blue) and “Main Menu” (left hand side, dark colour)
+- [x] READY - remove the pointer arrows from the Tutorial screen 5 (place a vault). It is better to let the player choose where to put the vault)
 - [ ] Polish backlog: lateral map asymmetry, effect variants, remaining small items.
 - [x] Juicy Blueprint pickup FX (bigger collect effect), carried from M2 sign-off via the old M6. ✅ S21 (Blueprint swoop to the tray button)
 
@@ -107,6 +114,8 @@ After the sim: quest/login rewards feed the economy, so they tune against a bala
 
 - [ ] Finish the Daily Quests design in the design doc (still cut off at "Eg.").
 - [ ] Retention Module 4 — Re-engagement: daily logins, quests, BITS hooks.
+- [ ] Extend Bits economy. Longer unlock path, more ways to earn bits. An additional T5 unlock that allows you to auto-build the tower at T2 for T2 price. (No need to build a T1 version. Option shown on tapping to build.)
+- [ ] Maybe even a few expensive Bits purchase to start each level with +50 Token.
 
 
 

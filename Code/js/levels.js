@@ -15,7 +15,7 @@ export const LEVELS = [
   {
     name: 'Level 0: Tutorial',
     tutorial: true,
-    grid: { rowWidths: [4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 3], spawnCells: 1, entryRows: 2, entryMinDist: 0 },
+    grid: { rowWidths: [4, 5, 4, 5, 4, 5, 4, 5, 4, 3, 2], spawnCells: 1, entryRows: 2, entryMinDist: 0 },
     spawns: 1,
     blockers: 2,
     lockouts: 0,

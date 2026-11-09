@@ -45,6 +45,9 @@ export const DEFAULT_STRINGS = {
   Analytics_Kills: 'Enemies destroyed',
   Analytics_Cores_Lost: 'Cores lost to',
   Analytics_No_Cores_Lost: 'None. Every Core held.',
+  Archive_Back: 'Back',                       // S26: bottom Back button on the Archive pop-up
+  Report_Main_Menu: 'Main Menu',               // S25: Battle Report buttons after a win
+  Report_Next_Level: 'Next Level',
 };
 
 // RFC 4180 CSV: quoted fields may hold commas, quotes ("") and line breaks.
@@ -106,6 +109,8 @@ export const TUTORIAL_DEFAULTS = {
   Screen_5: 'Vaults are defence towers. Use them to create walls and mazes to slow down enemies',
   Screen_6: 'Defend the Repo from enemy agents.\nIf an enemy reaches the Repo you will lose a Core.',
   Screen_7: 'If you lose too many Cores, the Repo will start to permanently lose data.\nIf you lose them all, the level will be failed.',
+  Screen_8: 'Tap to collect a Blueprint.\nBlueprints unlock new towers.',
+  Screen_9: 'Earn “Bits” for completing levels.\nYou can use Bits to unlock tower upgrades.',
   Archive_Tut_Top: 'This is the name of the person, or organisation you are protecting',
   Archive_Tut_Bottom: 'This is the data or memories that the cyber attackers are trying to steal - or delete!',
   Tut_Continue: 'Continue',
@@ -220,15 +225,13 @@ export function rollRun(content, levelNo, rand = Math.random) {
   return { archive, core, secondary, lossOrder };
 }
 
-// How many of the run's memories are lost (Jogo's rule, M4 Todos). One per
-// `step` Cores lost, step = ceil((startCores − 1) / shown): with 15 Cores and 4
-// memories, lose 4 → 1, 8 → 2, 12 → 3. The last memory (the Core Memory) only
-// goes when you're down to one Core. Losing the level loses everything.
-export function memoriesLost(coresLost, startCores, shown) {
-  if (shown <= 0 || coresLost <= 0) return 0;
-  if (coresLost >= startCores - 1) return shown;
-  const step = Math.max(1, Math.ceil((startCores - 1) / shown));
-  return Math.min(shown - 1, Math.floor(coresLost / step));
+// How many of the run's memories are lost on a win (S26, Jogo's dial): one more
+// memory goes at each of these Cores-lost counts. The two others go first, the
+// Core Memory last. Losing the level (all 15 Cores) loses everything.
+export const MEMORY_LOSS_AT = [3, 7, 13];
+
+export function memoriesLost(coresLost, shown) {
+  return Math.min(shown, MEMORY_LOSS_AT.filter(n => coresLost >= n).length);
 }
 
 export async function loadNarrative(dir = CONTENT_DIR) {

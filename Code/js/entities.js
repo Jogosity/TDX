@@ -88,6 +88,17 @@ export class Tower {
     if (this.health <= 0) this.alive = false;
   }
 
+  // 0–1: how far through its fire cycle (reload, then cooldown) the tower is; 1 = ready.
+  // Drives the Deleter's chevron light-up (S25). Towers without a weapon read 1.
+  get charge() {
+    const w = this.weapon;
+    if (!w || !w.fireRate) return 1;
+    const gap = 1 / w.fireRate, reload = w.clipSize > 0 ? w.reloadTime : 0, total = gap + reload;
+    if (total <= 0) return 1;
+    if (this.reloading > 0) return Math.max(0, (reload - this.reloading) / total);
+    return Math.min(1, (reload + gap - Math.max(0, this.cooldown)) / total);
+  }
+
   update(dt, enemies, projectiles, grid) {
     this.flash = Math.max(0, this.flash - dt * 4);
     this.attackedFor = Math.max(0, this.attackedFor - dt);
@@ -330,8 +341,8 @@ export class Enemy {
     const start = { x: this.x, y: this.y };
     this.detourAt = Infinity;   // arc length where the detour cell is passed
     let wps;
-    if (this.def.hunter && this.attackTarget?.alive && cell) {
-      // Bug: walk open cells (never over blockers/towers) to beside its target
+    if (this.def.attack && this.attackTarget?.alive && cell) {
+      // Bug / Virus: walk open cells (never over blockers/towers) to beside its target
       const leg = this.huntLeg(cell, field, this.attackTarget);
       wps = leg ? [start, ...leg.map(c => ({ x: c.x, y: c.y }))] : [start, start];
     } else if (cell && field.reachable(cell)) {
@@ -367,6 +378,27 @@ export class Enemy {
     while (pool.length && cell) {
       const t = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
       if (this.huntLeg(cell, this.field, t)) return t;
+    }
+    return null;
+  }
+
+  // Virus: nearest tower in scan range that it can walk up to. Prefers a tower
+  // no other Virus is draining, so two don't stack into what looks like one
+  // (M3 E14); falls back to a taken tower if that's all in range.
+  pickVirusTarget(towers, grid, px) {
+    const cell = this.currentCell(grid);
+    if (!cell) return null;
+    const range = this.def.attack.scanRange * px;
+    const near = towers.filter(t => t.alive && Math.hypot(t.x - this.x, t.y - this.y) < range)
+      .sort((a, b) => Math.hypot(a.x - this.x, a.y - this.y) - Math.hypot(b.x - this.x, b.y - this.y));
+    const taken = t => t.drainer && t.drainer !== this && t.drainer.alive && t.drainer.attackTarget === t;
+    for (const pass of [false, true]) {
+      for (const t of near) {
+        if (!pass && taken(t)) continue;
+        if (!this.huntLeg(cell, this.field, t)) continue;
+        if (!pass) t.drainer = this;
+        return t;
+      }
     }
     return null;
   }
@@ -474,24 +506,35 @@ export class Enemy {
     }
 
     // Virus-class behaviour: latch onto a nearby tower and drain it.
+    // S26: it walks open cells to a free cell beside the tower, like the Bug —
+    // never across or onto Blocked cells (Lockouts are fine). A tower with no
+    // reachable free neighbour is ignored.
     else if (this.def.attack) {
-      if (this.attackTarget && !this.attackTarget.alive) this.attackTarget = null;
-      if (!this.attackTarget) {
-        // Prefer a tower no other Virus is draining, so two don't stack into
-        // what looks like one (M3 E14). Falls back to a taken tower if that's all in range.
-        let free = null, freeD = this.def.attack.scanRange * px;
-        let any = null, anyD = freeD;
-        for (const t of towers) {
-          if (!t.alive) continue;
-          const d = Math.hypot(t.x - this.x, t.y - this.y);
-          if (d < anyD) { anyD = d; any = t; }
-          const taken = t.drainer && t.drainer !== this && t.drainer.alive && t.drainer.attackTarget === t;
-          if (!taken && d < freeD) { freeD = d; free = t; }
-        }
-        this.attackTarget = free ?? any;
-        if (free) free.drainer = this;
+      if (this.attackTarget && !this.attackTarget.alive) {
+        this.attackTarget = null;
+        this.buildPath(this.field, grid);       // back to the base route from here
       }
-      if (this.attackTarget) { this.closeInAndDrain(dt, px); return; }
+      this.virusScan = (this.virusScan ?? 0) - dt;
+      if (!this.attackTarget && this.virusScan <= 0) {
+        this.virusScan = 0.25;
+        this.attackTarget = this.pickVirusTarget(towers, grid, px);
+        if (this.attackTarget) this.buildPath(this.field, grid);
+      }
+      if (this.attackTarget) {
+        const t = this.attackTarget;
+        if (Math.hypot(t.x - this.x, t.y - this.y) <= px * 1.05) {
+          this.closeInAndDrain(dt, px);        // adjacent: hold and drain
+          return;
+        }
+        this.dist += this.def.speed * this.slow * px * dt;
+        const p = pointAt(this.path, this.dist);
+        this.x = p.x; this.y = p.y; this.angle = p.angle;
+        if (this.dist >= this.path.total) {    // board changed under it → re-plan
+          this.attackTarget = null;
+          this.buildPath(this.field, grid);
+        }
+        return;
+      }
     }
 
     // normal path-following

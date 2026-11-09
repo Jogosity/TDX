@@ -1,6 +1,7 @@
 // TDX — game state machine and main loop.
 
-import { Tutorial, tutorialTowers } from './tutorial.js';
+import { Tutorial, tutorialTowers, HintBox } from './tutorial.js';
+const NEXT_LEVEL_KEY = 'tdx-next-level';
 import { PLAYER, TOWERS, TOWER_ORDER, ENEMIES, LEVELS, UPGRADE, BLUEPRINTS, CRASH } from './config.js';
 import { loadSave, writeSave, clearSave } from './save.js';
 import { crashShuffle } from './crash.js';
@@ -74,6 +75,10 @@ class Game {
     this.initLevel(this.latestLevelIndex());
     this.ui.refresh();
     this.ui.showMainMenu();   // boot lands on the main menu, not the battlefield
+    // S25: Battle Report → Next Level reloads, then starts that level here
+    let next = null;
+    try { next = sessionStorage.getItem(NEXT_LEVEL_KEY); sessionStorage.removeItem(NEXT_LEVEL_KEY); } catch { /* none */ }
+    if (next !== null && +next <= this.latestLevelIndex()) this.startRun(+next);
 
     this.last = performance.now();
     requestAnimationFrame((t) => this.frame(t));
@@ -149,7 +154,11 @@ class Game {
 
   onTap(x, y) {
     // blueprint drops take tap priority — they're small and time-limited
-    if (this.collectDropAt(x, y)) return;
+    if (this.collectDropAt(x, y)) {
+      if (this.hint && this.hintDrop) this.finishBlueprintHint();
+      return;
+    }
+    if (this.hint && this.hintDrop) return;   // S25: only the Blueprint can be tapped under its hint
     const p = this.state.placing;
     const cell = this.grid.cellAt(x, y);
     if (p) {
@@ -267,6 +276,21 @@ class Game {
       const a = (Math.PI * 2 * i) / towers.length, off = towers.length > 1 ? 14 : 0;
       this.state.drops.push({ x: x + Math.cos(a) * off, y: y + Math.sin(a) * off, age: 0, tower, color: TOWERS[tower].color });
     });
+    if (towers.length) this.blueprintHint(this.state.drops[this.state.drops.length - 1]);
+  }
+
+  // S25: the first Blueprint a player ever sees freezes the board under the
+  // Screen_8 box; collecting it closes the box (once per save).
+  blueprintHint(drop) {
+    if (this.hint || this.inTutorial || this.save.hints.blueprint || !this.narrative) return;
+    const canvas = this.canvas;
+    this.hint = new HintBox({
+      text: this.narrative.tutorial.Screen_8,
+      point: () => { const r = canvas.getBoundingClientRect(); return { x: r.left + drop.x, y: r.top + drop.y - 10 }; },
+      allow: (t) => t === canvas,
+      onDone: () => { this.hint = null; },
+    });
+    this.hintDrop = drop;
   }
 
   collectDropAt(x, y) {
@@ -292,6 +316,13 @@ class Game {
       }
     }
     return false;
+  }
+
+  finishBlueprintHint() {
+    this.save.hints.blueprint = true;
+    writeSave(this.save);
+    this.hintDrop = null;
+    this.hint.close();
   }
 
   // --- debug menu API -------------------------------------------------------------
@@ -497,12 +528,24 @@ class Game {
     const s = this.state;
     const run = this.run;
     const shown = run ? run.lossOrder.length : 0;
-    const lostN = win ? memoriesLost(s.maxLives - s.lives, s.maxLives, shown) : shown;
+    const lostN = win ? memoriesLost(s.maxLives - s.lives, shown) : shown;
     this.story.showResult(
       { win, lives: Math.max(0, s.lives), maxLives: s.maxLives, run, lost: run ? run.lossOrder.slice(0, lostN) : [], note },
       this.narrative.strings,
       { wallet: { tokens: s.tokens, bits: this.save.bits }, onContinue: () => this.showAnalytics() },
     );
+    // S25: the first Result screen that pays Bits explains them (Screen_9, once per save)
+    if (win && s.level.rewardBits > 0 && !this.save.hints.bits && this.narrative) {
+      setTimeout(() => {
+        const bits = document.querySelector('#story .story-wallet div:nth-child(2)');
+        if (!bits || this.hint) return;
+        this.hint = new HintBox({
+          text: this.narrative.tutorial.Screen_9, tick: true, overStory: true, dir: 'up',
+          point: () => { const r = bits.getBoundingClientRect(); return { x: r.left + r.width * 0.6, y: r.bottom }; },
+          onDone: () => { this.hint = null; this.save.hints.bits = true; writeSave(this.save); },
+        });
+      }, 2600);
+    }
   }
 
   // Analytics Report (S20): the level in numbers, then back to the menu.
@@ -510,7 +553,17 @@ class Game {
     this.story.showAnalytics(this.state.stats, this.narrative.strings, {
       wallet: { tokens: this.state.tokens, bits: this.save.bits },
       onContinue: () => window.location.reload(),
+      // S25: after a win, Next Level goes straight into the next level's story screens
+      onNext: this.state.phase === 'levelComplete' && this.state.levelIndex + 1 < LEVELS.length
+        ? () => this.queueNextLevel(this.state.levelIndex + 1) : null,
     });
+  }
+
+  // A fresh boot is the clean way to reset a level, so Next Level reloads with a
+  // note to start that level (sessionStorage; falls back to the main menu).
+  queueNextLevel(idx) {
+    try { sessionStorage.setItem(NEXT_LEVEL_KEY, String(idx)); } catch { /* menu instead */ }
+    window.location.reload();
   }
 
   // --- CRASH -----------------------------------------------------------------
@@ -569,6 +622,7 @@ class Game {
     if (s.phase === 'levelComplete' || s.phase === 'gameOver') return;
     // S24: a Tutorial box during a running wave freezes the board until it's dealt with
     if (s.phase === 'wave' && this.tutorial?.update(dt, s.enemies.length)) return;
+    if (this.hintDrop) return;   // S25: so does the first-Blueprint hint
 
     // blueprint drops fade whether or not a wave is running
     for (const d of s.drops) d.age += dt;

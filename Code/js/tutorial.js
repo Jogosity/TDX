@@ -26,7 +26,7 @@ export const TUTORIAL_STEPS = [
   { id: 'Screen_2', wave: 0, do: 'build', tower: 'threader', point: 'board', box: 'low' },
   { id: 'Screen_3', wave: 0, do: 'build', tower: 'threader', count: 2, tick: true, box: 'mid' },
   { id: 'Screen_4', wave: 1, when: 'wave', do: 'select', tower: 'vault', point: 'tray', box: 'mid' },
-  { id: 'Screen_5', wave: 1, when: 'wave', do: 'build', tower: 'vault', point: 'board', box: 'low' },
+  { id: 'Screen_5', wave: 1, when: 'wave', do: 'build', tower: 'vault', box: 'low' },   // no arrow: the player picks the spot (Jogo, 9 Nov)
   { id: 'Screen_6', wave: 2, when: 'wave', tick: true, point: 'base', box: 'mid' },
   { id: 'Screen_7', wave: 2, when: 'wave', tick: true, point: 'base', box: 'mid' },
 ];
@@ -236,5 +236,67 @@ export class Tutorial {
       a.style.left = `${canvas.left - app.left + g.baseX}px`;
       a.style.top = `${canvas.top - app.top + g.baseY - g.baseR - 56}px`;
     } else a.classList.add('none');
+  }
+}
+
+// --- One-time hints (S25) -------------------------------------------------------
+// A single Tutorial-style box shown once per save, outside the Tutorial level:
+//   blueprint  Screen_8 on the first Blueprint drop: the board freezes, the arrow
+//              points at the drop, and collecting it closes the box
+//   bits       Screen_9 on the first Result screen that pays Bits: arrow on the
+//              Bits count, tick to close
+// Which hints are done lives in save.hints (loadSave marks them done for players
+// who already know: Blueprints collected / Bits earned).
+export class HintBox {
+  // point(): { x, y } in page px for the arrow tip, re-read on every place().
+  // allow(target): may this tap through? onDone(): called once when it closes.
+  // dir: 'down' (arrow above the point, pointing at it) or 'up' (arrow below it, pointing up).
+  constructor({ text, point, dir = 'down', tick = false, overStory = false, allow = () => false, onDone = () => {} }) {
+    this.point = point; this.allow = allow; this.onDone = onDone; this.dir = dir;
+    this.root = h('div', 'tut-layer show' + (overStory ? ' over-story' : ''));
+    this.box = h('div', 'tut-box in');
+    for (const line of (text ?? '').split('\n')) this.box.appendChild(h('p', 'tut-msg', line));
+    this.arrow = h('div', 'tut-arrow ' + dir);
+    this.root.append(this.arrow, this.box);
+    if (tick) {
+      const t = h('button', 'tut-tick show');
+      t.setAttribute('aria-label', 'OK');
+      const img = h('img'); img.src = ICONS + 'Icon_Button_Tick.png'; img.alt = '';
+      t.appendChild(img);
+      t.addEventListener('click', () => this.close());
+      this.box.appendChild(t);
+    }
+    document.getElementById('app').appendChild(this.root);
+    this.guard = (ev) => {
+      if (ev.target.closest?.('.tut-tick, #cog-btn, #debug-menu') || this.allow(ev.target)) return;
+      ev.stopPropagation(); ev.preventDefault();
+    };
+    for (const k of ['pointerdown', 'click']) document.addEventListener(k, this.guard, true);
+    this.onResize = () => this.place();
+    window.addEventListener('resize', this.onResize);
+    this.place();
+  }
+  place() {
+    const app = this.root.getBoundingClientRect();
+    const p = this.point();
+    const x = p.x - app.left, y = p.y - app.top;
+    this.arrow.style.left = `${x}px`;
+    const bh = this.box.offsetHeight;
+    let top;
+    // 'up' (the Bits hint): the box sits in the Result screen's open space, clear of the title
+    if (this.dir === 'up') { this.arrow.style.top = `${y + 4}px`; top = app.height * 0.6 - bh / 2; }
+    else {
+      this.arrow.style.top = `${y - 54}px`;
+      // keep the box clear of the arrow: below the point if it's high up, else above it
+      top = y < app.height * 0.45 ? y + 24 : y - 54 - 18 - bh;
+    }
+    this.box.style.top = `${Math.round(Math.max(8, Math.min(app.height - bh - 8, top)))}px`;
+  }
+  close() {
+    if (!this.root) return;
+    for (const k of ['pointerdown', 'click']) document.removeEventListener(k, this.guard, true);
+    window.removeEventListener('resize', this.onResize);
+    this.root.remove(); this.root = null;
+    this.onDone();
   }
 }

@@ -290,7 +290,7 @@ export class Renderer {
     if (t.upgrading) ctx.globalAlpha = 0.45;              // offline while applying
     ctx.shadowColor = t.def.glow;
     ctx.shadowBlur = 14 + t.flash * 10;
-    drawTowerShape(ctx, t.type, s * 0.62, t.def);
+    drawTowerShape(ctx, t.type, s * 0.62, t.def, t.charge);
     ctx.restore();
     if (t.health < t.maxHealth) {
       this.drawHealthBar(ctx, t.x, t.y - s * 0.95, s * 1.2, t.health / t.maxHealth, '#4ef3ff');
@@ -562,7 +562,8 @@ export function makeConfetti(x, y) {
 
 // Weapon-tower art points "up" in local space; the renderer rotates the
 // whole shape toward the tower's aim.
-export function drawTowerShape(ctx, type, s, def) {
+// charge (0–1, optional): how close a Deleter is to its next shot (S25 light-up).
+export function drawTowerShape(ctx, type, s, def, charge = 1) {
   ctx.fillStyle = def.color;
   switch (type) {
     case 'threader': { // simple arrowhead
@@ -614,8 +615,12 @@ export function drawTowerShape(ctx, type, s, def) {
       break;
     }
     case 'deleter': { // stacked chevrons
+      // S25: the 3 back chevrons light one... two... three... as the shot charges, then it fires
+      const lit = Math.floor(Math.min(1, Math.max(0, charge)) * 3 + 1e-6);
+      const base = ctx.globalAlpha;
       for (let i = 0; i < 4; i++) {
         const y = -s * 0.75 + i * s * 0.48;
+        ctx.globalAlpha = i === 0 || 3 - i < lit ? base : base * 0.25;
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(s * 0.75, y + s * 0.36);
@@ -623,6 +628,7 @@ export function drawTowerShape(ctx, type, s, def) {
         ctx.closePath();
         ctx.fill();
       }
+      ctx.globalAlpha = base;
       break;
     }
     case 'pulse': { // three slim rounds side by side — the 3-round burst

@@ -265,6 +265,16 @@
     color: var(--cyan);
   }
   .mm-row { display: flex; gap: 12px; }
+  /* S25: red-dot notifications (affordable tower upgrades) */
+  .red-dot {
+    position: absolute; top: -8px; right: -8px;
+    min-width: 22px; height: 22px; padding: 0 6px; box-sizing: border-box;
+    border-radius: 11px; background: #f7005d; color: #fff;
+    font-size: 12px; font-weight: 800; line-height: 22px; text-align: center; letter-spacing: 0;
+    box-shadow: 0 0 8px rgba(247, 0, 93, 0.8); pointer-events: none;
+  }
+  #mm-towers-btn, .mm-item.has-dot { position: relative; }
+  .mm-item.has-dot .red-dot { top: -7px; right: -7px; }
   .menu-btn {
     font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: 1px;
     color: var(--cyan);
@@ -316,6 +326,38 @@
     box-shadow: 0 0 8px rgba(255, 233, 60, 0.5);
   }
   .mi-unlock:disabled { opacity: 0.45; box-shadow: none; cursor: default; }
+
+  /* S25: Towers Info screen (Towers_Info.png) */
+  #mm-towers { justify-content: flex-start; padding-top: 40px; gap: 10px; }
+  .mm-towers-bits { font-size: 16px; font-weight: 800; }
+  .mm-towers-bits .bit-gem { color: var(--yellow); margin: 0 4px 0 10px; }
+  .list-wrap { position: relative; width: 100%; max-width: 380px; flex: 1 1 auto; min-height: 0; display: flex; }
+  .list-wrap .mm-list { max-width: none; flex: 1 1 auto; max-height: 100%; padding: 8px 18px 8px 8px; scrollbar-width: none; }
+  .list-wrap .mm-list::-webkit-scrollbar { display: none; }
+  .list-track {
+    position: absolute; right: 0; top: 8px; bottom: 8px; width: 5px;
+    border-radius: 3px; background: rgba(78, 243, 255, 0.15); pointer-events: none;
+  }
+  .list-thumb { width: 100%; border-radius: 3px; background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+  .mm-item.tower-card { flex-wrap: wrap; row-gap: 8px; padding: 10px 12px 12px; }
+  .tower-card .mi-body { flex: 1 1 0; }
+  .tier-chevrons { flex: 1 0 100%; display: flex; gap: 3px; padding-left: 4px; }
+  .tier-chevrons.locked { opacity: 0.35; }
+  .chev-seg {
+    flex: 0 1 62px; height: 16px; box-sizing: border-box;
+    clip-path: polygon(0 0, 82% 0, 100% 50%, 82% 100%, 0 100%, 18% 50%);
+  }
+  .chev-seg.owned { background: var(--yellow); }
+  .chev-seg.pale { background: #3a3608; }
+  .chev-seg.next { background: var(--yellow); position: relative; animation: chev-next 1.2s ease-in-out infinite; }
+  .chev-seg.next::after {    /* dark inner chevron leaves a yellow outline */
+    content: ''; position: absolute; inset: 2px 3px; background: #3a3608;
+    clip-path: polygon(0 0, 82% 0, 100% 50%, 82% 100%, 0 100%, 18% 50%);
+  }
+  @keyframes chev-next { 50% { filter: brightness(1.6); } }
+  .tier-offer { flex: 1 0 100%; font-size: 12px; line-height: 1.4; opacity: 0.9; padding-left: 4px; }
+  .tier-offer div + div { color: var(--green); }
+  @media (prefers-reduced-motion: reduce) { .chev-seg.next { animation: none; } }
 
   /* --- debug menu ------------------------------------------------------------ */
   #debug-menu {
@@ -525,16 +567,22 @@
   .tut-mode .story-bar { display: none; }
   .tut-cap { font-size: 17px; font-weight: 800; line-height: 1.2; text-align: center; color: #fff; }
   .tut-cap.top { margin: 40px 0 8px; }
+  /* S26: red pointers get arrowheads (shaft + triangle via clip-path) */
   .tut-cap.top::after, .tut-cap.bottom::before {
-    content: ''; display: block; width: 3px; height: 16px; margin: 6px auto 0;
-    background: #f7005d; clip-path: none;
+    content: ''; display: block; width: 14px; height: 22px; margin: 6px auto 0;
+    background: #f7005d;
+    clip-path: polygon(40% 0, 60% 0, 60% 55%, 100% 55%, 50% 100%, 0 55%, 40% 55%);
   }
   .tut-cap.bottom { margin-top: 8px; }
-  .tut-cap.bottom::before { margin: 0 auto 6px; }
+  .tut-cap.bottom::before {
+    margin: 0 auto 6px;
+    clip-path: polygon(50% 0, 100% 45%, 60% 45%, 60% 100%, 40% 100%, 40% 45%, 0 45%);
+  }
   .tut-mode .archive-who, .tut-mode .archive-scroll {
     border: 3px solid #f7005d; border-radius: 14px; padding: 8px 10px;
   }
-  .tut-mode .archive-scroll { min-height: 90px; }
+  .tut-mode .archive-scroll { flex: 0 1 auto; min-height: 0; padding-bottom: 8px; }  /* S26: hug the text */
+  .tut-mode .archive-scroll > .mem-list { margin-bottom: 0; }
   .tut-mode .archive-avatar { width: 84px; height: 84px; }
   .tut-mode .archive-who { margin-top: 0; }
   .tut-mode .archive-who > *, .tut-mode .archive-scroll > * { opacity: 0.55; }
@@ -563,6 +611,13 @@
     padding: 14px 0;
     cursor: pointer;
     box-shadow: 0 0 20px rgba(78, 243, 255, 0.7);
+  }
+  /* S25: Battle Report after a win: Main Menu (dark, left) + Next Level (bright, right) */
+  .story-btn-row { display: flex; gap: 12px; justify-content: center; margin: 18px 16px 0; }
+  .story-btn-row .story-btn { margin-top: 0; flex: 1 1 0; width: auto; max-width: 180px; font-size: 16px; }
+  .story-btn.dark {
+    color: var(--cyan); background: #050820;
+    border: 2px solid var(--cyan); box-shadow: 0 0 10px rgba(78, 243, 255, 0.35);
   }
   .result-icon { width: 92px; align-self: center; margin-top: 22px; }
   .result-title {
@@ -686,6 +741,7 @@
     display: none; pointer-events: none;
   }
   .tut-layer.show { display: block; }
+  .tut-layer.over-story { z-index: 37; }   /* S25 hints on the Result screen */
   .tut-box {
     position: absolute; left: 50%; width: min(82%, 380px); transform: translateX(-50%);
     box-sizing: border-box; padding: 22px 22px 24px; min-height: 104px;
@@ -807,7 +863,12 @@
     </div>
     <div class="menu-screen" id="mm-towers">
       <h2>TOWERS</h2>
-      <div id="mm-tower-list" class="mm-list"></div>
+      <div class="mm-towers-bits">Bits <span class="bit-gem">◆</span><span id="mm-towers-bits">0</span></div>
+      <p class="mm-tag">Use Bits earned during play to upgrade towers and unlock powerful new effects.</p>
+      <div class="list-wrap">
+        <div id="mm-tower-list" class="mm-list"></div>
+        <div class="list-track"><div class="list-thumb"></div></div>
+      </div>
       <button class="menu-btn mm-back">BACK</button>
     </div>
     <div class="menu-screen" id="mm-enemies">
