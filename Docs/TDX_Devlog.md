@@ -41,6 +41,8 @@ Carried forward to M7 "Fortran" (Onboarding & Presentation): Tutorial level (L0)
 - **Bug fix (Jogo): Viruses no longer cross or stand on Blocked cells.** They used to fly straight at a tower and stop wherever they touched it. Now they walk open cells (Lockouts included) to a free cell beside the tower, like the Bug, and ignore a tower they can't reach (`Enemy.pickVirusTarget` in entities.js). When the tower dies they re-plan to the base from where they stand.
 - **Archive pop-up** (the (i) on the Battle Report): a normal BACK button at the bottom as well as the arrow at the top. Label: Screen Text `Archive_Back` (default "Back").
 - **Memory loss curve** (Jogo): on a win, the 1st memory goes at 3 Cores lost, the 2nd at 7, the Core Memory at 13; losing the level (15) takes all. One dial: `MEMORY_LOSS_AT = [3, 7, 13]` in narrative.js (was one per ceil(14/3) = 5 Cores).
+- **Tutorial Screen_2 arrow** (Jogo): it now points at an open, buildable cell just above the box (never a Blocked, Lockout, spawn or exit cell, and never one that would Firewall the path), instead of the fixed screen centre, which could land on a random blocker.
+- **M7 "Fortran" complete** (Jogo, 9 Nov): vague polish line dropped, lateral asymmetry to Backlog, `VERSION` → 1.07 Fortran.
 - Tests 151 → **161**.
 
 ## Session 24 — 2026-11-08 — FTUE: the Tutorial sequence

@@ -61,11 +61,11 @@ The game is intended as a 360° demonstration of game craft — each milestone s
 
 
 
-## M7 — "Fortran" (v1.07) — Onboarding & Presentation
+## M7 — "Fortran" (v1.07) — Onboarding & Presentation ✅ COMPLETE (9 Nov, S26)
 Last of the main beats: onboarding teaches the *final* systems and depends on tuned difficulty.
 
 
-- [ ] UI/UX improvement to narrative screens
+- [x] UI/UX improvement to narrative screens
 	- [x] READY - Add small, pale grey "Data at risk" header above the Data class line on the Archive Details screen (see new screen mockup Archive_Details_Screen-UPDATE_7th_Nov.png)
 	- [x] READY - Remove the "Victim Under Attack" banner and chevrons from the Archive Details screen.
 	- [x] READY - Fix max height of Archive details screen to not overflow on iPhone. Add a scroll bar for long text blocks. The Scroll bar should be invisible when not used. (The Tail Feathers data set is particularly long and useful as a test case)
@@ -74,13 +74,13 @@ Last of the main beats: onboarding teaches the *final* systems and depends on tu
 	- [x] READY - Add an overlay to the Archive Details screen when players play the Tutorial level. The overlay will explain what the various bits of text mean. (Screen mockup at Archive_Details_Screen_Tut.png)
 		- [x] Tap the "Continue" button on that overlay in order to reveal the standard Archive Details Screen.
 		- [x] The overlay will show everyt ime the player starts the tutorial level.
-- [ ] TUTORIAL LEVEL
+- [x] TUTORIAL LEVEL
 	- [x] READY - Create a new Level 0 for use as the tutorial level.
 		- [x] Use the Level 0 description and Tutorial Archive
-	- [ ] READY - Use the existing editor to define a custom shape for the level (Jogo to do this, long and narrow)
+	- [x] READY - Use the existing editor to define a custom shape for the level (Jogo to do this, long and narrow)
 	- [x] READY - Customise the settings for Tutorial level. Just 3 waves, 500 starting tokens, small TEV and MAV
 	- [x] The Tutorial level can be played normally, before the formal FTUE is implemented. ✅ S23
-- [ ] FTUE SEQUENCE
+- [x] FTUE SEQUENCE
 	- [x] READY - Create a formal, step-by-step tutorial that directs players what to press and what will happen. Will take place on the new Tutorial map. ✅ S24 (js/tutorial.js)
 	- [x] READY - Override all of the players unlocks and upgrades the Tutorial mission. Lock all towers apart from Threader in wave1, and Threader and Vault in wave 2)
 	- [x] READY - Place the Threader selection and placement tutorials on Wave 1 of the Tutorial mission.
@@ -102,7 +102,6 @@ Last of the main beats: onboarding teaches the *final* systems and depends on tu
 - [x] READY - Add a light-up sequence to the 3 arrows on the Deleter unit to show when it will fire. (One... two... three... fire)
 - [x] READY - Screenflow update. After a successful level, the Battle report screen should have two buttons “Next Level” (right and side, bright blue) and “Main Menu” (left hand side, dark colour)
 - [x] READY - remove the pointer arrows from the Tutorial screen 5 (place a vault). It is better to let the player choose where to put the vault)
-- [ ] Polish backlog: lateral map asymmetry, effect variants, remaining small items.
 - [x] Juicy Blueprint pickup FX (bigger collect effect), carried from M2 sign-off via the old M6. ✅ S21 (Blueprint swoop to the tray button)
 
 
@@ -122,6 +121,7 @@ After the sim: quest/login rewards feed the economy, so they tune against a bala
 
 ## Backlog — low priority (S21)
 - [ ] Add my custom domain (punkarcade.net) to the site. Yes. I do own this!
+- [ ] Lateral map asymmetry: per-row sideways offsets so a board can lean or dog-leg (needs a `rowOffsets` level field + editor support). Moved from M7, 9 Nov.
 
 
 ## Content backlog — ON HOLD (no milestone yet)

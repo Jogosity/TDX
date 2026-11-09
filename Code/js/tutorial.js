@@ -227,9 +227,23 @@ export class Tutorial {
       a.style.left = `${r.left - app.left + r.width / 2}px`;
       a.style.top = `${r.top - app.top - 52}px`;
     } else if (s.point === 'board') {
+      // S26: aim at an open, buildable cell (never a Blocked one) nearest the
+      // spot just above the box's centre; fall back to that spot if none.
       a.classList.add('up');
-      a.style.left = `${app.width / 2}px`;
-      a.style.top = `${boxTop - 58}px`;
+      const g = this.game.grid;
+      const ox = canvas.left - app.left, oy = canvas.top - app.top;
+      const wantX = app.width / 2, wantY = boxTop - 58 - g.size * 0.7;
+      let best = null, bd = Infinity;
+      for (const c of g.cells.values()) {
+        if (c.occupied || c.spawn || c.exit || c.lockout) continue;
+        const cy = oy + c.y;
+        if (cy > wantY + 1) continue;                       // keep the arrow clear of the box
+        if (this.game.field.wouldFirewall(c, this.game.state.enemies)) continue;
+        const d = (ox + c.x - wantX) ** 2 + (cy - wantY) ** 2;
+        if (d < bd) { bd = d; best = c; }
+      }
+      a.style.left = `${best ? ox + best.x : wantX}px`;
+      a.style.top = `${best ? oy + best.y + g.size * 0.3 : boxTop - 58}px`;
     } else if (s.point === 'base') {
       const g = this.game.grid;
       a.classList.add('down');

@@ -4,7 +4,7 @@ Paste the prompt below into a fresh session (with the JogoHome folder connected)
 
 ---
 
-We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestones 1 (v1.01 Altair), 2 (v1.02 Basic — Tower & Enemy Expansion), 3 (v1.03 Cobol — Difficulty Management), 4 (v1.04 Disc Drive — Narrative and Content), 5 (v1.05 Elm — Balance and Expansion) and 6 (v1.06 Goto — Publishing) are complete.** Next is **M7 "Fortran" — Onboarding & Presentation** (tutorial level and FTUE). The full roadmap lives at the bottom of TDX_Todos.md; the repo is at github.com/Jogosity/TDX and the game is live at https://jogosity.github.io/TDX/ (every push to main publishes it).
+We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestones 1 (v1.01 Altair), 2 (v1.02 Basic — Tower & Enemy Expansion), 3 (v1.03 Cobol — Difficulty Management), 4 (v1.04 Disc Drive — Narrative and Content), 5 (v1.05 Elm — Balance and Expansion), 6 (v1.06 Goto — Publishing) and 7 (v1.07 Fortran — Onboarding & Presentation: Tutorial level, FTUE, one-time hints) are complete.** Next is the **Sound** milestone, then **M8 "Hypercard" — Re-engagement**. The full roadmap lives at the bottom of TDX_Todos.md; the repo is at github.com/Jogosity/TDX and the game is live at https://jogosity.github.io/TDX/ (every push to main publishes it).
 
 Before doing anything else, read these files in `1_projects/05_TDX/`:
 1. `Docs/TDX_Devlog.md` — session history and decisions. Read the MILESTONE 5 and 6 COMPLETE summaries and the newest session entry first.
