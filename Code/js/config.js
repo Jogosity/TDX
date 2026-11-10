@@ -7,7 +7,7 @@ export const SPEED = { low: 0.45, medium: 0.75, fast: 1.4 };
 // Elm, Fortran, Goto, Hypercard, Int, Java, Kernel, ...). The number/codename
 // only bumps when a milestone's FULL feature set has landed.
 // Milestone 1 → v1.01 Altair. Milestone 2 → v1.02 Basic. M3 closes as v1.03 Cobol.
-export const VERSION = { number: '1.07', codename: 'Fortran' };
+export const VERSION = { number: '1.08', codename: 'Hypercard' };
 
 export const PLAYER = {
   startTokens: 300,   // fallback only — per-level budgets live in LEVELS[i].startTokens
@@ -226,7 +226,7 @@ export const TOWERS = {
     color: '#49e6b0', glow: '#49e6b0',
   },
   deleter: {
-    name: 'Deleter', cost: 200, health: 80,   // S18 tower value: was 700 (see TDX_AI_Balance_Notes F3)
+    name: 'Deleter', cost: 400, health: 80,   // F11 (2026-11-10): 200 → 400, spam stopped paying (was 700 before S18, F3)
     weapon: 'sniperRifle',
     tier4: { health: 200, damage: 300 },
     blueprints: 18,

@@ -1,6 +1,6 @@
 # TDX M8 "Hypercard" (v1.08): Plan
 
-Status: **planning (2026-11-09).** M8 is Sound and Music. Re-engagement has moved to M9 "Integer". Sources: `TDX_Todos.md` (M8 list, Mac copy of 9 Nov), the v1.07 code.
+Status: **complete (v1.08, 2026-11-10).** Built in Session 26; see the devlog's MILESTONE 8 entry. M8 is Sound and Music. Re-engagement has moved to M9 "Integer". Sources: `TDX_Todos.md` (M8 list, Mac copy of 9 Nov), the v1.07 code.
 
 ## What I found
 - The game has no audio code yet: no AudioContext, no sound files, and no volume settings. M8 builds it from scratch.

@@ -3,6 +3,22 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+# ✅ MILESTONE 8 COMPLETE — v1.08 "Hypercard" — 2026-11-10
+
+Closed by Jogo after a day of tuning ("Sound and Music are in and behaving well"). M8 was Sound and Music; plan in `Docs/TDX_M8_Plan.md`.
+- **Synth SFX, no sound files** (`js/synth.js`): every effect is a small recipe rendered in code, tuned by Jogo in the Mixer to Beta quality.
+- **Audio engine** (`js/audio.js`): music / SFX / UI buses, mobile first-tap unlock, pause in the background, iOS silent switch where supported, master limiter.
+- **Anti-spam**: per-sound voices and gap, a 14-voice cap, and priorities so rare heavy shots and game events beat rapid fire.
+- **Sound Mixer** (`tools/mixer/`): tap tower and enemy icons, shape every sound live, stress-test the voice rules with a full board, set music, Save to `js/sounds.js` via `serve.py`.
+- **Music**: menu track plus a pool of 4 wave tracks (Meta Sound and Music, credited in `sounds.js`); a track runs for 3 waves, drops to 35% between waves, fades on change; win and fail stings.
+- **SOUND tab** in the cog menu (mute, Music, Sound effects), saved with the profile.
+- Hooks everywhere: buttons, tray, story whooshes, Tutorial and hint pop-ups, teletype and Cores count-up clicks, all game events.
+- Also landing with this close (from other threads): Deleter price 200 → 400 (finding F11; F12 on T2 Threaders, no change) and enemy delta tweaks on two levels in `levels.js`. Strongest-at-T2 for the Deleter is not built yet.
+- `VERSION` → **1.08 Hypercard**. Tests 161 → **193**.
+
+Next: M9 "Integer" — Re-engagement.
+
+---
 # ✅ MILESTONE 6 COMPLETE — v1.06 "Goto" — 2026-11-07
 
 Banked by Jogo with M5. M6 was Publishing: the game is live at **https://jogosity.github.io/TDX/**.

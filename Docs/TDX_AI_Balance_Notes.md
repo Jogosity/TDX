@@ -322,3 +322,102 @@ So per-level balance now has three screwdrivers: **enemy delta** (power across t
 
 **Finding.** The Stinger and Bug now do real work: from L4 on, they leak 5–50× more than before. Stacked with the late-level HP rises, the sims put L5–L10 well past the bot's limit. The losses spread across the whole level, not just the W1–W2 openings, so this is a power problem, not just an opening problem. Calibration: the bot is harsher than Jogo (it loses 53% of L1 runs, which Jogo clears with 12–14 Cores), so its numbers rank levels rather than predict Jogo's result. The largest single jump is L8 (HP × +48%).
 
+---
+
+## F11 — Deleter spam: what one board-wide gun is worth (2026-11-10)
+
+**Question (Jogo).** Playing with lots of Deleters "sort of broke the game": at 200 Tokens it's easy to have 5–6 on the board, and then the problem of enemies slipping past the "First" targeting largely goes away. Fun, but too easy. What should the Deleter cost, and does a "Strongest" targeting power at Tier 2 help or hurt?
+
+**Why F3 missed it.** F3 measured one Tier 1 Deleter beside a straight route. Its 6.5-cell range covers nearly the whole board, so in a real army a Deleter is never idle and always reaches the enemy that got past everything else. A single-tower bench can't see that.
+
+**Method.** The Sim with three additions, kept outside `js/` (`plan_d.mjs` plus two small bot options in `engine.js`): per-tower-type tracking of HP removed, overkill and Tokens invested (build + upgrades); a bot option that holds a set number of Deleters on the board; and a "Strongest" power (from Tier 2, the Deleter shoots the enemy in range with the most HP left). 20 seeds per cell. "Waste" = share of fired damage that removed no HP (overkill, plus shots whose target died before they landed).
+
+**1. One tower type only** (L4, L7, L9; HP removed per Token):
+
+| Army | Threader | Pulse | Deleter | Deleter waste (overkill part) |
+|---|---|---|---|---|
+| Fixed 1,200 Tokens, never rebuilt | 25–36 | 13–22 | 5–16 | 62–75% (5–11%) |
+| Spends all income on that type | 20–32 | 7–13 | 10–21 | 51–68% (5–15%) |
+
+On its own, the Deleter is the weakest buy per Token, below Pulse. Only the Threader-only army survives (L4 10% lost, L7 85%). Six Deleters all pick the same "First" enemy, and the first shot kills it, so most of the volley flies at a corpse. The waste is lost shots, not overkill.
+
+**2. In the skilled bot's mixed army** (L6–L10), the picture flips. At 200 the Deleter removes **16–27 HP per Token** against 12–15 for the bot's (upgraded) Threaders, and roughly level with even a Tier 1 Threader (20–36). It supplies 16–28% of all damage from ~7 of ~50 guns. By the F3 rule (a specialist ≈ half a Threader per Token) it is priced about twice too cheap.
+
+**3. Does spam win?** It depends on when the Deleters arrive (runs lost, 0 Deleters → 6 Deleters at 200):
+
+| Level | Bought from the 2nd gun | Bought after the 8-Threader opening |
+|---|---|---|
+| L6 | 25% → 20% | 25% → 20% |
+| L7 | 35% → 80% | 35% → 25% |
+| L8 | 45% → 95% | 45% → 65% |
+| L9 | 75% → 100% | 75% → 95% |
+| L10 | 60% → 100% | **60% → 25%** (leaks 96 → 15) |
+
+Buying Deleters early starves the opening (W1–3 leaks ×2–5). Bought late, as Jogo plays them, six Deleters at 200 cut L10's losses by more than half and its leaks by 85%. L10 is the biggest board with four entry points, where board-wide range is worth most. That's the break Jogo felt. The bot reproduces it only partly (L6–L9 are flat or worse), because it places and times them mechanically.
+
+**4. Price sweep** (6 Deleters bought after the opening; runs lost):
+
+| Price | L6 | L7 | L8 | L9 | L10 | Deleter HP/Token | Deleter avg tier |
+|---|---|---|---|---|---|---|---|
+| (no Deleters) | 25% | 35% | 45% | 75% | 60% | – | – |
+| 200 | 20% | 25% | 65% | 95% | 25% | 12–22 | 2.0 |
+| 300 | 25% | 30% | 80% | 80% | 70% | 18–28 | 1.0–1.3 |
+| 400 | 35% | 35% | 80% | 75% | 85% | 14–20 | 1.0–1.1 |
+
+With 3 Deleters bought early (L6–L10) the price rows don't separate beyond noise (±10 points at 20 seeds). At 300 or more, spamming Deleters no longer beats the plain skilled bot on any level, and at 400 it is slightly worse everywhere. Per Token, a Tier 1 Deleter in a mix at 400 removes ~0.5–0.7× what a Tier 1 Threader does, just above the F3 half-Threader rule. At 500 it would sit on the rule, and alone it would be the worst pick in the game (~0.1–0.2× a Threader).
+
+**5. "Strongest" at Tier 2.** When it's reached, it works: at 200 it cuts Deleter waste from ~45% to ~25% and lifts its HP per Token by 25–55% (it stops volleys converging on one leader and puts the 173-damage T2 shot into Cracks and Worms). Outcomes barely move (±10 points). But at 300+ the T2 upgrade costs 2× the price (600–800 Tokens), and the bot almost never bought it (average Deleter tier 1.0–1.1). So at 400, Strongest at T2 changes nothing in the sims. It is a late-game reward, and it can't re-break spam: six T2 Deleters would cost 7,200 Tokens.
+
+**Decision (recommended).** **Deleter 200 → 400.** That's the lowest price at which Deleter spam stops paying on every level tested, and it leaves the Deleter at the top of the specialist band per Token (range premium, like DDOS). Add **Strongest at Tier 2** as Jogo proposed: it fixes the wasted volleys for the player who invests, without restoring spam. 500 would over-correct.
+
+**Caveats.**
+- The bot places Deleters greedily and doesn't plan around them, so it under-plays them (it reproduced the break only on L10). Jogo's playtest is the real check: at 400, 5–6 Deleters should feel like a late-level luxury, not an opening.
+- Deleter upgrades still use hand-set `tier4` values (damage 300, health 200), not the F4 rule. At 400 the upgrade prices (800/1,200/1,600) make T3–T4 very expensive for +57% damage per step. Worth a look when the F4 rule is applied to the Deleter.
+- At 400 the Deleter is still fragile: 80 HP for 400 Tokens is 0.2 HP per Token, against the Threader's 1.0, so Virus drain punishes it hardest.
+
+**Takeaways for the write-up**
+- A tower's value can live in its interaction with the rest of the army (here, board-wide reach picking off whatever leaks), which a single-tower bench can't measure. The same lesson as DDOS in F3, but it cut the other way: the bench undervalued the Deleter.
+- When a unit has one dominant property (range), measure it in its real role, then price it with the same rule as everything else.
+
+---
+
+## F12 — Are T2 Threaders overpowered? (2026-11-10)
+
+**Question (Jogo).** Since adopting the technique of upgrading Threaders to T2, the game feels a lot easier. What are the maths of putting lots of resources into T2 Threaders?
+
+**The maths.** T2 costs 200 on top of the 100 build (300 total) and, by the F4 rule, multiplies damage *and* HP by 2.2 (4 → 8.8 per bullet, 100 → 220 HP), plus Self Defence.
+
+| Per 300 Tokens | Damage per second | HP | Duel strength vs drain (DPS × HP) | Cells used |
+|---|---|---|---|---|
+| Three T1 Threaders | 60 | 300 | 3 towers × 2,000, each fighting alone | 3 |
+| One T2 Threader | 44 (0.73×) | 220 (0.73×) | 9,680 (4.8× one T1) | 1 |
+
+- **Firepower per Token: T2 is worse** (0.73× of building), exactly as F4 intended.
+- **Firepower per cell: T2 is 2.2× better.** On a crowded board the good cells are the scarce resource, and upgrading is how you buy more of them.
+- **Against drain, T2 is much better.** A duel's outcome depends on damage × HP, so a step that raises both by 2.2× makes the tower ~4.8× tougher for 3× the price. A lone T1 Threader loses a 1-on-1 against a Virus from L2 on; a T2 wins it on every level L1–L9 (it kills an L8 Virus in 8.7 s and would die at 10.4 s) and loses narrowly only on L10. T3 wins everywhere.
+
+**Method.** Skilled bot (which already upgrades once the board is full), 20 seeds, L3–L10, against variants that put every T1 Threader to T2 before building anything new (from the 4th gun on), with and without Self Defence, and with the bot's Vault reflexes switched off.
+
+| Variant | Runs lost (avg L3–L10) | Cores left |
+|---|---|---|
+| Skilled bot as is | 38% | 5.1 |
+| Skilled, Self Defence off | 41% | 4.8 |
+| T2 first, also mid-wave | 73% | 1.8 |
+| T2 first, between waves only | 42% | 4.8 |
+| No Vault reflexes, as is | 38% | 5.4 |
+| No Vault reflexes, T2 first between waves | 39% | 4.8 |
+| … and Self Defence off | 40% | 4.8 |
+
+**Finding.**
+- **T2-first gives the bot no edge.** Between waves it is level with the normal bot; mid-wave it is much worse, because each upgrade takes the tower offline for 3 s while it's needed, and saving for the next upgrade under pressure starves the build.
+- **The bot is already a T2 player.** Its Threaders end levels at T2–T3.4 on average and do most of the damage (92% on L8). So the Sim's level calibration (F10) already assumes upgrades. A player who upgrades is playing the way the levels were measured, while one who doesn't is playing below that line.
+- **Self Defence barely registers** in the sims (±3 points), with or without Vault babysitting. The duel maths says it should matter for a lone tower, but the bot's Threaders rarely fight alone.
+
+**Read.** The Sim doesn't show T2 Threaders as overpowered; it shows them as the intended upgrade path working (F7: upgrading at parity with building). The likely reason the game feels easier is that Jogo has moved from a T1 style up to the bot's level, plus the 4.8× toughness against Viruses and Bugs, which a human feels more than the bot because a human places towers in tighter, less overlapping spots. What the Sim can't see is placement: a human packing T2s into the two or three best cells gets more from the 2.2× density than the greedy bot does.
+
+**If T2 needs toning down, the dials** (one at a time, as usual):
+- `UPGRADE.valueShare` 0.6 → 0.5: T2 becomes 2.0× (duel 4.0×), and every tower's upgrades soften together.
+- Threader `costMult` for T2 (2 → 2.5, or a Threader-only price): same stats, dearer.
+- HP growing slower than damage for the Threader (e.g. HP at half the damage step): keeps the firepower, cuts the 4.8× toughness, which is the outlier here.
+
+**Recommendation.** No change yet. The numbers say T2 is fairly priced for firepower and strong but not dominant overall. If a playtest says the game is now too easy *because* Viruses and Bugs no longer threaten T2s, the HP step is the targeted dial.
