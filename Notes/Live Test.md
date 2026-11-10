@@ -18,6 +18,7 @@ With `serve.py` running:
 - **Level Editor:** [http://localhost:8000/tools/editor/](http://localhost:8000/tools/editor/)
 - **Ledger:** [http://localhost:8000/tools/ledger/](http://localhost:8000/tools/ledger/)
 - **Game:** [http://localhost:8000/](http://localhost:8000/)
+- **Mixer:** [http://localhost:8000/tools/mixer/](http://localhost:8000/tools/mixer/)
 
 **Run the Game (mobile)** 
 On your phone (optional): use the Mac’s LAN address in place of localhost, the same way you playtest. For example, [http://192.168.x.x:8000/](http://192.168.x.x:8000/) for the game.

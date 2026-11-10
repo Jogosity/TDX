@@ -4,7 +4,7 @@ Paste the prompt below into a fresh session (with the JogoHome folder connected)
 
 ---
 
-We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestones 1 (v1.01 Altair), 2 (v1.02 Basic — Tower & Enemy Expansion), 3 (v1.03 Cobol — Difficulty Management), 4 (v1.04 Disc Drive — Narrative and Content), 5 (v1.05 Elm — Balance and Expansion), 6 (v1.06 Goto — Publishing) and 7 (v1.07 Fortran — Onboarding & Presentation: Tutorial level, FTUE, one-time hints) are complete.** Next is the **Sound** milestone, then **M8 "Hypercard" — Re-engagement**. The full roadmap lives at the bottom of TDX_Todos.md; the repo is at github.com/Jogosity/TDX and the game is live at https://jogosity.github.io/TDX/ (every push to main publishes it).
+We're continuing the TDX project — a mobile-first HTML5 tower defence game we're building together across sessions. **Milestones 1 (v1.01 Altair), 2 (v1.02 Basic — Tower & Enemy Expansion), 3 (v1.03 Cobol — Difficulty Management), 4 (v1.04 Disc Drive — Narrative and Content), 5 (v1.05 Elm — Balance and Expansion), 6 (v1.06 Goto — Publishing) and 7 (v1.07 Fortran — Onboarding & Presentation: Tutorial level, FTUE, one-time hints) are complete.** **M8 "Hypercard" — Sound and Music** is under way (plan: `Docs/TDX_M8_Plan.md`), then **M9 "Integer" — Re-engagement**. The full roadmap lives at the bottom of TDX_Todos.md; the repo is at github.com/Jogosity/TDX and the game is live at https://jogosity.github.io/TDX/ (every push to main publishes it).
 
 Before doing anything else, read these files in `1_projects/05_TDX/`:
 1. `Docs/TDX_Devlog.md` — session history and decisions. Read the MILESTONE 5 and 6 COMPLETE summaries and the newest session entry first.
@@ -14,11 +14,11 @@ Before doing anything else, read these files in `1_projects/05_TDX/`:
 4. `Docs/TDX_Initial_Design.md` — the original design doc (reference).
 5. `Code/js/config.js` (balance: towers, weapons, enemies) and `Code/js/levels.js` (the 10 levels, written by the Level Editor). I may have changed either since the last session; treat them as the current source of truth.
 
-The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (161 checks passing as of Session 25; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
+The codebase in `Code/` is a working game (vanilla JS ES modules, canvas, no dependencies). Run `node tests/sim.mjs` from the Code folder before and after any changes (193 checks passing as of Session 26; no Node? serve Code/ and open `/tests/run.html`). To play: `python3 Code/serve.py` from the `05_TDX` folder (no-cache dev server, port 8000; phone via LAN IP).
 
 The project is a git repo (root of `05_TDX/`) — Jogo commits at the end of every session per the Backup Procedure at the bottom of this doc. The Milestones roadmap is at the bottom of `TDX_Todos.md`.
 
-Where we left off (Session 23): **M7 is under way** (plan: `Docs/TDX_M7_Plan.md`). Done: the Archive Record UX items and **Level 0: Tutorial** (`LEVELS[0]`, level number = index, save v2 migration, first PLAY goes into the Tutorial, no rewards). Next: Jogo reshapes Level 0 in the Level Editor and playtests; then the FTUE once Jogo's Tutorial Box screen designs land. Tools: Level Editor at http://localhost:8000/tools/editor/ (Save only from the Mac, via `serve.py`), Ledger at /tools/ledger/, Sim with `node tools/sim/run.mjs [seeds]` from Code/. Jogo prefers one-dial "screwdriver" fixes and commits with GitHub Desktop.
+Where we left off (Session 23): **M7 is under way** (plan: `Docs/TDX_M7_Plan.md`). Done: the Archive Record UX items and **Level 0: Tutorial** (`LEVELS[0]`, level number = index, save v2 migration, first PLAY goes into the Tutorial, no rewards). Next: Jogo reshapes Level 0 in the Level Editor and playtests; then the FTUE once Jogo's Tutorial Box screen designs land. Tools: Level Editor at http://localhost:8000/tools/editor/ (Save only from the Mac, via `serve.py`), Ledger at /tools/ledger/, Sound Mixer at /tools/mixer/ (Save from the Mac, writes js/sounds.js), Sim with `node tools/sim/run.mjs [seeds]` from Code/. Jogo prefers one-dial "screwdriver" fixes and commits with GitHub Desktop.
 
 Today: [state the step from the M7 list]
 

@@ -14,6 +14,8 @@ import { Renderer, makeConfetti } from './render.js';
 import { UI } from './ui.js';
 import { Story } from './story.js';
 import { loadNarrative, rollRun, memoriesLost } from './narrative.js';
+import { audio, sfx } from './audio.js';
+import { deathSound, fireSound } from './sounds.js';
 
 // Per-level numbers for the Analytics Report (S20). Tokens earned = kill
 // rewards + sell refunds (not starting Tokens); spent = builds + upgrades;
@@ -29,6 +31,7 @@ class Game {
     this.spawnPaused = false;   // debug: hold natural wave spawning
 
     this.save = loadSave();
+    audio.setSettings(this.save.audio);   // M8: the SOUND tab's settings
 
     this.state = {
       grid: null,
@@ -166,6 +169,7 @@ class Game {
       p.cell = cell;
       p.legal = this.isLegalPlacement(cell);
       if (!p.legal) {
+        sfx('ui_error');
         this.ui.toast(this.placementError(cell));
         return;
       }
@@ -203,6 +207,7 @@ class Game {
     cell.tower = tower;
     this.state.towers.push(tower);
     this.onPathChanged();
+    sfx('build');
     this.ui.refresh();
     this.tutorial?.event('build', type);
   }
@@ -232,8 +237,8 @@ class Game {
     if (!t) return;
     const st = this.upgradeStatus(t);
     if (!st.ok) {
-      if (st.reason === 'locked') this.ui.showUpgradeMenu();
-      else if (st.reason === 'tokens') this.ui.toast('Not enough Tokens');
+      if (st.reason === 'locked') { sfx('ui_popup'); this.ui.showUpgradeMenu(); }
+      else if (st.reason === 'tokens') { sfx('ui_error'); this.ui.toast('Not enough Tokens'); }
       return;
     }
     this.state.tokens -= t.upgradeCost;
@@ -241,6 +246,7 @@ class Game {
     this.state.stats.spent += t.upgradeCost;
     t.spent += t.upgradeCost;
     t.beginUpgrade();
+    sfx('upgrade');
     this.ui.refresh();
     this.ui.showTowerPopup(t); // reflect new state immediately
   }
@@ -250,11 +256,12 @@ class Game {
     const next = this.tierUnlockOf(type) + 1;
     const cost = UPGRADE.tierUnlockBits[next];
     if (cost === undefined) return; // already at max tier
-    if (this.save.bits < cost) { this.ui.toast('Not enough BITS'); return; }
+    if (this.save.bits < cost) { sfx('ui_error'); this.ui.toast('Not enough BITS'); return; }
     this.save.bits -= cost;
     this.save.tierUnlocks[type] = next;
     writeSave(this.save);
     this.state.bits = this.save.bits;
+    sfx('unlock');
     this.ui.toast(`${TOWERS[type].name} Tier ${next} unlocked`);
     this.ui.refresh();
   }
@@ -299,6 +306,7 @@ class Game {
       const d = drops[i];
       if (Math.hypot(d.x - x, d.y - y) <= BLUEPRINTS.tapRadius) {
         drops.splice(i, 1);
+        sfx('blueprint');
         const def = TOWERS[d.tower];
         const n = (this.save.blueprints[d.tower] || 0) + 1;
         this.save.blueprints[d.tower] = n;
@@ -389,6 +397,7 @@ class Game {
     if (!t) return;
     this.state.tokens += t.sellValue;
     this.state.stats.earned += t.sellValue;
+    sfx('sell');
     this.removeTower(t);
     this.selectTower(null);
     this.ui.refresh();
@@ -434,6 +443,7 @@ class Game {
     this.inTutorial = !!this.state.level.tutorial;
     this.tutorial = this.inTutorial && this.narrative ? new Tutorial(this, this.narrative.tutorial) : null;
     this.ui.hideMainMenu();
+    audio.stopMusic();   // M8: the menu music fades; each wave picks its own track
     this.ui.refresh();
     this.buildPhaseBanner(this.state.level.name.toUpperCase(),
       'Viral agents are inbound. Deploy towers to defend the data repo, then start the wave.');
@@ -455,6 +465,9 @@ class Game {
       s.phase = 'wave';
       const def = s.level.waves[s.waveIndex];
       this.wave = new WaveController(def, this.grid, this.field, s.level.enemyDelta);
+      // M8 (Jogo, 10 Nov): a track from the pool runs for 3 waves (AUDIO.wavesPerTrack)
+      sfx('wave_start');
+      audio.startWaveMusic(s.waveIndex);
       this.tutorial?.waveStarted(s.waveIndex);   // S24: the wave's in-wave tutorial boxes
       // CRASH cadence: every 3–4 waves, striking shortly after the wave opens
       // (S23: never in the Tutorial; it stays about the basics)
@@ -503,6 +516,8 @@ class Game {
       this.endLevel(true, `${bitsNote}${unlockNote}`.trim());
     } else {
       s.phase = 'build';
+      audio.musicBreak(true);   // the track keeps going, lowered, until the next wave
+      sfx('wave_clear');
       this.ui.refresh();
       this.buildPhaseBanner(`WAVE ${s.waveIndex} CLEARED`, 'Rebuild and reinforce, then launch the next wave.');
     }
@@ -520,6 +535,8 @@ class Game {
     this.ui.clearSelection();
     this.selectTower(null);
     this.ui.hideUpgradeMenu();
+    audio.stopMusic();                          // M8: the loop fades, the sting plays
+    sfx(win ? 'sting_win' : 'sting_fail');
     this.story.showVerdict(win, this.narrative.strings, () => this.showResult(win, note));
   }
 
@@ -574,6 +591,7 @@ class Game {
   executeCrash() {
     const s = this.state;
     const destroyed = crashShuffle(this.grid, this.field, CRASH.maxTowerKills);
+    sfx('crash');
     s.stats.lost += destroyed.length;
     for (const t of destroyed) {
       t.alive = false;
@@ -588,6 +606,14 @@ class Game {
     s.shake = 1;
     s.crashFx = { t: 0, dur: CRASH.captionTime };
     this.ui.refresh();
+  }
+
+  // M8: towers flag what happened this frame (entities stay sound-free for the Sim)
+  towerSounds() {
+    for (const t of this.state.towers) {
+      if (t.fired) { t.fired = false; if (t.def.weapon) sfx(fireSound(t.def.weapon)); }
+      if (t.upgradeDone) { sfx(t.upgradeDone === 1 ? 'build_done' : 'upgrade_done'); t.upgradeDone = 0; }
+    }
   }
 
   // an upgrade finishing while the popup is open needs a UI nudge
@@ -641,6 +667,7 @@ class Game {
     if (!inWave && s.enemies.length === 0) {
       // upgrade timers still run during the between-wave break
       for (const t of s.towers) if (t.upgrading) t.update(dt, s.enemies, s.projectiles, this.grid);
+      this.towerSounds();
       this.syncPopup();
       return;
     }
@@ -664,6 +691,7 @@ class Game {
     if (inWave) this.syncSurge();
 
     for (const t of s.towers) t.update(dt, s.enemies, s.projectiles, this.grid);
+    this.towerSounds();
     this.syncPopup();
     for (const e of s.enemies) if (e.alive) e.update(dt, this.grid, s.towers);
     for (const p of s.projectiles) p.update(dt, s.enemies, s.effects);
@@ -676,6 +704,7 @@ class Game {
     const destroyed = s.towers.filter(t => !t.alive);
     if (destroyed.length > 0) {
       s.stats.lost += destroyed.length;
+      sfx('tower_die');
       for (const t of destroyed) {
         t.cell.tower = null;
         s.effects.push({ kind: 'death', x: t.x, y: t.y, color: '#4ef3ff', t: 0, dur: 0.4 });
@@ -696,10 +725,12 @@ class Game {
         s.stats.leakedBy[e.type] = (s.stats.leakedBy[e.type] ?? 0) + 1;
         s.lives--;
         s.baseFlash = 1;
+        sfx('core_lost');
         if (s.lives <= 0) { this.gameOver(); return; }
       } else {
         s.tokens += e.def.reward;
         s.stats.kills++;
+        sfx(deathSound(e.type));
         s.stats.earned += e.def.reward;
         s.effects.push(makeConfetti(e.x, e.y));
         this.rollBlueprint(e.x, e.y);

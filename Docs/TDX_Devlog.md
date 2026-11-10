@@ -29,6 +29,36 @@ Banked by Jogo after the S21 playtests (L1–L4 "better than ever"; L8 "VERY int
 Carried forward to M7 "Fortran" (Onboarding & Presentation): Tutorial level (L0) and FTUE, narrative-screen UX items, Deleter fire light-up, polish backlog. Balance keeps rolling: L8–L10 retests after the surge fix.
 
 ---
+## Session 26 — 2026-11-09 — M8 "Hypercard" starts: the audio engine
+
+Plan: `Docs/TDX_M8_Plan.md`. M8 is now Sound and Music (Re-engagement moved to M9 "Integer"). Jogo's calls: synth SFX + licensed music; the four plan recommendations (D1–D4) accepted; a voice cap with priorities for the sound chaos.
+
+- **`js/synth.js`**: a tiny retro synth. A recipe of numbers (wave, pitch slide, envelope, punch, arpeggio, vibrato, noise, low-pass sweep, bit-crush, layers) renders to samples, so no sound files. Pure maths, Node-tested.
+- **`js/sounds.js`**: the sound list, where all sound tuning lives (like config.js for balance). 31 sounds: UI (tap, back, select, error, popup, whoosh), one fire sound per weapon, enemy death (small, and big for Crack/Worm), Core lost, Virus/Bug attack warning, build / tower online / sell / upgrade / upgrade done / tower destroyed / CRASH / Blueprint / unlock, wave start / cleared, surge tick / breach, win and fail stings. `MUSIC` has the menu / game / final-wave cues with `file: null` until tracks are sourced.
+- **`js/audio.js`**: music, SFX and UI buses into a master limiter; wakes on the first tap (mobile rule); pauses while the page is hidden; asks iOS for an 'ambient' session (silent switch) where Safari supports it; music crossfades and stings duck the loop.
+- **Anti-spam (`VoicePool`)**: per sound `voices` (copies at once) and `gap` (seconds between starts), plus `AUDIO.maxVoices` = 14 overall. When the pool is full a new sound cuts the oldest lowest-priority voice if it outranks it, otherwise it's dropped. Priorities rank rare, heavy shots over rapid fire (Deleter 60 > DDOS 40 > Defrag/Compressor 35 > Pulse 30 > Threader 20), game events above guns, stings 100. Test: a full board firing for 10 s peaks at 10/14 voices and the Deleter is never dropped.
+- **Hooks**: every button clicks (one listener; back-style buttons blip down, `data-sfx` overrides); tray select/deselect/error; story screens whoosh; Tutorial and hint boxes pop; game events in game.js. Entities only set flags (`fired`, `upgradeDone`), so the Sim stays sound-free.
+- **SOUND tab** first in the cog menu: mute, Music and Sound effects sliders, saved in the profile (`save.audio`, defaults music 60%, SFX 80%).
+- Tests 161 → **181**. Browser check at iPhone size: audio starts on the first tap, sounds fire in a wave, no errors.
+
+### Sound Mixer (`tools/mixer/`, same session)
+Open http://localhost:8000/tools/mixer/ with `serve.py` running (Save only from the Mac, like the editor).
+- **Tap to hear**: tower icons play their fire sound, enemy icons their death sound; the list on the left has every sound by group (UI, Towers, Enemies, Game, Waves, Stings), with a dot on ones changed since the last save.
+- **Shape it**: the waveform shows the sound; Dials (bus, priority, voices, gap, pitch vary, pitch, gain) and Recipe sliders (pitch and slide, envelope, punch, jump, vibrato, noise, low-pass sweep, bit-crush, volume) play the sound as you drag. Layers: add, remove, set their start time. Mutate nudges every setting a little; Revert undoes one sound. Space plays, Cmd+S saves.
+- **Stress test**: fires a board (tower counts editable, default 6 Threaders, 2 DDOS, 2 Pulse, 1 each of the rest) using each weapon's real timing from config.js, plus kills per second, through the real voice rules. A live voice meter, and a table of played / dropped (gap, voice limit, pool full) / cut off per sound. The global voice caps are editable there.
+- **Music**: a file path, gain and credit per cue (menu, game, final) with a play button; crossfade time, music level under stings, and new-player volume defaults.
+- **Save** writes `js/sounds.js` through a new `serve.py` route (`POST /tools/mixer/save`, header-checked like the editor's). `sounds.js` is now in the Mixer's own format (each sound has `group` and `label`; big enemy deaths list their enemies in `for`), so a save is a one-line diff per change.
+- Engine: `play(id, { force })` skips the anti-spam rules for the Mixer's Play button; `stopAll()`.
+- Tests 181 → **185** (format round-trip, sounds.js is in Mixer format).
+
+Jogo confirmed (9 Nov): in-game sound and the Mixer both work on the Mac.
+
+10 Nov: **Teletype clicks** (Jogo). New `ui_type` sound (UI group, "Teletype key"): a short noise click per letter as the Level Data text types out, skipping spaces (`Story.teletype`). Priority 60, below taps, so typing never blocks a button sound.
+
+10 Nov: **Wave music pool** (Jogo's plan). `MUSIC` is now `menu` (main menu, fades in) plus `waves`, a list of tracks (4 slots). Each wave start picks a track with a file (never the one just played, if there's a choice; `pickTrack` in audio.js), plays it from the top at full volume (the tracks have their own fade-in) and loops it; when the wave is cleared or the level ends it fades out over `AUDIO.musicFade`. The build phase is silent, and entering a level fades the menu music. The old game/final cues are gone. Mixer Music panel: Menu row, Wave 1–N rows with play and remove, "+ Wave track", "Next wave (random pick)". Tests 185 → **190**.
+
+10 Nov, after playtest (Jogo: switching every wave was jarring): **a track now runs for 3 waves** (`AUDIO.wavesPerTrack`), switching at the start of waves 4, 7, 10… (`trackChangeDue`). Between waves it keeps playing at `AUDIO.breakLevel` (0.35) instead of fading out, and comes back to full at the next wave start. A track change fades the old one out as the new one starts from the top. Mixer: "Waves per track" and "Music between waves" sliders, a "Wave break" toggle to hear the lowered level; the engine now reads the Mixer's live AUDIO copy. Tests 190 → **193**. The Result screen's Cores count-up also plays `ui_type` on each step (Jogo, 10 Nov). Next: Jogo reworks the sounds themselves in the Mixer, then music tracks.
+
 ## Session 25 — 2026-11-09 — READY batch: Battle Report buttons, red dots, Deleter light-up, Towers Info
 
 - **Tutorial Screen 5** (place a Vault) has no arrow now, so the player picks the spot.

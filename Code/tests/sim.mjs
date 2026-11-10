@@ -12,6 +12,9 @@ import { relocateBlockers, crashShuffle } from '../js/crash.js';
 import { placeBlockers, placeLockouts, placeExtraSpawns, rollBlueprints } from '../js/board.js';
 import { parseCSV, parseContent, archivePool, rollRun, memoriesLost, DEFAULT_AVATAR, CONTENT_FILES, SECONDARY_SHOWN } from '../js/narrative.js';
 import { pickWeighted } from '../js/waves.js';
+import { renderSynth, recipeLength, WAVES } from '../js/synth.js';
+import { SOUNDS, MUSIC, AUDIO, deathSound, fireSound } from '../js/sounds.js';
+import { VoicePool, AudioEngine, sfx, pickTrack, trackChangeDue } from '../js/audio.js';
 
 let pass = 0, fail = 0;
 const check = (name, cond) => { cond ? pass++ : fail++; console.log(cond ? ' PASS' : ' FAIL', name); };
@@ -847,6 +850,107 @@ check('every level defines a starting budget',
   check('entry rules: extras stay in the entry rows and at the min distance', entryOk);
   const tooFar = structuredClone(E); tooFar.grid.entryMinDist = 99;
   check('validator: impossible entry distance is an error', validateLevels([tooFar]).errors.length > 0);
+}
+
+// --- M8: sound (synth recipes, sound list, anti-spam voice pool, settings) ------
+{
+  // every sound renders: right length, not silent, no NaN, never past full scale
+  let renders = true, bad = [];
+  for (const [id, def] of Object.entries(SOUNDS)) {
+    if (!def.synth) continue;
+    const data = renderSynth(def.synth, 22050);
+    let peak = 0, finite = true;
+    for (const v of data) { if (!Number.isFinite(v)) finite = false; peak = Math.max(peak, Math.abs(v)); }
+    const lenOk = Math.abs(data.length - Math.ceil(recipeLength(def.synth) * 22050)) <= 1;
+    if (!finite || peak < 0.01 || peak > 1 || !lenOk) { renders = false; bad.push(id); }
+  }
+  check(`sound: every synth recipe renders cleanly${bad.length ? ' (' + bad.join(', ') + ')' : ''}`, renders);
+  check('sound: rendering is repeatable (seeded noise)',
+    renderSynth(SOUNDS.tower_die.synth, 8000).every((v, i, arr) => v === renderSynth(SOUNDS.tower_die.synth, 8000)[i]) );
+  check('sound: every wave shape renders', WAVES.every(w => renderSynth({ wave: w, freq: 440, hold: 0.05 }, 8000).some(v => Math.abs(v) > 0.05)));
+  check('sound: a layer starts at its offset',
+    (() => { const d = renderSynth({ layers: [{ at: 0.1, wave: 'square', freq: 440, hold: 0.05 }] }, 1000); return d.slice(0, 95).every(v => v === 0) && d.slice(101, 140).some(v => v !== 0); })());
+
+  // the list: valid buses and dials, every weapon and enemy covered
+  check('sound list: every sound has a bus, priority, voices and a recipe or file',
+    Object.values(SOUNDS).every(d => ['ui', 'sfx', 'music'].includes(d.bus) && d.priority >= 0 && d.priority <= 100 && d.voices >= 1 && (d.synth || d.file)));
+  const weapons = [...new Set(Object.values(TOWERS).map(t => t.weapon).filter(w => typeof w === 'string'))];
+  check('sound list: every tower weapon has a fire sound', weapons.every(w => SOUNDS[fireSound(w)]));
+  check('sound list: every enemy has a death sound', Object.keys(ENEMIES).every(k => SOUNDS[deathSound(k)]));
+  check('sound list: heavy weapons outrank rapid fire (Deleter > DDOS > Threader)',
+    SOUNDS.fire_sniperRifle.priority > SOUNDS.fire_grenadeLauncher.priority && SOUNDS.fire_grenadeLauncher.priority > SOUNDS.fire_machineGun.priority);
+  check('music: a menu track and a wave pool', 'menu' in MUSIC && Array.isArray(MUSIC.waves));
+  // wave pool picks (Jogo, 10 Nov)
+  const tracks = [{ file: 'a.mp3' }, { file: null }, { file: 'c.mp3' }, { file: 'd.mp3' }];
+  let repeats = 0, empties = 0, last = -1;
+  for (let i = 0; i < 300; i++) { const n = pickTrack(tracks, last); if (n === last) repeats++; if (!tracks[n]?.file) empties++; last = n; }
+  check('music: a wave never repeats the last track when there is a choice', repeats === 0);
+  check('music: a wave only picks tracks that have a file', empties === 0);
+  check('music: one track is picked again and again', pickTrack([{ file: 'a.mp3' }], 0) === 0);
+  check('music: no tracks with a file = silence', pickTrack([{ file: null }], -1) === -1 && pickTrack(undefined, -1) === -1);
+  check('music: a new track every 3 waves (waves 1, 4, 7)',
+    [0, 1, 2, 3, 4, 5, 6, 7, 8].filter(w => trackChangeDue(w, 3)).join() === '0,3,6');
+  check('music: wavesPerTrack 1 changes every wave', [0, 1, 2].every(w => trackChangeDue(w, 1)));
+  check('music: the between-waves level is a sensible dial', AUDIO.wavesPerTrack >= 1 && AUDIO.breakLevel > 0 && AUDIO.breakLevel < 1);
+  check('music: every pool track gets played', new Set(Array.from({ length: 200 }, (_, i) => pickTrack(tracks, -1, () => (i % 10) / 10))).size === 3);
+
+  // VoicePool: the anti-spam rules
+  const gun = { priority: 20, voices: 3, gap: 0.05 }, big = { priority: 80, voices: 2, gap: 0 };
+  let pool = new VoicePool(4);
+  check('voices: a sound inside its gap is dropped', pool.request('gun', gun, 0, 1).ok && pool.request('gun', gun, 0.02, 1).reason === 'gap');
+  pool.request('gun', gun, 0.1, 1); pool.request('gun', gun, 0.2, 1);
+  check('voices: a sound at its voice limit is dropped', pool.request('gun', gun, 0.3, 1).reason === 'voices');
+  check('voices: finished voices free their slot', pool.request('gun', gun, 1.05, 1).ok);
+  pool = new VoicePool(3);
+  for (let i = 0; i < 3; i++) pool.request('g' + i, gun, i * 0.1, 5);
+  const r = pool.request('boom', big, 0.5, 1);
+  check('voices: a full pool cuts its oldest lowest-priority voice for a higher one', r.ok && r.steal?.id === 'g0');
+  check('voices: a full pool drops a sound that outranks nothing', pool.request('g9', gun, 0.6, 1).reason === 'busy');
+  pool = new VoicePool(2);
+  pool.request('a', big, 0, 5); pool.request('b', big, 0, 5);
+  check('voices: equal priority never cuts', pool.request('c', big, 0.1, 1).reason === 'busy');
+  // a full board firing for 10 s: never more than the cap, and the Deleter is always heard
+  pool = new VoicePool(AUDIO.maxVoices);
+  let maxNow = 0, deleterDropped = 0;
+  for (let t = 0; t < 10; t += 0.01) {
+    for (const w of ['machineGun', 'machineGun', 'machineGun', 'pulseRifle', 'pumpShotgun', 'scatterShot']) pool.request(fireSound(w), SOUNDS[fireSound(w)], t, 0.08);
+    pool.request('enemy_die', SOUNDS.enemy_die, t, 0.1);
+    if (Math.round(t * 100) % 50 === 0 && !pool.request('fire_sniperRifle', SOUNDS.fire_sniperRifle, t, 0.2).ok) deleterDropped++;
+    maxNow = Math.max(maxNow, pool.voices.length);
+  }
+  check(`voices: a full board stays within the cap (${maxNow}/${AUDIO.maxVoices})`, maxNow <= AUDIO.maxVoices);
+  check('voices: the Deleter is never drowned out', deleterDropped === 0);
+
+  // the engine is silent and safe with no Web Audio (node, old browsers)
+  const eng = new AudioEngine();
+  let safe = true;
+  try { eng.setSettings({ muted: true }); eng.playMusic('game'); eng.stopMusic(); safe = eng.play('ui_tap') === false && sfx('build') === false; } catch { safe = false; }
+  check('audio engine: a no-op without Web Audio', safe);
+
+  // the Sound Mixer's file format
+  const { formatSounds, SOUNDS_FILE_HEADER } = await import('../tools/mixer/format.js');
+  const text = formatSounds({ AUDIO, SOUNDS, MUSIC });
+  check('mixer: a saved file starts with the header serve.py checks', text.startsWith(SOUNDS_FILE_HEADER));
+  const back = await import('data:text/javascript;base64,' + (globalThis.Buffer ? Buffer.from(text).toString('base64') : btoa(unescape(encodeURIComponent(text)))));
+  check('mixer: a saved file reads back exactly', JSON.stringify(back.SOUNDS) === JSON.stringify(SOUNDS)
+    && JSON.stringify(back.AUDIO) === JSON.stringify(AUDIO) && JSON.stringify(back.MUSIC) === JSON.stringify(MUSIC)
+    && back.deathSound('crack') === 'enemy_die_big' && back.deathSound('hack') === 'enemy_die');
+  if (typeof process !== 'undefined' && process.versions?.node) {
+    const fs = await import('node:fs');
+    check('sounds.js is exactly what the Mixer would save (no noisy diffs)',
+      fs.readFileSync(new URL('../js/sounds.js', import.meta.url), 'utf8') === text);
+  }
+  check('sound list: every sound has a Mixer group and label', Object.values(SOUNDS).every(d => d.group && d.label));
+
+  // settings in the save
+  check('save: new profiles get default sound settings', JSON.stringify(loadSave().audio) === JSON.stringify(AUDIO.defaults));
+  {
+    const store = { 'tdx-save-v1': JSON.stringify({ bits: 3, audio: { music: 7, muted: 1 } }) };
+    globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: () => {}, removeItem: () => {} };
+    const a = loadSave().audio;
+    delete globalThis.localStorage;
+    check('save: broken sound settings are repaired', a.music === AUDIO.defaults.music && a.sfx === AUDIO.defaults.sfx && a.muted === true);
+  }
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

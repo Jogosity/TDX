@@ -3,6 +3,7 @@
 // Safe in headless/node contexts (no localStorage → in-memory only).
 
 import { TOWER_ORDER, UPGRADE } from './config.js';
+import { AUDIO } from './sounds.js';
 
 const KEY = 'tdx-save-v1';
 export const SAVE_VERSION = 2;   // S23: 2 = Level 0 (Tutorial) added at LEVELS[0]
@@ -15,6 +16,7 @@ const DEFAULTS = () => ({
   levelsUnlocked: 0,            // Area Unlock: index of the highest playable level (0 = Tutorial)
   saveVersion: SAVE_VERSION,
   hints: {},                    // S25 one-time hints shown: { blueprint, bits }
+  audio: { ...AUDIO.defaults }, // M8: { muted, music, sfx } — the cog menu's SOUND tab
 });
 
 export function loadSave() {
@@ -45,6 +47,11 @@ export function loadSave() {
   if (typeof s.hints !== 'object' || s.hints === null) s.hints = {};
   if (Object.values(s.blueprints).some(n => n > 0) || s.towersUnlocked.length > 1) s.hints.blueprint = true;
   if (s.bits > 0 || Object.keys(s.tierUnlocks).length > 0) s.hints.bits = true;
+  // M8: sound settings (older saves have none; fill any missing field)
+  if (typeof s.audio !== 'object' || s.audio === null) s.audio = {};
+  s.audio = { ...AUDIO.defaults, ...s.audio };
+  for (const k of ['music', 'sfx']) if (typeof s.audio[k] !== 'number' || !(s.audio[k] >= 0 && s.audio[k] <= 1)) s.audio[k] = AUDIO.defaults[k];
+  s.audio.muted = !!s.audio.muted;
   return s;
 }
 

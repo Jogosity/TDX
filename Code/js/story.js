@@ -12,6 +12,7 @@
 import { AVATAR_DIR, DEFAULT_AVATAR } from './narrative.js';
 import { ENEMIES } from './config.js';
 import { drawEnemyShape } from './render.js';
+import { sfx } from './audio.js';
 
 const ICONS = 'assets/icons/';
 
@@ -152,6 +153,7 @@ export class Story {
       ci++;
       pt.shown.textContent = pt.line.slice(0, ci);
       pt.rest.textContent = pt.line.slice(ci);
+      if (pt.line[ci - 1].trim()) sfx('ui_type');   // M8: a key click per letter (not spaces)
       if (ci >= pt.line.length) { pi++; ci = 0; this.later(tick, TIMING.typeParaPause); }
       else this.later(tick, 1000 / TIMING.typeCps);
     };
@@ -189,6 +191,7 @@ export class Story {
 
   // 1. Level Data: background, then bar, title, teletyped description, Continue.
   showLevelData(levelText, { wallet, onBack, onContinue }) {
+    sfx('ui_whoosh');   // M8
     const card = this.card(this.root, { onBack, wallet });
     card.classList.add('level-data');
     card.appendChild(h('div', 'story-spacer'));
@@ -215,6 +218,7 @@ export class Story {
   // Archive_Details_Screen_Tut overlay: captions + red outlines + Continue, which
   // clears it and leaves the normal Archive Record with Start.
   showArchive(run, strings, { wallet, onBack, onStart, host = this.root, lost = [], tutorial = null }) {
+    sfx(host === this.root ? 'ui_whoosh' : 'ui_popup');   // M8
     const card = this.card(host, { onBack, wallet });
     card.classList.add('archive');
     const bar = rv(h('div', 'story-bar with-icon'), 'bar');
@@ -322,6 +326,7 @@ export class Story {
 
   // 3b. Level Result: slides on over the board, then builds in sequence.
   showResult(r, strings, { wallet, onContinue }) {
+    sfx('ui_whoosh');   // M8
     const card = this.card(this.root, { wallet });
     this.root.classList.add('slide-in');
     this.later(() => this.root.classList.add('slid'), 20);
@@ -366,7 +371,8 @@ export class Story {
     const countTo = (n) => { pill.textContent = `${n}/${r.maxLives}`; };
     this.finishers.push(() => countTo(r.lives));
     const steps = Math.max(1, r.lives);
-    for (let i = 1; i <= steps; i++) this.later(() => countTo(Math.round((r.lives * i) / steps)), pillAt + (TIMING.countUp * i) / steps);
+    // M8 (Jogo, 10 Nov): the teletype click on every step of the count
+    for (let i = 1; i <= steps; i++) this.later(() => { countTo(Math.round((r.lives * i) / steps)); if (r.lives > 0) sfx('ui_type'); }, pillAt + (TIMING.countUp * i) / steps);
     // memories lost land one at a time, a beat apart
     const t = this.seq(order, start, TIMING.step);
     this.later(() => btn.classList.add('in'), t + 400);
@@ -377,6 +383,7 @@ export class Story {
   // S25: onNext given (a won level with a level after it) → Main Menu (left, dark) +
   // Next Level (right, bright blue) instead of Continue. onContinue = Main Menu.
   showAnalytics(stats, strings, { wallet, onContinue, onNext = null }) {
+    sfx('ui_whoosh');   // M8
     const card = this.card(this.root, { wallet });
     card.classList.add('analytics');
     card.appendChild(h('div', 'story-spacer'));

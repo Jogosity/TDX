@@ -15,6 +15,8 @@
 //
 // TutorialScript is the DOM-free step machine (Node-tested); Tutorial draws it.
 
+import { sfx } from './audio.js';
+
 // Towers the Tutorial allows, whatever the player's save holds (Tier 1 only).
 export const tutorialTowers = (waveIndex) => (waveIndex >= 1 ? ['threader', 'vault'] : ['threader']);
 
@@ -193,6 +195,7 @@ export class Tutorial {
   }
 
   show(s) {
+    if (this.shownId !== s.id) { this.shownId = s.id; sfx('ui_popup'); }   // M8: a new box, not a recount
     this.msg.textContent = '';
     for (const line of (this.text[s.id] ?? '').split('\n')) this.msg.appendChild(h('p', '', line));
     const left = s.count ? s.count - this.script.done : 0;
@@ -267,6 +270,7 @@ export class HintBox {
   // dir: 'down' (arrow above the point, pointing at it) or 'up' (arrow below it, pointing up).
   constructor({ text, point, dir = 'down', tick = false, overStory = false, allow = () => false, onDone = () => {} }) {
     this.point = point; this.allow = allow; this.onDone = onDone; this.dir = dir;
+    sfx('ui_popup');
     this.root = h('div', 'tut-layer show' + (overStory ? ' over-story' : ''));
     this.box = h('div', 'tut-box in');
     for (const line of (text ?? '').split('\n')) this.box.appendChild(h('p', 'tut-msg', line));

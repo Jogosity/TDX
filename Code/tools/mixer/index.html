@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TDX Sound Mixer</title>
+<link rel="icon" href="data:,">
+<!-- TDX Sound Mixer (M8) — audition every sound, shape it, test the anti-spam
+     rules, Save to js/sounds.js. Run python3 Code/serve.py and open
+     http://localhost:8000/tools/mixer/ -->
+<style>
+  :root {
+    color-scheme: dark;
+    --page: #08101f; --surface: #0f1a30; --surface-2: #142242; --surface-3: #1b2d55;
+    --ink: #e8f1ff; --ink-2: #b4c4dc; --muted: #7d8aa3; --border: rgba(255,255,255,0.10);
+    --accent: #4ef3ff; --critical: #ff6b6b; --warn: #ffc65c; --good: #5fd35f; --pin: #ffb020;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  button, input, select { font: inherit; }
+  button { background: var(--surface-2); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; cursor: pointer; }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: 0.4; cursor: default; }
+  button.primary { background: var(--accent); color: #04121c; border-color: var(--accent); font-weight: 600; }
+  button.on { border-color: var(--accent); color: var(--accent); }
+  button.small { padding: 2px 8px; font-size: 12px; }
+  select, input[type=number], input[type=text] { background: var(--surface-2); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; }
+  input[type=range] { accent-color: var(--accent); width: 100%; }
+
+  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 12px 20px; background: rgba(8,16,31,0.94); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); }
+  header h1 { margin: 0 12px 0 0; font-size: 18px; letter-spacing: 0.04em; }
+  header h1 span { color: var(--accent); }
+  #status { color: var(--muted); font-size: 13px; margin-right: auto; }
+  #status.dirty { color: var(--warn); } #status.bad { color: var(--critical); }
+  #wake { color: var(--warn); font-size: 13px; }
+
+  .layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; padding: 16px 20px 60px; max-width: 1400px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; padding: 12px 16px 60px; } }
+  aside { position: sticky; top: 64px; align-self: start; display: grid; gap: 12px; max-height: calc(100vh - 80px); overflow: auto; }
+  @media (max-width: 900px) { aside { position: static; max-height: none; } }
+  main { display: grid; gap: 16px; min-width: 0; align-content: start; }
+  .panel { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .panel > h2 { margin: 0 0 2px; font-size: 15px; }
+  .panel > .sub { margin: 0 0 12px; color: var(--muted); font-size: 12.5px; }
+
+  .icons { display: flex; flex-wrap: wrap; gap: 6px; }
+  .icon-btn { padding: 4px; width: 58px; display: grid; justify-items: center; gap: 2px; font-size: 10px; color: var(--ink-2); }
+  .icon-btn canvas { width: 40px; height: 40px; }
+  .icon-btn.sel { border-color: var(--accent); }
+
+  .group h3 { margin: 10px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .snd { display: flex; width: 100%; text-align: left; justify-content: space-between; gap: 6px; margin-bottom: 3px; background: transparent; }
+  .snd small { color: var(--muted); font-size: 11px; }
+  .snd.sel { background: var(--surface-3); border-color: var(--accent); }
+  .snd.changed::after { content: '•'; color: var(--warn); }
+
+  .title-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .title-row h2 { margin: 0; font-size: 18px; }
+  .title-row code { color: var(--muted); font-size: 12px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+  .bar label { display: flex; gap: 6px; align-items: center; color: var(--ink-2); font-size: 13px; }
+  #wave { width: 100%; height: 110px; background: var(--page); border-radius: 8px; border: 1px solid var(--border); display: block; }
+  .meta { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+
+  .sliders { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 4px 22px; }
+  .sgroup { grid-column: 1 / -1; margin: 10px 0 2px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .srow { display: grid; grid-template-columns: 92px minmax(0, 1fr) 72px; gap: 8px; align-items: center; min-height: 30px; }
+  .srow span { color: var(--ink-2); font-size: 13px; }
+  .srow.unset span { color: var(--muted); }
+  .srow input[type=number] { width: 72px; padding: 2px 4px; font-size: 12.5px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .waves { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .stress { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 14px; }
+  .stress label { display: flex; justify-content: space-between; gap: 6px; align-items: center; font-size: 13px; color: var(--ink-2); }
+  .stress input { width: 56px; }
+  .meter { height: 14px; background: var(--page); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; margin: 10px 0 4px; }
+  .meter div { height: 100%; width: 0; background: var(--accent); transition: width 0.08s; }
+  .meter div.full { background: var(--warn); }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; margin-top: 8px; }
+  th, td { text-align: right; padding: 3px 8px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--muted); font-weight: 500; }
+  td.drop { color: var(--warn); }
+
+  .music-row { display: grid; grid-template-columns: 60px minmax(0, 1fr) 90px minmax(0, 1fr) auto; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .music-row input[type=text] { width: 100%; }
+  @media (max-width: 700px) { .music-row { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>TDX <span>Sound Mixer</span></h1>
+  <div id="status">Loading…</div>
+  <span id="wake">Click anywhere to switch sound on</span>
+  <button id="stop">■ Stop all</button>
+  <button id="save" class="primary" disabled>Save</button>
+</header>
+<div class="layout">
+  <aside>
+    <div class="panel">
+      <h2>Towers</h2>
+      <p class="sub">Tap a tower to hear it fire.</p>
+      <div class="icons" id="tower-icons"></div>
+    </div>
+    <div class="panel">
+      <h2>Enemies</h2>
+      <p class="sub">Tap an enemy to hear it destroyed.</p>
+      <div class="icons" id="enemy-icons"></div>
+    </div>
+    <div class="panel" id="list"></div>
+  </aside>
+  <main>
+    <section class="panel">
+      <div class="title-row"><h2 id="s-label"></h2><code id="s-id"></code></div>
+      <div class="bar">
+        <button id="play" class="primary">▶ Play <small>(space)</small></button>
+        <button id="play5">▶ ×5 with variation</button>
+        <button id="mutate">Mutate</button>
+        <button id="revert">Revert this sound</button>
+        <label><input type="checkbox" id="auto" checked> Play as I change it</label>
+      </div>
+      <canvas id="wave"></canvas>
+      <div class="meta" id="s-meta"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Dials</h2>
+      <p class="sub">How the game plays this sound: its volume slider, how it competes for voices, and its pitch.</p>
+      <div class="sliders" id="dials"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Recipe</h2>
+      <p class="sub">The synth settings that make the sound. Layers are extra voices that start at their own time (stings, two-tone beeps).</p>
+      <div class="tabs" id="layer-tabs"></div>
+      <div id="recipe"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Stress test: anti-spam</h2>
+      <p class="sub">Fires a full board through the real voice rules, using each tower's weapon timing from config.js. Watch the voice meter and what gets dropped, then tune voices, gap and priority.</p>
+      <div class="stress" id="stress-towers"></div>
+      <div class="bar">
+        <label>Kills per second <input type="number" id="kills" min="0" max="30" step="0.5" value="4"></label>
+        <label>Seconds <input type="number" id="secs" min="1" max="30" step="1" value="8"></label>
+        <button id="stress-run" class="primary">▶ Run</button>
+      </div>
+      <div class="sliders" id="globals"></div>
+      <div class="meter"><div id="meter"></div></div>
+      <div class="meta" id="meter-text">Voices: 0</div>
+      <table id="stress-table"></table>
+    </section>
+
+    <section class="panel">
+      <h2>Music</h2>
+      <p class="sub">Loops from a game-safe licence. Put the file in Code/assets/audio/ and give its path from Code/, e.g. assets/audio/menu.mp3. Leave empty for silence.</p>
+      <div id="music"></div>
+      <div class="sliders" id="music-globals"></div>
+    </section>
+  </main>
+</div>
+<script type="module" src="./mixer.js"></script>
+</body>
+</html>

@@ -716,6 +716,10 @@
   @media (prefers-reduced-motion: reduce) {
     .rv, #story.slide-in { transition: none; }
   }
+  /* M8 SOUND tab */
+  .snd-row { display: grid; grid-template-columns: 7.5em 1fr 3em; align-items: center; gap: 10px; padding: 10px 2px; font-size: 14px; }
+  .snd-row input[type=range] { width: 100%; accent-color: var(--cyan, #4ef3ff); }
+  .snd-val { text-align: right; opacity: 0.8; font-variant-numeric: tabular-nums; }
   .dbg-note { font-size: 12px; line-height: 1.5; white-space: pre-line; opacity: 0.85; padding: 4px 2px 8px; }
 
   #toast {

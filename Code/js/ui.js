@@ -2,9 +2,17 @@
 
 import { TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, LEVELS, VERSION, tierOffer } from './config.js';
 import { drawTowerShape, drawEnemyShape } from './render.js';
-import { affordableTiers, upgradesAffordable, dotLabel } from './save.js';
+import { affordableTiers, upgradesAffordable, dotLabel, writeSave } from './save.js';
+import { audio, sfx } from './audio.js';
 
 const redDot = (text) => { const d = document.createElement('span'); d.className = 'red-dot'; d.textContent = text; return d; };
+
+// M8: every button clicks. Back-style buttons get the backward blip; a button
+// with data-sfx="name" plays that sound instead, and data-sfx="none" stays quiet
+// (the game plays its own sound for those, e.g. build, sell, START WAVE).
+const BACK_BUTTONS = '.mm-back, .story-back, #um-close, #debug-close, .story-btn.dark';
+const buttonSound = (b) => b.dataset.sfx
+  ?? (b.matches(BACK_BUTTONS) || /^back$/i.test(b.textContent.trim()) ? 'ui_back' : 'ui_tap');
 
 const ALERT_REARM = 6;   // seconds before another under-attack warning can show
 
@@ -61,6 +69,7 @@ export class UI {
       const btn = document.createElement('button');
       btn.className = 'tray-btn';
       btn.dataset.type = key;
+      btn.dataset.sfx = 'none';   // onTrayTap picks select / error
       btn.appendChild(this.towerIcon(key, 68, 17));
       const name = document.createElement('div');
       name.className = 't-name';
@@ -106,20 +115,24 @@ export class UI {
 
   onTrayTap(key, btn) {
     if (!this.game.isTowerUnlocked(key)) {
+      sfx('ui_error');
       const def = TOWERS[key];
       this.toast(`Locked — collect Blueprints (${this.game.bpCount(key)}/${def.blueprints})`);
       return;
     }
     if (this.selectedType === key) {
+      sfx('ui_back');
       this.clearSelection();
       return;
     }
     if (this.game.state.tokens < TOWERS[key].cost) {
+      sfx('ui_error');
       this.toast('Not enough Tokens');
       return;
     }
     this.clearSelection();
     this.selectedType = key;
+    sfx('ui_select');
     btn.classList.add('selected');
     this.game.startPlacing(key);
     this.game.tutorial?.event('select', key);
@@ -133,6 +146,14 @@ export class UI {
 
   bind() {
     const canvas = this.game.canvas;
+    // M8: one listener gives every button its sound
+    for (const b of [this.el.sellBtn, this.el.upgradeBtn, this.el.bannerBtn]) b.dataset.sfx = 'none';
+    document.addEventListener('click', (ev) => {
+      const b = ev.target.closest?.('button');
+      if (!b || b.disabled) return;
+      const id = buttonSound(b);
+      if (id !== 'none') sfx(id);
+    }, true);
     canvas.addEventListener('pointerdown', (ev) => {
       const rect = canvas.getBoundingClientRect();
       this.game.onTap(ev.clientX - rect.left, ev.clientY - rect.top);
@@ -287,6 +308,7 @@ export class UI {
   // --- main menu ---------------------------------------------------------------
   showMainMenu() {
     this.el.mainMenu.classList.add('show');
+    audio.playMusic('menu');   // M8
     const ver = document.getElementById('mm-version');
     if (ver) ver.textContent = `v${VERSION.number} — ${VERSION.codename.toUpperCase()}`;
     this.showMenuScreen('mm-home');
@@ -473,6 +495,7 @@ export class UI {
   // Tab registry: add new tabs here — { label, build(bodyEl) }.
   get debugTabDefs() {
     return [
+      { label: 'SOUND', build: (el) => this.buildSoundTab(el) },   // M8: player settings come first
       {
         label: 'ECONOMY',
         build: (el) => {
@@ -523,6 +546,41 @@ export class UI {
       },
     ];
   }
+
+  // M8 SOUND tab: mute, Music and SFX volume. Saved with the profile.
+  buildSoundTab(el) {
+    const save = this.game.save;
+    const apply = () => { audio.setSettings(save.audio); writeSave(save); };
+    const mute = this.dbgButton(el, '', () => {
+      save.audio.muted = !save.audio.muted;
+      apply();
+      mute.textContent = this.muteLabel();
+    });
+    mute.textContent = this.muteLabel();
+    mute.dataset.sfx = 'none';
+    for (const [key, label, test] of [['music', 'Music', null], ['sfx', 'Sound effects', 'ui_select']]) {
+      const row = document.createElement('label');
+      row.className = 'snd-row';
+      const name = document.createElement('span');
+      name.textContent = label;
+      const val = document.createElement('span');
+      val.className = 'snd-val';
+      const slider = document.createElement('input');
+      slider.type = 'range'; slider.min = 0; slider.max = 100; slider.step = 5;
+      slider.value = Math.round(save.audio[key] * 100);
+      val.textContent = `${slider.value}%`;
+      slider.addEventListener('input', () => {
+        save.audio[key] = slider.value / 100;
+        val.textContent = `${slider.value}%`;
+        audio.setSettings(save.audio);
+      });
+      slider.addEventListener('change', () => { apply(); if (test) sfx(test); });
+      row.append(name, slider, val);
+      el.appendChild(row);
+    }
+  }
+
+  muteLabel() { return this.game.save.audio.muted ? '🔇 Sound off: tap to turn on' : '🔊 Sound on: tap to mute'; }
 
   dbgButton(parent, label, onTap, danger = false) {
     const b = document.createElement('button');
@@ -591,20 +649,24 @@ export class UI {
     const now = performance.now() / 1000;
     if (now - (this.lastAttackWarning ?? -Infinity) < ALERT_REARM) return;
     this.lastAttackWarning = now;
+    sfx('warn_attack');   // M8: one short cue as the attack starts, never a constant alarm
     this.alert('warn', 'WARNING!', `${ENEMIES[enemyType]?.name ?? 'Enemy'} attacking your units`);
   }
 
   // Breach Surge (S21): one alert per countdown second (each re-pops the strip),
   // then the breach itself.
   surgeCountdown(secs) {
+    sfx('surge_tick');
     this.alert('warn', 'BREACH DETECTED', `Surge in ${secs}`, 1.2);
   }
 
   surgeBreach() {
+    sfx('surge_breach');
     this.alert('warn', 'BREACH!', 'Every entry point is flooding', 2.6);
   }
 
   towerUnlocked(type) {
+    sfx('unlock');
     this.alert('good', 'TOWER UNLOCKED', TOWERS[type].name.toUpperCase(), 3);
     const btn = this.trayBtns[type]?.btn;
     if (btn) { btn.classList.remove('just-unlocked', 'bp-hit'); void btn.offsetWidth; btn.classList.add('just-unlocked'); }

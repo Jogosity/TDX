@@ -111,6 +111,7 @@ export class Tower {
     if (this.upgrading) {
       this.upgrading.remaining -= dt;
       if (this.upgrading.remaining <= 0) {
+        this.upgradeDone = this.upgrading.toTier;  // M8: 1 = construction finished, 2+ = upgrade finished
         this.applyTier(this.upgrading.toTier);
         this.upgrading = null;
         this.justUpgraded = true; // lets the UI refresh an open popup
@@ -187,6 +188,7 @@ export class Tower {
 
   fire(target, projectiles, grid) {
     const w = this.weapon;
+    this.fired = true;   // M8: the game plays this tower's fire sound, then clears it
     if (w.radial) {
       // full 360° ring of pellets, evenly spaced with a little jitter
       this.flash = 1;
