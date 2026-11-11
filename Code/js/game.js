@@ -2,8 +2,10 @@
 
 import { Tutorial, tutorialTowers, HintBox } from './tutorial.js';
 const NEXT_LEVEL_KEY = 'tdx-next-level';
-import { PLAYER, TOWERS, TOWER_ORDER, ENEMIES, LEVELS, UPGRADE, BLUEPRINTS, CRASH } from './config.js';
+import { PLAYER, TOWERS, TOWER_ORDER, ENEMIES, LEVELS, UPGRADE, BLUEPRINTS, CRASH, effectiveDelta } from './config.js';
 import { loadSave, writeSave, clearSave } from './save.js';
+import * as saveApi from './save.js';   // M9: optional Difficulty helpers (advancedOpen) for the quests
+import * as quests from './quests.js';
 import { crashShuffle } from './crash.js';
 import { placeBlockers, placeLockouts, placeExtraSpawns, rollBlueprints } from './board.js';
 import { HexGrid } from './hex.js';
@@ -15,12 +17,16 @@ import { UI } from './ui.js';
 import { Story } from './story.js';
 import { loadNarrative, rollRun, memoriesLost } from './narrative.js';
 import { audio, sfx } from './audio.js';
+import { Recorder } from './recorder.js';   // M9: debug run recorder
 import { deathSound, fireSound } from './sounds.js';
 
 // Per-level numbers for the Analytics Report (S20). Tokens earned = kill
 // rewards + sell refunds (not starting Tokens); spent = builds + upgrades;
 // lost = towers drained or crushed by a CRASH; leakedBy = Cores taken, by enemy.
-const newLevelStats = () => ({ built: 0, lost: 0, upgraded: 0, earned: 0, spent: 0, kills: 0, leakedBy: {} });
+// M9 (Daily Quests): damage = enemy health removed, bps = Blueprints collected,
+// builtBy / killedBy = counts per tower / enemy type.
+const newLevelStats = () => ({ built: 0, lost: 0, upgraded: 0, earned: 0, spent: 0, kills: 0, leakedBy: {},
+  damage: 0, bps: 0, builtBy: {}, killedBy: {} });
 
 class Game {
   constructor() {
@@ -29,8 +35,10 @@ class Game {
     this.grid = null;
     this.field = null;
     this.spawnPaused = false;   // debug: hold natural wave spawning
+    this.rec = new Recorder();  // M9: records runs when save.recordRuns is on
 
     this.save = loadSave();
+    if (quests.ensureQuests(this.save, this.questCtx())) writeSave(this.save);   // M9: today's Daily Quests
     audio.setSettings(this.save.audio);   // M8: the SOUND tab's settings
 
     this.state = {
@@ -38,6 +46,7 @@ class Game {
       phase: 'build', // build | wave | levelComplete | gameOver
       level: LEVELS[0],
       levelIndex: 0,
+      difficulty: 'basic',  // M9: 'basic' | 'advanced' for this run
       waveIndex: 0,
       tokens: LEVELS[0].startTokens ?? PLAYER.startTokens,
       bits: this.save.bits,
@@ -81,7 +90,8 @@ class Game {
     // S25: Battle Report → Next Level reloads, then starts that level here
     let next = null;
     try { next = sessionStorage.getItem(NEXT_LEVEL_KEY); sessionStorage.removeItem(NEXT_LEVEL_KEY); } catch { /* none */ }
-    if (next !== null && +next <= this.latestLevelIndex()) this.startRun(+next);
+    const [nextIdx, nextDiff] = String(next ?? '').split(':');   // M9: 'index:difficulty'
+    if (next !== null && nextIdx !== '' && +nextIdx <= this.latestLevelIndex()) this.startRun(+nextIdx, nextDiff || 'basic');
 
     this.last = performance.now();
     requestAnimationFrame((t) => this.frame(t));
@@ -92,11 +102,17 @@ class Game {
     return Math.min(this.save.levelsUnlocked, LEVELS.length - 1);
   }
 
+  // M9: Advanced only where it's open; the Tutorial is always Basic.
+  playableDifficulty(idx, difficulty) {
+    return difficulty === 'advanced' && saveApi.advancedOpen(this.save, idx) ? 'advanced' : 'basic';
+  }
+
   // Build (or rebuild) the battlefield for a level and reset the run state.
-  initLevel(idx) {
+  initLevel(idx, difficulty = 'basic') {
     const s = this.state;
     s.levelIndex = idx;
     s.level = LEVELS[idx];
+    s.difficulty = this.playableDifficulty(idx, difficulty);
     this.grid = new HexGrid(s.level.grid);
     this.field = new PathField(this.grid);
     s.grid = this.grid;
@@ -203,13 +219,16 @@ class Game {
     this.state.tokens -= def.cost;
     this.state.stats.built++;
     this.state.stats.spent += def.cost;
+    this.state.stats.builtBy[type] = (this.state.stats.builtBy[type] ?? 0) + 1;
     const tower = new Tower(type, cell);
     cell.tower = tower;
     this.state.towers.push(tower);
+    this.rec.build(this.state, tower);
     this.onPathChanged();
     sfx('build');
     this.ui.refresh();
     this.tutorial?.event('build', type);
+    this.questTick();
   }
 
   selectTower(tower) {
@@ -241,6 +260,7 @@ class Game {
       else if (st.reason === 'tokens') { sfx('ui_error'); this.ui.toast('Not enough Tokens'); }
       return;
     }
+    this.rec.upgrade(this.state, t);
     this.state.tokens -= t.upgradeCost;
     this.state.stats.upgraded++;
     this.state.stats.spent += t.upgradeCost;
@@ -248,6 +268,7 @@ class Game {
     t.beginUpgrade();
     sfx('upgrade');
     this.ui.refresh();
+    this.questTick();
     this.ui.showTowerPopup(t); // reflect new state immediately
   }
 
@@ -310,6 +331,8 @@ class Game {
         const def = TOWERS[d.tower];
         const n = (this.save.blueprints[d.tower] || 0) + 1;
         this.save.blueprints[d.tower] = n;
+        this.state.stats.bps++;
+        this.questTick();
         this.state.effects.push({ kind: 'death', x: d.x, y: d.y, color: d.color, t: 0, dur: 0.4 });
         const unlocks = n >= def.blueprints && !this.isTowerUnlocked(d.tower);
         if (unlocks) this.save.towersUnlocked.push(d.tower);   // instant unlock, mid-game
@@ -331,6 +354,41 @@ class Game {
     writeSave(this.save);
     this.hintDrop = null;
     this.hint.close();
+  }
+
+  // --- Daily Quests (M9) --------------------------------------------------------
+  // What the quest rules need from elsewhere: the Difficulty work's
+  // advancedOpen(save, i), once it exists (the Advanced quest waits for it).
+  questCtx() { return { advancedOpen: saveApi.advancedOpen }; }
+
+  // Mid-level: announce a quest the moment the run finishes it (not saved yet;
+  // the run's numbers are added at the end of the level).
+  questTick() {
+    if (this.inTutorial || !this.save.quests.set.length) return;
+    const live = quests.liveProgress(this.save, this.state.stats);
+    this.questToasted ??= new Set();
+    this.save.quests.set.forEach((e, i) => {
+      if (quests.isDone(this.save, i) || this.questToasted.has(i) || !quests.isDone(this.save, i, live)) return;
+      this.questToasted.add(i);
+      this.ui.alert('good', 'QUEST COMPLETE', quests.questName(e, this.narrative?.strings).toUpperCase(), 2.6);
+    });
+  }
+
+  // End of a level: add the run to the quests. Returns the Result note line.
+  commitQuests(win) {
+    const s = this.state;
+    const done = quests.commitRun(this.save, s.stats, { win, difficulty: s.difficulty }, s.level);
+    if (!done.length) { writeSave(this.save); return ''; }
+    writeSave(this.save);
+    const names = done.map(i => quests.questName(this.save.quests.set[i], this.narrative?.strings));
+    return `Quest${names.length > 1 ? 's' : ''} complete: ${names.join(', ')}.`;
+  }
+
+  // Main Menu panel: claim quest i. Returns the BITS paid.
+  claimQuest(i) {
+    const paid = quests.claim(this.save, i);
+    if (paid) { writeSave(this.save); this.state.bits = this.save.bits; }
+    return paid;
   }
 
   // --- debug menu API -------------------------------------------------------------
@@ -360,6 +418,7 @@ class Game {
 
   debugUnlockAllLevels() {
     this.save.levelsUnlocked = LEVELS.length - 1;
+    for (let i = 0; i < LEVELS.length - 1; i++) saveApi.recordClear(this.save, i, 'basic');   // M9: unlocked = cleared on Basic before it
     writeSave(this.save);
     this.ui.refresh();
     this.ui.refreshMenu();
@@ -367,12 +426,36 @@ class Game {
 
   debugLockAllLevels() {
     this.save.levelsUnlocked = 0;
+    this.save.cleared = { basic: [], advanced: [] };   // M9
     writeSave(this.save);
     this.ui.refresh();
     this.ui.refreshMenu();
   }
 
   debugResetAll() { clearSave(); window.location.reload(); }
+
+  // M9: mark the Tutorial done (Level 1 opens). In the Tutorial itself, back to the menu.
+  debugCompleteTutorial() {
+    this.save.levelsUnlocked = Math.max(this.save.levelsUnlocked, 1);
+    saveApi.recordClear(this.save, 0, 'basic');   // M9
+    writeSave(this.save);
+    if (this.inTutorial) { window.location.reload(); return; }
+    this.ui.refresh();
+    this.ui.refreshMenu();
+  }
+
+  // M9 Daily Quests debug: reroll (new set, progress cleared), complete all
+  // (finished but not claimed), next day (clock +1 day), break the streak.
+  debugQuests(action) {
+    const ctx = this.questCtx();
+    if (action === 'reroll') quests.debugReroll(this.save, ctx);
+    if (action === 'complete') quests.debugCompleteAll(this.save);
+    if (action === 'nextDay') quests.debugNextDay(this.save, ctx);
+    if (action === 'breakStreak') quests.debugBreakStreak(this.save);
+    this.questToasted = new Set();
+    writeSave(this.save);
+    this.ui.refreshMenu();
+  }
 
   debugQuitToMenu() { window.location.reload(); } // boot lands on the main menu
 
@@ -385,16 +468,36 @@ class Game {
     this.endLevel(win, '(debug preview)');
   }
 
+  // M9 Difficulty debug. Each returns the toast text.
+  debugClearNext() {
+    const i = this.save.levelsUnlocked;
+    saveApi.recordClear(this.save, i, 'basic');
+    if (i + 1 < LEVELS.length) this.save.levelsUnlocked = i + 1;
+    writeSave(this.save); this.ui.refresh(); this.ui.refreshMenu();
+    return `${LEVELS[i].name} cleared on Basic`;
+  }
+  debugAdvancedAll() {
+    for (const i of [...this.save.cleared.basic]) saveApi.recordClear(this.save, i, 'advanced');
+    writeSave(this.save); this.ui.refresh(); this.ui.refreshMenu();
+    return 'Every Basic clear is now an Advanced clear';
+  }
+  debugWipeAdvanced() {
+    this.save.cleared.advanced = [];
+    writeSave(this.save); this.ui.refresh(); this.ui.refreshMenu();
+    return 'Advanced clears wiped';
+  }
+
   debugSpawnEnemy(type) {
     if (!ENEMIES[type]) return;
     const spawns = this.grid.spawns;
     const cell = spawns[Math.floor(Math.random() * spawns.length)];
-    this.state.enemies.push(new Enemy(type, cell, this.field, this.grid, this.state.level.enemyDelta));
+    this.state.enemies.push(new Enemy(type, cell, this.field, this.grid, effectiveDelta(this.state.level, this.state.difficulty)));
   }
 
   sellSelected() {
     const t = this.state.selectedTower;
     if (!t) return;
+    this.rec.sell(this.state, t);
     this.state.tokens += t.sellValue;
     this.state.stats.earned += t.sellValue;
     sfx('sell');
@@ -419,13 +522,14 @@ class Game {
   // PLAY uses the latest unlocked level; Level Select passes an index.
   // M4 flow: Level Data → Archive Record → battlefield. Back steps out again.
   // A screen with no content in the CSVs is skipped.
-  async startRun(levelIndex = this.latestLevelIndex()) {
+  async startRun(levelIndex = this.latestLevelIndex(), difficulty = 'basic') {
+    difficulty = this.playableDifficulty(levelIndex, difficulty);
     const content = await this.narrativeReady;
     const levelNo = levelIndex;   // S23: level number = index (0 = Tutorial)
     this.run = rollRun(content, levelNo);
     const wallet = { tokens: LEVELS[levelIndex].startTokens ?? PLAYER.startTokens, bits: this.save.bits };
     const text = content.levels[levelNo];
-    const go = () => { this.story.hide(); this.beginLevel(levelIndex); };
+    const go = () => { this.story.hide(); this.beginLevel(levelIndex, difficulty); };
     const toLevel = () => (text
       ? this.story.showLevelData(text, { wallet, onBack: () => this.story.hide(), onContinue: toArchive })
       : toArchive());
@@ -436,8 +540,9 @@ class Game {
     toLevel();
   }
 
-  beginLevel(levelIndex) {
-    this.initLevel(levelIndex);
+  beginLevel(levelIndex, difficulty = 'basic') {
+    this.initLevel(levelIndex, difficulty);
+    if (this.save.recordRuns && !this.state.level.tutorial) this.rec.start(this.state, this.grid, this.save);   // M9
     // S24: Level 0 runs the Tutorial (FTUE), the same way every time it's played
     this.tutorial?.destroy();
     this.inTutorial = !!this.state.level.tutorial;
@@ -463,8 +568,9 @@ class Game {
     if (s.phase === 'build') {
       this.ui.hideBanner();
       s.phase = 'wave';
+      this.rec.waveStart(s);
       const def = s.level.waves[s.waveIndex];
-      this.wave = new WaveController(def, this.grid, this.field, s.level.enemyDelta);
+      this.wave = new WaveController(def, this.grid, this.field, effectiveDelta(s.level, s.difficulty));
       // M8 (Jogo, 10 Nov): a track from the pool runs for 3 waves (AUDIO.wavesPerTrack)
       sfx('wave_start');
       audio.startWaveMusic(s.waveIndex);
@@ -492,17 +598,20 @@ class Game {
       this.ui.surgeBreach();
       s.shake = Math.max(s.shake, 0.5);
     }
+    if (phase !== s.surge && phase) this.rec.ev(s, `surge_${phase}`);
     if (!phase) this.surgeCount = null;
     s.surge = phase;
   }
 
   onWaveComplete() {
     const s = this.state;
+    this.rec.waveEnd(s);
     this.wave = null;
     s.waveIndex++;
     if (s.waveIndex >= s.level.waves.length) {
       s.phase = 'levelComplete';
       this.save.bits += s.level.rewardBits;
+      saveApi.recordClear(this.save, s.levelIndex, s.difficulty);   // M9
       // linear progression: clearing the frontier level unlocks the next
       let unlockNote = '';
       if (s.levelIndex === this.save.levelsUnlocked && s.levelIndex + 1 < LEVELS.length) {
@@ -531,6 +640,8 @@ class Game {
   // End of a level (M4): hold on the board, verdict over it, then the Result
   // screen slides on. Timings in story.js TIMING.
   endLevel(win, note) {
+    this.rec.finish(this.state, win);   // M9: saves the run if recording
+    note = [note, this.commitQuests(win)].filter(Boolean).join(' ');
     this.ui.hideBanner();
     this.ui.clearSelection();
     this.selectTower(null);
@@ -569,6 +680,7 @@ class Game {
   showAnalytics() {
     this.story.showAnalytics(this.state.stats, this.narrative.strings, {
       wallet: { tokens: this.state.tokens, bits: this.save.bits },
+      difficulty: this.state.level.tutorial ? null : this.state.difficulty,   // M9
       onContinue: () => window.location.reload(),
       // S25: after a win, Next Level goes straight into the next level's story screens
       onNext: this.state.phase === 'levelComplete' && this.state.levelIndex + 1 < LEVELS.length
@@ -578,8 +690,10 @@ class Game {
 
   // A fresh boot is the clean way to reset a level, so Next Level reloads with a
   // note to start that level (sessionStorage; falls back to the main menu).
-  queueNextLevel(idx) {
-    try { sessionStorage.setItem(NEXT_LEVEL_KEY, String(idx)); } catch { /* menu instead */ }
+  // M9: it asks for the difficulty just played; startRun drops to Basic if
+  // Advanced isn't open on the next level yet (D5).
+  queueNextLevel(idx, difficulty = this.state.difficulty) {
+    try { sessionStorage.setItem(NEXT_LEVEL_KEY, `${idx}:${difficulty}`); } catch { /* menu instead */ }
     window.location.reload();
   }
 
@@ -593,7 +707,9 @@ class Game {
     const destroyed = crashShuffle(this.grid, this.field, CRASH.maxTowerKills);
     sfx('crash');
     s.stats.lost += destroyed.length;
+    this.rec.ev(s, 'crash', { killed: destroyed.length });
     for (const t of destroyed) {
+      this.rec.lost(s, t, 'crash');
       t.alive = false;
       s.effects.push({ kind: 'death', x: t.x, y: t.y, color: '#4ef3ff', t: 0, dur: 0.4 });
       s.effects.push({ kind: 'wreck', x: t.x, y: t.y, t: 0, dur: 2.0 });
@@ -688,6 +804,7 @@ class Game {
 
     // Debug: spawning can be paused (debug-spawned enemies still arrive)
     if (inWave && !this.spawnPaused) this.wave.update(dt, s.enemies);
+    this.rec.tick(s, dt);
     if (inWave) this.syncSurge();
 
     for (const t of s.towers) t.update(dt, s.enemies, s.projectiles, this.grid);
@@ -706,6 +823,7 @@ class Game {
       s.stats.lost += destroyed.length;
       sfx('tower_die');
       for (const t of destroyed) {
+        this.rec.lost(s, t, 'drain');
         t.cell.tower = null;
         s.effects.push({ kind: 'death', x: t.x, y: t.y, color: '#4ef3ff', t: 0, dur: 0.4 });
         s.effects.push({ kind: 'wreck', x: t.x, y: t.y, t: 0, dur: 2.0 });
@@ -721,15 +839,19 @@ class Game {
       if (e.alive || e.resolved) continue;
       e.resolved = true;
       dirty = true;
+      s.stats.damage += e.dmgTaken || 0;
       if (e.reachedBase) {
         s.stats.leakedBy[e.type] = (s.stats.leakedBy[e.type] ?? 0) + 1;
         s.lives--;
+        this.rec.leaked(s, e);
         s.baseFlash = 1;
         sfx('core_lost');
         if (s.lives <= 0) { this.gameOver(); return; }
       } else {
         s.tokens += e.def.reward;
+        this.rec.kill(s, e);
         s.stats.kills++;
+        s.stats.killedBy[e.type] = (s.stats.killedBy[e.type] ?? 0) + 1;
         sfx(deathSound(e.type));
         s.stats.earned += e.def.reward;
         s.effects.push(makeConfetti(e.x, e.y));
@@ -740,6 +862,7 @@ class Game {
     if (dirty) {
       s.enemies = s.enemies.filter(e => e.alive);
       this.ui.refresh();
+      this.questTick();
     }
 
     if (inWave && this.wave && this.wave.isComplete(s.enemies)) this.onWaveComplete();

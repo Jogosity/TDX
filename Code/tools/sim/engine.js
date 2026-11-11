@@ -12,7 +12,7 @@ import { Tower, cellPx } from '../../js/entities.js';
 import { WaveController } from '../../js/waves.js';
 import { placeBlockers, placeLockouts, placeExtraSpawns } from '../../js/board.js';
 import { crashShuffle } from '../../js/crash.js';
-import { LEVELS, TOWERS, WEAPONS, ENEMIES, PLAYER, CRASH } from '../../js/config.js';
+import { LEVELS, TOWERS, WEAPONS, ENEMIES, PLAYER, CRASH, effectiveDelta } from '../../js/config.js';
 
 export function mulberry32(seed) {
   let a = seed >>> 0;
@@ -95,7 +95,7 @@ export function buildTower(s, type, cell) {
 // --- one wave (mirrors Game.update during phase 'wave') ------------------------
 function runWave(s, opts, bot) {
   const def = s.level.waves[s.waveIndex];
-  const wave = new WaveController(def, s.grid, s.field, s.level.enemyDelta);
+  const wave = new WaveController(def, s.grid, s.field, effectiveDelta(s.level, opts.difficulty ?? 'advanced'));   // M9
   let pendingCrash = null;
   if (opts.crash && --s.wavesToCrash <= 0) {
     pendingCrash = CRASH.leadIn;

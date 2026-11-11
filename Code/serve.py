@@ -2,8 +2,9 @@
 # cache, so phones and desktops always load the latest JS after an edit.
 # Run from anywhere:  python3 serve.py   (port 8000, or pass another)
 #
-# Two write routes, one per tool: POST /tools/editor/save replaces js/levels.js
-# (Level Editor), POST /tools/mixer/save replaces js/sounds.js (Sound Mixer, M8).
+# Three write routes, one per tool: POST /tools/editor/save replaces js/levels.js
+# (Level Editor), POST /tools/mixer/save replaces js/sounds.js (Sound Mixer, M8),
+# POST /tools/curve/save-difficulty replaces js/difficulty.js (Difficulty Curve, M9).
 # They only answer this Mac (not phones on the LAN) and only accept a file that
 # starts with that tool's own header line.
 import functools, http.server, os, sys
@@ -15,8 +16,14 @@ ROUTES = {
                            'export const LEVELS', 'Level Editor'),
     '/tools/mixer/save': (os.path.join(here, 'js', 'sounds.js'), '// TDX — the sound list (M8 "Hypercard"). Written by the Sound Mixer',
                           'export const SOUNDS', 'Sound Mixer'),
+    '/tools/curve/save-difficulty': (os.path.join(here, 'js', 'difficulty.js'), '// TDX — difficulty settings (M9 "Integer"). Written by the Difficulty Curve tool',
+                                     'export const DIFFICULTY', 'Difficulty Curve'),
 }
 MAX_BYTES = 1_000_000
+# M9 run recorder: POST /runs/save stores one recorded run as JSON in
+# ../Notes/runs/ (phones on the LAN may post too; the server picks the name).
+RUNS_DIR = os.path.join(here, '..', 'Notes', 'runs')
+import json, re, time
 
 class NoCache(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -31,7 +38,27 @@ class NoCache(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def save_run(self):
+        length = int(self.headers.get('Content-Length') or 0)
+        if not 0 < length <= MAX_BYTES:
+            return self.reply(400, 'Empty or oversized run.')
+        text = self.rfile.read(length).decode('utf-8')
+        try:
+            run = json.loads(text)
+            assert isinstance(run, dict) and 'events' in run and 'level' in run
+        except Exception:
+            return self.reply(400, "That doesn't look like a recorded run.")
+        name = re.sub(r'[^A-Za-z0-9_-]', '', self.headers.get('X-Run-Name') or '')[:60] or time.strftime('run-%Y%m%d%H%M%S')
+        os.makedirs(RUNS_DIR, exist_ok=True)
+        path = os.path.join(RUNS_DIR, name + '.json')
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(text)
+        print(f'Run saved: Notes/runs/{name}.json ({len(text):,} bytes)')
+        return self.reply(200, 'Saved')
+
     def do_POST(self):
+        if self.path == '/runs/save':
+            return self.save_run()
         route = ROUTES.get(self.path)
         if not route:
             return self.reply(404, 'Not found')
@@ -55,4 +82,5 @@ port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 print(f'TDX serving {here} on http://localhost:{port} (no-cache)')
 print(f'Level Editor: http://localhost:{port}/tools/editor/')
 print(f'Sound Mixer:  http://localhost:{port}/tools/mixer/')
+print(f'Curve tool:   http://localhost:{port}/tools/curve/')
 http.server.ThreadingHTTPServer(('', port), functools.partial(NoCache, directory=here)).serve_forever()

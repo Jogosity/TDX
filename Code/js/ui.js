@@ -2,8 +2,11 @@
 
 import { TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, LEVELS, VERSION, tierOffer } from './config.js';
 import { drawTowerShape, drawEnemyShape } from './render.js';
-import { affordableTiers, upgradesAffordable, dotLabel, writeSave } from './save.js';
+import { affordableTiers, upgradesAffordable, dotLabel, writeSave, isCleared, advancedOpen } from './save.js';
+import { DEFAULT_STRINGS } from './narrative.js';
+import { keptRuns } from './recorder.js';
 import { audio, sfx } from './audio.js';
+import { questText, isDone, claimable, streakNow, msToNextDay, ensureQuests } from './quests.js';
 
 const redDot = (text) => { const d = document.createElement('span'); d.className = 'red-dot'; d.textContent = text; return d; };
 
@@ -178,7 +181,7 @@ export class UI {
     this.el.mmLevelsBtn.addEventListener('click', () => this.showMenuScreen('mm-levels'));
     // Level Select PLAY: plays the selected (latest unlocked) level; tapping a row still works too
     document.getElementById('mm-levels-play')
-      .addEventListener('click', () => this.game.startRun(this.game.latestLevelIndex()));
+      .addEventListener('click', () => this.playLevel(this.game.latestLevelIndex()));
     for (const b of document.querySelectorAll('.mm-back')) {
       b.addEventListener('click', () => this.showMenuScreen('mm-home'));
     }
@@ -187,6 +190,13 @@ export class UI {
   refresh() {
     const s = this.game.state;
     this.el.level.textContent = s.level.tutorial ? 'Tutorial' : `Level ${s.levelIndex}`;   // S23: number = index
+    // M9 (D6): a small difficulty tag beside "Level N" (none in the Tutorial)
+    if (!s.level.tutorial) {
+      const tag = document.createElement('span');
+      tag.className = `diff-tag ${s.difficulty}`;
+      tag.textContent = s.difficulty === 'advanced' ? 'ADV' : 'BASIC';
+      this.el.level.appendChild(tag);
+    }
     this.el.wave.textContent = `Wave ${Math.min(s.waveIndex + 1, s.level.waves.length)}/${s.level.waves.length}`;
     this.el.lives.textContent = `${s.lives}/${s.maxLives}`;
     this.el.tokens.textContent = s.tokens;
@@ -324,6 +334,65 @@ export class UI {
     this.refreshTowerDot();
   }
 
+  // --- M9 Daily Quests panel (Main Menu, Engagement_Screens.png) ---------------
+  // Three cards: in progress (yellow count), done (green count, tap to collect),
+  // claimed (dimmed under a tick). Red dot = quests waiting to be collected.
+  buildQuestPanel() {
+    const panel = document.getElementById('mm-quests');
+    if (!panel) return;
+    const save = this.game.save;
+    if (ensureQuests(save, this.game.questCtx())) writeSave(save);   // a new day while the menu was open
+    const q = save.quests, strings = this.game.narrative?.strings ?? {};
+    panel.querySelector('.red-dot')?.remove();
+    const n = claimable(save);
+    if (n > 0) panel.appendChild(redDot(dotLabel(n)));
+    const streak = streakNow(save);
+    document.getElementById('dq-streak').textContent = streak > 0 ? `${streak} day streak` : '';
+    const cards = document.getElementById('dq-cards');
+    cards.innerHTML = '';
+    q.set.forEach((e, i) => {
+      const done = isDone(save, i), claimed = q.claimed[i];
+      const card = document.createElement(done && !claimed ? 'button' : 'div');
+      card.className = 'dq-card' + (claimed ? ' claimed' : done ? ' done' : '');
+      const text = document.createElement('div');
+      text.className = 'dq-text';
+      text.textContent = questText(e, strings);
+      const count = document.createElement('div');
+      count.className = 'dq-count';
+      count.textContent = `${Math.min(q.progress[i], e.target).toLocaleString('en-GB')}/${e.target.toLocaleString('en-GB')}`;
+      card.append(text, count);
+      if (claimed) { const tick = document.createElement('div'); tick.className = 'dq-tick'; tick.textContent = '✔'; card.appendChild(tick); }
+      if (done && !claimed) {
+        card.dataset.sfx = 'none';
+        card.addEventListener('click', () => this.collectQuest(i, card));
+      }
+      cards.appendChild(card);
+    });
+    const foot = document.getElementById('dq-foot');
+    if (n > 0) foot.textContent = 'Tap to Collect';
+    else {
+      const mins = Math.ceil(msToNextDay() / 60000);
+      foot.textContent = `New quests in ${mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`}`;
+    }
+  }
+
+  // Claim: the card flashes, "+N ◆" floats up, then the panel redraws.
+  collectQuest(i, card) {
+    const paid = this.game.claimQuest(i);
+    if (!paid) return;
+    sfx('unlock');
+    const r = card.getBoundingClientRect();
+    const pop = document.createElement('div');
+    pop.className = 'dq-pop';
+    pop.textContent = `+${paid} ◆ BITS`;
+    pop.style.left = `${r.left + r.width / 2}px`;
+    pop.style.top = `${r.top}px`;
+    document.body.appendChild(pop);
+    setTimeout(() => pop.remove(), 1200);
+    card.classList.add('collecting');
+    setTimeout(() => { this.buildQuestPanel(); this.refreshTowerDot(); }, 350);
+  }
+
   // S25: red dot on the main menu's TOWERS button: the total of the Towers menu's dots.
   refreshTowerDot() {
     const btn = this.el.mmTowersBtn;
@@ -336,6 +405,7 @@ export class UI {
     if (id === 'mm-towers') this.buildTowersScreen();
     if (id === 'mm-enemies') this.buildEnemiesScreen();
     if (id === 'mm-levels') this.buildLevelsScreen();
+    if (id === 'mm-home') this.buildQuestPanel();
   }
 
   // Rebuild the open menu screen after progress changes underneath it (debug
@@ -346,9 +416,56 @@ export class UI {
     this.refreshTowerDot();
   }
 
+  // M9: a Screen Text string (the CSV), falling back to the built-in default
+  str(key) { return this.game.narrative?.strings?.[key] ?? DEFAULT_STRINGS[key] ?? key; }
+
+  diffPill(text, cls) {
+    const p = document.createElement('div');
+    p.className = `diff-pill ${cls}`.trim();
+    p.textContent = text;
+    return p;
+  }
+
+  // M9: start a level from Level Select. Basic only → straight in; Advanced
+  // open → the "Select Difficulty" pop-up first.
+  playLevel(i) {
+    if (!advancedOpen(this.game.save, i)) { this.game.startRun(i, 'basic'); return; }
+    this.showDifficultyPicker(i);
+  }
+
+  showDifficultyPicker(i) {
+    this.hideDifficultyPicker();
+    const pop = document.createElement('div');
+    pop.id = 'diff-pop';
+    const box = document.createElement('div');
+    box.className = 'diff-box';
+    const title = document.createElement('div');
+    title.className = 'diff-title';
+    title.textContent = `Level ${i}: ${this.str('Difficulty_Select')}`;
+    const row = document.createElement('div');
+    row.className = 'diff-row';
+    for (const d of ['basic', 'advanced']) {
+      const b = document.createElement('button');
+      b.className = 'diff-btn';
+      b.dataset.diff = d;
+      b.textContent = this.str(d === 'basic' ? 'Difficulty_Basic' : 'Difficulty_Advanced');
+      b.addEventListener('click', (e) => { e.stopPropagation(); this.hideDifficultyPicker(); this.game.startRun(i, d); });
+      row.appendChild(b);
+    }
+    box.append(title, row);
+    box.addEventListener('click', (e) => e.stopPropagation());
+    pop.appendChild(box);
+    pop.addEventListener('click', () => { sfx('ui_back'); this.hideDifficultyPicker(); });   // tap outside closes it
+    this.el.mainMenu.appendChild(pop);
+    sfx('ui_popup');
+  }
+
+  hideDifficultyPicker() { document.getElementById('diff-pop')?.remove(); }
+
   buildLevelsScreen() {
     const list = this.el.mmLevelList;
-    const unlocked = this.game.save.levelsUnlocked;
+    const save = this.game.save;
+    const unlocked = save.levelsUnlocked;
     const selected = this.game.latestLevelIndex();   // what the PLAY button starts
     list.innerHTML = '';
     LEVELS.forEach((lvl, i) => {
@@ -367,15 +484,23 @@ export class UI {
       delta.className = 'mi-desc';
       delta.textContent = `Δ HP ×${lvl.enemyDelta.health.toFixed(2)} · DMG ×${lvl.enemyDelta.damage.toFixed(2)} · START ${lvl.startTokens} TOKENS`;
       body.append(name, desc, delta);
-      const status = document.createElement('div');
-      status.className = 'mi-status';
-      if (i < unlocked) { status.classList.add('unlocked'); status.textContent = 'CLEARED'; }
-      else if (i === unlocked) { status.classList.add('unlocked'); status.textContent = 'CURRENT'; }
-      else { status.classList.add('locked'); status.textContent = 'LOCKED'; }
-      item.append(body, status);
+      // M9 (Engagement_Screens.png): Basic / Advanced pills. Basic once unlocked;
+      // Advanced appears greyed once Basic is cleared, full colour once cleared on it.
+      const side = document.createElement('div');
+      side.className = 'mi-side';
+      if (i <= unlocked) {
+        side.appendChild(this.diffPill(this.str('Difficulty_Basic'), ''));
+        if (advancedOpen(save, i)) side.appendChild(this.diffPill(this.str('Difficulty_Advanced'), isCleared(save, i, 'advanced') ? '' : 'dim'));
+      } else {
+        const status = document.createElement('div');
+        status.className = 'mi-status locked';
+        status.textContent = 'Locked';
+        side.appendChild(status);
+      }
+      item.append(body, side);
       if (i <= unlocked) {
         item.style.cursor = 'pointer';
-        item.addEventListener('click', () => this.game.startRun(i));
+        item.addEventListener('click', () => this.playLevel(i));
       } else {
         item.style.opacity = '0.5';
         item.addEventListener('click', () => this.toast('Complete the previous level first'));
@@ -495,9 +620,8 @@ export class UI {
   // Tab registry: add new tabs here — { label, build(bodyEl) }.
   get debugTabDefs() {
     return [
-      { label: 'SOUND', build: (el) => this.buildSoundTab(el) },   // M8: player settings come first
       {
-        label: 'ECONOMY',
+        label: 'ECONOMY',   // M9: first tab, and the one the menu opens on
         build: (el) => {
           this.dbgButton(el, 'Add 100 Tokens', () => this.game.debugAddTokens(100));
           this.dbgButton(el, 'Add 10 Bits', () => this.game.debugAddBits(10));
@@ -511,10 +635,37 @@ export class UI {
           this.dbgButton(el, 'Lock all towers', () => this.game.debugLockAllTowers());
           this.dbgButton(el, 'Unlock all levels', () => this.game.debugUnlockAllLevels());
           this.dbgButton(el, 'Lock all levels', () => this.game.debugLockAllLevels());
+          this.dbgButton(el, 'Complete Tutorial', () => this.game.debugCompleteTutorial());
+          // M9 Difficulty
+          this.dbgButton(el, 'Clear next level on Basic', () => this.toast(this.game.debugClearNext()));
+          this.dbgButton(el, 'Clear all Basic levels on Advanced', () => this.toast(this.game.debugAdvancedAll()));
+          this.dbgButton(el, 'Wipe Advanced clears', () => this.toast(this.game.debugWipeAdvanced()));
+          // M9 run recorder: logs your runs for the Sim (saved to Notes/runs/ by serve.py)
+          const rec = this.dbgButton(el, this.recLabel(), () => {
+            this.game.save.recordRuns = !this.game.save.recordRuns;
+            writeSave(this.game.save);
+            rec.textContent = this.recLabel();
+            this.toast(this.game.save.recordRuns ? 'Recording from the next level you start' : 'Run recording off');
+          });
+          this.dbgButton(el, 'Download last recorded run', () => {
+            const last = keptRuns()[0];
+            if (!last) { this.toast('No recorded runs yet'); return; }
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([last.text], { type: 'application/json' }));
+            a.download = `${last.name}.json`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+          });
+          // M9 Daily Quests
+          this.dbgButton(el, 'Reroll quests (clears progress)', () => { this.game.debugQuests('reroll'); this.toast('New quests rolled'); });
+          this.dbgButton(el, 'Complete all quests (unclaimed)', () => { this.game.debugQuests('complete'); this.toast('Quests ready to collect'); });
+          this.dbgButton(el, 'Quests: next day', () => { this.game.debugQuests('nextDay'); this.toast(`Quest clock +${this.game.save.quests.dayOffset} day(s)`); });
+          this.dbgButton(el, 'Quests: break streak', () => { this.game.debugQuests('breakStreak'); this.toast('Streak reset'); });
           this.dbgButton(el, 'Reset all settings', () => this.game.debugResetAll(), true);
           this.dbgButton(el, 'Quit to main menu', () => this.game.debugQuitToMenu(), true);
         },
       },
+      { label: 'SOUND', build: (el) => this.buildSoundTab(el) },
       {
         label: 'STORY',
         build: (el) => {
@@ -605,6 +756,7 @@ export class UI {
       + `<span class="w-bits">◆ ${this.game.save.bits} BITS</span>`;
   }
 
+  recLabel() { return this.game.save.recordRuns ? 'Record runs: ON' : 'Record runs: OFF'; }
   pauseLabel() { return this.game.spawnPaused ? 'Resume wave spawning' : 'Pause wave spawning'; }
 
   showDebugMenu() {

@@ -421,3 +421,24 @@ With 3 Deleters bought early (L6–L10) the price rows don't separate beyond noi
 - HP growing slower than damage for the Threader (e.g. HP at half the damage step): keeps the firepower, cuts the 4.8× toughness, which is the outlier here.
 
 **Recommendation.** No change yet. The numbers say T2 is fairly priced for firepower and strong but not dominant overall. If a playtest says the game is now too easy *because* Viruses and Bugs no longer threaten T2s, the HP step is the targeted dial.
+
+## F13 — How much easier should Basic be? (M9, 2026-11-11)
+
+**Question.** Basic multiplies every level's enemyDelta (HP × and damage ×) by one global number, X (`js/difficulty.js`). Which X?
+
+**Method.** `node tools/sim/difficulty.mjs 10 <bot> 0.9,0.8,0.7` plays L1–L10 on Advanced and on Basic at each X, with HP and damage scaled together, 10 seeds per cell. Two bots: `skilled` (the F5 bot, the nearest stand-in for Jogo) and `live` (it builds without a plan, a rough stand-in for a new player).
+
+| Win rate, all levels | Advanced | Basic ×0.9 | Basic ×0.8 | Basic ×0.7 |
+|---|---|---|---|---|
+| skilled | 68% | 79% | 90% | 95% |
+| live | 44% | 48% | 54% | 61% |
+
+Skilled, average Cores lost on the hardest levels (L9 / L10): Advanced 14.1 / 12.5, ×0.8 8.2 / 9.0, ×0.7 6.4 / 5.6.
+Live: L1–L5 become near-certain wins from ×0.8. L8 and L9 stay at 0% even at ×0.7.
+
+**Finding.**
+- **For a player who plays well, Basic works as a "comfortable" mode.** At ×0.8 the skilled bot wins 9 runs in 10 and keeps about two thirds of its Cores. At ×0.7 it wins almost every time with Cores to spare.
+- **Below the skilled line, the delta isn't the wall.** The live bot can't clear L7–L10 at any X tried. Late levels are hard because of the board (entry points, Lockouts, surges) and the roster (Viruses, Bugs), not because of enemy HP. A lighter delta doesn't stand in for a real build plan. That job belongs to onboarding and the tower unlock path, not to the Basic dial.
+- **Advanced stays exactly where it was.** The multiplier is 1, and the tests pin it to the balanced numbers.
+
+**Recommendation.** Ship ×0.8 for HP and damage (the plan's default). That gives a clear step down without making Basic a walkover. If playtests show Basic still bites on L6+, ×0.7 is the next stop. The Curve tool's Basic knobs and dotted Ledger line show the effect live, and HP and damage can be split if only one of them needs to move.

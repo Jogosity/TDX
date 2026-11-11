@@ -446,6 +446,7 @@ export class Enemy {
 
   damage(amount) {
     if (!this.alive) return;
+    this.dmgTaken = (this.dmgTaken || 0) + Math.max(0, Math.min(amount, this.health));   // M9: Damage Dealer quest
     this.health -= amount;
     this.hitFlash = 1;
     if (this.health <= 0) this.alive = false;

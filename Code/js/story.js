@@ -382,7 +382,7 @@ export class Story {
   // stats from game.js newLevelStats(); labels from Screen Text (narrative.js).
   // S25: onNext given (a won level with a level after it) → Main Menu (left, dark) +
   // Next Level (right, bright blue) instead of Continue. onContinue = Main Menu.
-  showAnalytics(stats, strings, { wallet, onContinue, onNext = null }) {
+  showAnalytics(stats, strings, { wallet, onContinue, onNext = null, difficulty = null }) {
     sfx('ui_whoosh');   // M8
     const card = this.card(this.root, { wallet });
     card.classList.add('analytics');
@@ -401,6 +401,9 @@ export class Story {
       order.push(r);
       return r;
     };
+    // M9: which difficulty this run was (none for the Tutorial)
+    if (difficulty) row(strings.Analytics_Difficulty ?? 'Difficulty',
+      difficulty === 'advanced' ? (strings.Difficulty_Advanced ?? 'Advanced') : (strings.Difficulty_Basic ?? 'Basic'), 'diff ' + difficulty);
     row(strings.Analytics_Built, stats.built);
     row(strings.Analytics_Lost, stats.lost);
     row(strings.Analytics_Upgraded, stats.upgraded);

@@ -3,6 +3,35 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 27b — 2026-11-11 — M9 "Integer": Difficulty (Basic and Advanced)
+
+Plan: `Docs/TDX_M9_Difficulty_Plan.md` (D1–D6 agreed by Jogo). Screen design: `Assets/Screens/Engagement_Screens.png`. Built alongside Daily Quests (same day, shared save and debug tab).
+- **Advanced is the game as balanced.** Basic multiplies every level's enemyDelta by a global setting in the new `js/difficulty.js` (`DIFFICULTY.basic`, ×0.8 HP and ×0.8 damage). `config.effectiveDelta(level, difficulty)` feeds waves, debug spawns and the Sim. The Tutorial ignores difficulty.
+- **Progress**: save v3 adds `cleared: { basic: [], advanced: [] }` with `isCleared`, `advancedOpen` and `recordClear` in `save.js`. Clearing on Basic unlocks the next level and opens Advanced. An Advanced clear also counts on Basic. Migration (D4): levels beaten before v3 count on both, and the frontier level opens on Basic.
+- **Level Select** (to the design): Basic pill on every unlocked level. Advanced pill greyed once Basic is cleared, full colour once cleared on Advanced. Locked rows say "Locked" in yellow. Tapping a level with Advanced open shows "Level N: Select Difficulty" (Basic / Advanced; tap outside to close). PLAY at the bottom uses the same pop-up.
+- **Next Level** keeps Advanced if it's open on the next level, otherwise Basic (D5). Carried as `index:difficulty` in sessionStorage.
+- **HUD tag** next to "Level N": outlined BASIC or filled ADV (D6). The **Analytics Report** opens with a Difficulty row. New Screen Text keys: `Difficulty_Select`, `Difficulty_Basic`, `Difficulty_Advanced`, `Analytics_Difficulty`.
+- **Difficulty Curve tool**: Basic panel (HP and damage knobs, linked by the existing toggle), dotted Basic lines on both charts, Basic columns in the table, one undo history. Saves `js/difficulty.js` through a new `serve.py` route (`/tools/curve/save-difficulty`).
+- **Debug (ECONOMY)**: Clear next level on Basic, Clear all Basic levels on Advanced, Wipe Advanced clears. Unlock or Lock all levels also sets or wipes the clear records.
+- **Sim**: `node tools/sim/difficulty.mjs [seeds] [bot] [x,x,...]` sweeps Basic. Finding **F13** in `TDX_AI_Balance_Notes.md`: across all levels the skilled bot's win rate goes from 68% on Advanced to 90% at ×0.8 and 95% at ×0.7. The live bot still can't clear L8 and L9 at any X, so late difficulty comes from the boards and the roster, not enemy HP.
+- Tests 228 → **243**.
+
+---
+## Session 27 — 2026-11-11 — M9 "Integer": Daily Quests and streak
+
+Plan: `Docs/TDX_M9_Quests_Plan.md` (agreed by Jogo, with two extra debug buttons). Screen design: `Assets/Screens/Engagement_Screens.png`.
+- **Quest engine** (`js/quests.js`, no DOM): 3 quests a day, one easy / one medium / one hard, picked from a pool of 15 with a seed made from the local date (same day = same set). New set at local midnight; unclaimed quests from the day before are lost.
+- **Pool + tuning** at the end of `js/config.js` (`QUESTS`). Count quests size themselves to the player's furthest level from `QUEST_PROFILE` (one run of each level in numbers, from the Sim's skilled bot, 3 seeds): e.g. Exterminator = 1.5 runs of kills, rounded to two figures. Fixed ones: Win 2 levels, Build 6 [tower], Destroy 25 [enemy] (×3 for Slice / Stinger), Collect 3 Blueprints, the "win clean" challenges, Complete 3 levels. 1–3 BITS each, about 5–7 a day.
+- **Rules**: progress counts in lost runs too (except the "win" quests), never in the Tutorial. It is added at the end of each level (a run quit midway does not count); a quest finished mid-level shows a QUEST COMPLETE alert, and the Result screen note lists what the run finished. Blueprint quest only while a tower is still locked. Hard Mode (win on Advanced) waits for the Difficulty work: it reads `advancedOpen(save, i)` from `save.js` and `state.difficulty`, and stays out of the pool until they exist.
+- **New level stats** for the quests: `damage` (enemy health removed, no overkill), `bps`, `builtBy`, `killedBy`.
+- **Daily Quests panel** on the Main Menu under LEVELS / TOWERS / ENEMIES, built to the design: in progress (yellow count), done (green, pulsing, "Tap to Collect"), claimed (dimmed under a tick). Red dot = quests to collect. Claiming pops "+N ◆ BITS". Streak line under the title ("4 day streak"), and "New quests in 6h 12m" when nothing is waiting.
+- **Streak**: a day counts when at least one quest is claimed; a whole day with no claim breaks it; best streak kept in the save (no streak rewards yet).
+- **Save**: new `quests` block, filled in and repaired on load (no save version bump; the Difficulty thread owns v3).
+- **Debug (ECONOMY tab, now first and open by default)**: Complete Tutorial, Reroll quests (clears progress), Complete all quests (finished, not claimed), Quests: next day, Quests: break streak.
+- Quest wording can be overridden without code: a Screen Text row `Quest_<id>` (card text, `{n}` `{tower}` `{enemy}`) or `QuestName_<id>` (alert name).
+- Tests 193 → **228**.
+
+---
 # ✅ MILESTONE 8 COMPLETE — v1.08 "Hypercard" — 2026-11-10
 
 Closed by Jogo after a day of tuning ("Sound and Music are in and behaving well"). M8 was Sound and Music; plan in `Docs/TDX_M8_Plan.md`.

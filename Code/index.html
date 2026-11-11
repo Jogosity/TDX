@@ -47,6 +47,10 @@
   #wave-label { font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
   #hud-level-wave { display: flex; flex-direction: column; line-height: 1.15; }
   #level-label { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.75; }   /* S20 */
+  /* M9 (D6): difficulty tag beside "Level N" */
+  .diff-tag { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 5px; font-size: 9px; letter-spacing: 0.8px;
+    line-height: 14px; vertical-align: 1px; border: 1px solid var(--cyan); color: var(--cyan); }
+  .diff-tag.advanced { background: var(--cyan); color: #001018; }
   #lives-pill {
     background: linear-gradient(180deg, #ffc73c, #ff9210);
     color: #201000;
@@ -265,6 +269,43 @@
     color: var(--cyan);
   }
   .mm-row { display: flex; gap: 12px; }
+  /* M9: Daily Quests panel on the Main Menu (Engagement_Screens.png) */
+  .dq-panel {
+    position: relative; width: 100%; max-width: 360px; box-sizing: border-box;
+    margin-top: 28px; padding: 10px 10px 8px;
+    border: 2px solid var(--cyan); border-radius: 18px;
+    box-shadow: 0 0 18px rgba(78, 243, 255, 0.45), inset 0 0 12px rgba(78, 243, 255, 0.12);
+  }
+  .dq-panel .red-dot { top: -10px; right: -10px; }
+  .dq-title { font-size: 20px; color: var(--cyan); text-shadow: 0 0 10px rgba(78, 243, 255, 0.6); }
+  .dq-streak { font-size: 11px; letter-spacing: 1px; color: var(--yellow); min-height: 14px; margin-bottom: 4px; }
+  .dq-cards { display: flex; gap: 6px; }
+  .dq-card {
+    position: relative; flex: 1 1 0; min-width: 0; min-height: 66px; box-sizing: border-box;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 4px;
+    padding: 7px 4px 6px;
+    font-family: inherit; color: var(--text); background: transparent;
+    border: 1.5px solid var(--cyan); border-radius: 10px;
+    font-size: 11px; line-height: 1.25;
+  }
+  .dq-count { font-size: 12px; font-weight: 700; color: var(--yellow); }
+  .dq-card.done { cursor: pointer; box-shadow: 0 0 12px rgba(57, 255, 106, 0.5); animation: dq-ready 1.6s ease-in-out infinite; }
+  .dq-card.done .dq-count { color: var(--green); }
+  .dq-card.claimed .dq-text, .dq-card.claimed .dq-count { opacity: 0.3; }
+  .dq-tick {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 40px; color: var(--cyan); text-shadow: 0 0 10px rgba(78, 243, 255, 0.9); pointer-events: none;
+  }
+  .dq-card.collecting { animation: dq-collect 0.35s ease-out forwards; }
+  @keyframes dq-ready { 50% { box-shadow: 0 0 20px rgba(57, 255, 106, 0.85); } }
+  @keyframes dq-collect { 50% { transform: scale(1.08); background: rgba(57, 255, 106, 0.25); } 100% { transform: scale(1); } }
+  .dq-foot { font-size: 12px; opacity: 0.85; margin-top: 6px; }
+  .dq-pop {
+    position: fixed; z-index: 60; transform: translate(-50%, 0); pointer-events: none;
+    font-size: 16px; font-weight: 800; color: var(--yellow); text-shadow: 0 0 8px rgba(255, 233, 60, 0.8);
+    animation: dq-pop 1.2s ease-out forwards;
+  }
+  @keyframes dq-pop { from { opacity: 1; margin-top: 0; } to { opacity: 0; margin-top: -60px; } }
   /* S25: red-dot notifications (affordable tower upgrades) */
   .red-dot {
     position: absolute; top: -8px; right: -8px;
@@ -310,7 +351,21 @@
   .mm-item .mi-name { font-size: 13px; font-weight: 700; letter-spacing: 0.5px; }
   .mm-item .mi-desc { font-size: 11px; opacity: 0.75; line-height: 1.35; }
   .mm-item .mi-status { font-size: 10px; font-weight: 700; white-space: nowrap; }
-  .mm-item .mi-status.locked { color: var(--yellow); }
+  .mm-item .mi-status.locked { color: var(--yellow); font-size: 12px; }
+  /* M9: Basic / Advanced pills on Level Select (Engagement_Screens.png) */
+  .diff-pill { min-width: 72px; text-align: center; font-size: 10px; font-weight: 700; color: var(--cyan);
+    border: 1px solid var(--cyan); border-radius: 6px; padding: 4px 8px; }
+  .diff-pill.dim { color: #4a5678; border-color: #2a3558; }
+  /* M9: "Level N: Select Difficulty" pop-up */
+  #diff-pop { position: absolute; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+    background: rgba(2, 4, 16, 0.6); padding: 16px; }
+  .diff-box { width: 100%; max-width: 320px; background: var(--panel); border: 2px solid var(--cyan); border-radius: 12px;
+    box-shadow: 0 0 18px rgba(78, 243, 255, 0.45); padding: 12px 16px 16px; text-align: center; }
+  .diff-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+  .diff-row { display: flex; gap: 14px; justify-content: center; }
+  .diff-btn { flex: 1 1 0; max-width: 130px; font-family: inherit; font-size: 15px; font-weight: 700; letter-spacing: 0.5px;
+    color: var(--cyan); background: #050820; border: 2px solid var(--cyan); border-radius: 999px; padding: 6px 0; cursor: pointer; }
+  .diff-btn:active { background: var(--cyan); color: #001018; }
   .mm-item .mi-status.unlocked { color: var(--green); }
   .mm-item .mi-side {
     display: flex; flex-direction: column; align-items: flex-end;
@@ -854,6 +909,12 @@
         <button id="mm-levels-btn" class="menu-btn">LEVELS</button>
         <button id="mm-towers-btn" class="menu-btn">TOWERS</button>
         <button id="mm-enemies-btn" class="menu-btn">ENEMIES</button>
+      </div>
+      <div id="mm-quests" class="dq-panel">
+        <div class="dq-title">Daily Quests</div>
+        <div id="dq-streak" class="dq-streak"></div>
+        <div id="dq-cards" class="dq-cards"></div>
+        <div id="dq-foot" class="dq-foot"></div>
       </div>
       <div id="mm-version"></div>
     </div>

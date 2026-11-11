@@ -6,7 +6,7 @@ import { WaveController } from '../js/waves.js';
 import { LEVELS, WEAPONS, TOWERS, TOWER_ORDER, ENEMIES, UPGRADE, PLAYER, VERSION, BLUEPRINTS, SURGE, tierStat } from '../js/config.js';
 import { Enemy } from '../js/entities.js';
 import { tierOffer } from '../js/config.js';
-import { loadSave, affordableTiers, upgradesAffordable, dotLabel } from '../js/save.js';
+import { loadSave, affordableTiers, upgradesAffordable, dotLabel, SAVE_VERSION } from '../js/save.js';
 import { TutorialScript, TUTORIAL_STEPS, tutorialTowers } from '../js/tutorial.js';
 import { relocateBlockers, crashShuffle } from '../js/crash.js';
 import { placeBlockers, placeLockouts, placeExtraSpawns, rollBlueprints } from '../js/board.js';
@@ -348,7 +348,7 @@ check('level bpPool only references real, lockable towers',
     delete globalThis.localStorage;
     return s;
   };
-  check('save: a new player starts on Level 0 (Tutorial), save v2', (() => { const s = mk(null); return s.levelsUnlocked === 0 && s.saveVersion === 2; })());
+  check('save: a new player starts on Level 0 (Tutorial), current save version', (() => { const s = mk(null); return s.levelsUnlocked === 0 && s.saveVersion === SAVE_VERSION; })());
   check('save: a pre-Tutorial save moves up one level (Tutorial counts as cleared)',
     mk({ bits: 3, levelsUnlocked: 0 }).levelsUnlocked === 1 && mk({ levelsUnlocked: 4 }).levelsUnlocked === 5);
   check('save: one-time hints start unseen for a new player', (() => { const s = mk(null); return !s.hints.blueprint && !s.hints.bits; })());
@@ -951,6 +951,165 @@ check('every level defines a starting budget',
     delete globalThis.localStorage;
     check('save: broken sound settings are repaired', a.music === AUDIO.defaults.music && a.sfx === AUDIO.defaults.sfx && a.muted === true);
   }
+}
+
+// --- M9 Daily Quests ----------------------------------------------------------------
+{
+  const Q = await import('../js/quests.js');
+  const { QUESTS } = await import('../js/config.js');
+  const mk = (over = {}) => ({ bits: 0, levelsUnlocked: 3, towersUnlocked: ['threader', 'vault'], quests: null, ...over });
+  const at = (d) => new Date(2026, 10, 11 + d, 12);   // local noon, d days after 11 Nov
+  const sets = [];
+  for (let d = 0; d < 200; d++) { const s = mk(); Q.ensureQuests(s, {}, at(d)); sets.push(s.quests.set); }
+  check('quests: the same day always gives the same set', (() => { const s = mk(); Q.ensureQuests(s, {}, at(5)); return JSON.stringify(s.quests.set) === JSON.stringify(sets[5]); })());
+  check('quests: sets change from day to day', new Set(sets.map(s => s.map(e => e.id).join())).size > 20);
+  check('quests: 3 a day, one from each tier', sets.every(s => s.length === 3 && s.map(e => Q.questDef(e.id).tier).join() === 'easy,medium,hard'));
+  check('quests: Victory Lap and Marathon never on the same day', sets.every(s => !(s.some(e => e.id === 'wins') && s.some(e => e.id === 'marathon'))));
+  check('quests: every pool quest except Hard Mode turns up', QUESTS.pool.filter(d => d.id !== 'advanced').every(d => sets.some(s => s.some(e => e.id === d.id))));
+  check('quests: Hard Mode waits for Advanced to exist', !sets.some(s => s.some(e => e.id === 'advanced')));
+  {
+    let seen = false;
+    for (let d = 0; d < 200 && !seen; d++) { const s = mk(); Q.ensureQuests(s, { advancedOpen: (_, i) => i === 1 }, at(d)); seen = s.quests.set.some(e => e.id === 'advanced'); }
+    check('quests: Hard Mode shows once a level is open on Advanced', seen);
+  }
+  {
+    const all = [...TOWER_ORDER];
+    let bp = false;
+    for (let d = 0; d < 100; d++) { const s = mk({ towersUnlocked: all }); Q.ensureQuests(s, {}, at(d)); bp ||= s.quests.set.some(e => e.id === 'blueprints'); }
+    check('quests: no Blueprint quest once every tower is collected', !bp);
+  }
+  check('quests: Specialist names an unlocked tower other than the Threader',
+    sets.flat().filter(e => e.id === 'specialist').every(e => e.tower === 'vault'));
+  check('quests: Pest Control names an enemy from the open levels, more for swarms',
+    sets.flat().filter(e => e.id === 'pest').every(e => Q.enemiesMet(mk()).includes(e.enemy) && e.target === (QUESTS.swarm.includes(e.enemy) ? 75 : 25)));
+  {
+    const target = (lv) => { for (let d = 0; d < 300; d++) { const s = mk({ levelsUnlocked: lv }); Q.ensureQuests(s, {}, at(d)); const e = s.quests.set.find(x => x.id === 'kills'); if (e) return e.target; } };
+    check('quests: targets grow with the player\'s furthest level', target(10) > target(1) * 4);
+  }
+  check('quests: targets round to two figures', Q.niceNumber(4687) === 4700 && Q.niceNumber(23.4) === 23 && Q.niceNumber(0.2) === 1);
+
+  // progress
+  const s = mk(); Q.ensureQuests(s, {}, at(0));
+  s.quests.set = [{ id: 'kills', bits: 2, target: 100 }, { id: 'wins', bits: 2, target: 2 }, { id: 'firewall', bits: 3, target: 1 }];
+  s.quests.progress = [0, 0, 0]; s.quests.claimed = [false, false, false];
+  const stats = { kills: 60, built: 5, upgraded: 0, spent: 0, earned: 0, damage: 0, bps: 0, lost: 0, leakedBy: {}, builtBy: {}, killedBy: {} };
+  check('quests: mid-run progress shows, "win" quests wait for the end', JSON.stringify(Q.liveProgress(s, stats)) === '[60,0,0]');
+  check('quests: the Tutorial never counts', Q.commitRun(s, stats, { win: true }, { tutorial: true }).length === 0 && s.quests.progress[0] === 0);
+  check('quests: a lost run still counts, except the wins', Q.commitRun(s, stats, { win: false }, {}).length === 0 && JSON.stringify(s.quests.progress) === '[60,0,0]');
+  const leaky = { ...stats, leakedBy: { hack: 1 } };
+  const done = Q.commitRun(s, leaky, { win: true }, {});
+  check('quests: a win finishes count quests and is capped; a leak spoils Firewall', JSON.stringify(done) === '[0]' && JSON.stringify(s.quests.progress) === '[100,1,0]');
+  check('quests: one quest to collect', Q.claimable(s) === 1);
+  check('quests: an unfinished quest cannot be claimed', Q.claim(s, 1, at(0)) === 0 && s.bits === 0);
+  check('quests: claiming pays its BITS once', Q.claim(s, 0, at(0)) === 2 && Q.claim(s, 0, at(0)) === 0 && s.bits === 2);
+  check('quests: first claim starts a 1 day streak', Q.streakNow(s, at(0)) === 1);
+  const lean = { id: 'lean', bits: 3, target: 1, limit: 10 };
+  check('quests: Lean Machine counts a win with few enough towers', Q.runAmount(lean, { ...stats, built: 10 }, { win: true }) === 1 && Q.runAmount(lean, { ...stats, built: 11 }, { win: true }) === 0);
+  check('quests: Hard Mode needs an Advanced win', Q.runAmount({ id: 'advanced', target: 1 }, stats, { win: true, difficulty: 'basic' }) === 0
+    && Q.runAmount({ id: 'advanced', target: 1 }, stats, { win: true, difficulty: 'advanced' }) === 1);
+  check('quests: Specialist and Pest Control read the per-type counts',
+    Q.runAmount({ id: 'specialist', tower: 'vault' }, { ...stats, builtBy: { vault: 4 } }) === 4 && Q.runAmount({ id: 'pest', enemy: 'worm' }, { ...stats, killedBy: { worm: 7 } }) === 7);
+
+  // rollover + streak
+  Q.ensureQuests(s, {}, at(1));
+  check('quests: a new day brings a new set with progress cleared', s.quests.day === Q.dayNumber(at(1)) && s.quests.progress.every(n => n === 0) && s.quests.claimed.every(c => !c));
+  check('quests: the streak survives the next day before a claim', Q.streakNow(s, at(1)) === 1);
+  Q.debugCompleteAll(s);
+  check('debug: Complete all = finished but not claimed', Q.claimable(s) === 3 && s.quests.claimed.every(c => !c));
+  Q.claim(s, 0, at(1)); Q.claim(s, 1, at(1));
+  check('quests: claiming on the next day grows the streak (once a day)', s.quests.streak === 2 && s.quests.bestStreak === 2);
+  check('quests: a whole day with no claim breaks the streak', Q.streakNow(s, at(3)) === 0);
+  Q.ensureQuests(s, {}, at(3)); Q.debugCompleteAll(s); Q.claim(s, 2, at(3));
+  check('quests: claiming after a gap starts again at 1, best is kept', s.quests.streak === 1 && s.quests.bestStreak === 2);
+  const seed = s.quests.seed; s.quests.progress[0] = 5;
+  Q.debugReroll(s, {}, at(3));
+  check('debug: Reroll rolls again and clears progress', s.quests.seed === seed + 1 && s.quests.progress.every(n => n === 0));
+  const day = s.quests.day; Q.debugNextDay(s, {}, at(3));
+  check('debug: Next day moves the quest clock on one day', s.quests.day === day + 1 && Q.today(s, at(3)) === day + 1);
+  Q.debugBreakStreak(s);
+  check('debug: Break streak', Q.streakNow(s, at(3)) === 0);
+
+  // save
+  check('save: new profiles get an empty quest block', JSON.stringify(loadSave().quests) === JSON.stringify(Q.questDefaults()));
+  {
+    const store = { 'tdx-save-v1': JSON.stringify({ bits: 3, quests: { day: 5, set: [{ id: 'nope' }], progress: 'x', streak: 'y' } }) };
+    globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: () => {}, removeItem: () => {} };
+    const q = loadSave().quests;
+    delete globalThis.localStorage;
+    check('save: a broken quest block is repaired', q.set.length === 0 && q.day === null && q.streak === 0);
+  }
+  check('quest text fills in numbers and names', Q.questText({ id: 'specialist', target: 6, tower: 'ddos' }) === 'Build 6 DDOS towers'
+    && Q.questText({ id: 'kills', target: 10000 }) === 'Destroy 10,000 enemies'
+    && Q.questText({ id: 'kills', target: 5 }, { Quest_kills: 'Zap {n} bugs' }) === 'Zap 5 bugs');
+}
+
+// --- M9 Difficulty: Basic / Advanced ---------------------------------------------
+{
+  const { DIFFICULTY, effectiveDelta } = await import('../js/config.js');
+  const S = await import('../js/save.js');
+  const L5 = LEVELS[5];
+  const adv = effectiveDelta(L5, 'advanced'), bas = effectiveDelta(L5, 'basic');
+  check('difficulty: Advanced is the level as balanced', adv.health === L5.enemyDelta.health && adv.damage === L5.enemyDelta.damage);
+  check('difficulty: Basic scales HP and damage by DIFFICULTY.basic',
+    Math.abs(bas.health - L5.enemyDelta.health * DIFFICULTY.basic.health) < 1e-6 && Math.abs(bas.damage - L5.enemyDelta.damage * DIFFICULTY.basic.damage) < 1e-6);
+  check('difficulty: Basic is easier than Advanced on every non-Tutorial level',
+    LEVELS.every(l => l.tutorial || (effectiveDelta(l, 'basic').health <= l.enemyDelta.health && effectiveDelta(l, 'basic').damage <= l.enemyDelta.damage)));
+  check('difficulty: the Tutorial ignores difficulty', LEVELS[0].tutorial
+    && effectiveDelta(LEVELS[0], 'basic').health === LEVELS[0].enemyDelta.health);
+  check('difficulty: Basic changes enemy HP in a wave', new Enemy('hack', grid.spawns[0], new PathField(grid), grid, bas).maxHealth
+    < new Enemy('hack', grid.spawns[0], new PathField(grid), grid, adv).maxHealth);
+
+  const fresh = loadSave();
+  check('save v3: fresh save has empty clear records', S.SAVE_VERSION === 3 && fresh.cleared.basic.length === 0 && fresh.cleared.advanced.length === 0);
+  S.recordClear(fresh, 0, 'basic');
+  check('save: Tutorial has no Advanced', !S.advancedOpen(fresh, 0) && S.isCleared(fresh, 0, 'basic'));
+  check('save: Advanced is closed until Basic is cleared', !S.advancedOpen(fresh, 1));
+  S.recordClear(fresh, 1, 'basic');
+  check('save: a Basic clear opens Advanced', S.advancedOpen(fresh, 1) && !S.isCleared(fresh, 1, 'advanced'));
+  S.recordClear(fresh, 2, 'advanced');
+  check('save: an Advanced clear also counts on Basic', S.isCleared(fresh, 2, 'basic') && S.isCleared(fresh, 2, 'advanced'));
+  S.recordClear(fresh, 2, 'advanced');
+  check('save: clears are recorded once', fresh.cleared.basic.filter(i => i === 2).length === 1);
+
+  const mk = (data) => {
+    const store = { 'tdx-save-v1': JSON.stringify(data) };
+    globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: () => {}, removeItem: () => {} };
+    const out = loadSave();
+    delete globalThis.localStorage;
+    return out;
+  };
+  const old = mk({ saveVersion: 2, levelsUnlocked: 4, towersUnlocked: ['threader'] });
+  check('save v2 → v3: beaten levels count on Basic and Advanced (D4)',
+    old.saveVersion === 3 && [0, 1, 2, 3].every(i => S.isCleared(old, i, 'basic'))
+    && [1, 2, 3].every(i => S.isCleared(old, i, 'advanced')) && !S.isCleared(old, 0, 'advanced'));
+  check('save v2 → v3: the frontier level opens on Basic only', !S.isCleared(old, 4, 'basic') && !S.advancedOpen(old, 4));
+  const v1 = mk({ levelsUnlocked: 2, towersUnlocked: ['threader'] });
+  check('save v1 → v3: Tutorial slide then clears', v1.levelsUnlocked === 3 && S.isCleared(v1, 2, 'advanced'));
+  const junk = mk({ saveVersion: 3, levelsUnlocked: 1, cleared: { basic: [0, 0, -1, 'x'], advanced: null } });
+  check('save v3: a broken clear record is repaired', junk.cleared.basic.join() === '0' && Array.isArray(junk.cleared.advanced));
+}
+
+// --- M9 run recorder ---------------------------------------------------------------
+{
+  const { Recorder } = await import('../js/recorder.js');
+  const g = new HexGrid(LEVELS[3].grid); g.layout(390, 620);
+  const st = { time: 5, levelIndex: 3, level: LEVELS[3], difficulty: 'advanced', tokens: 390, lives: 15, phase: 'build', waveIndex: 0, towers: [], enemies: [], stats: { built: 1 } };
+  const rec = new Recorder();
+  rec.start(st, g, { towersUnlocked: ['threader'], tierUnlocks: {} });
+  const cell = [...g.cells.values()].find(c => !c.blocker);
+  const tw = new Tower('threader', cell); st.towers.push(tw); st.tokens -= 100;
+  rec.build(st, tw);
+  st.phase = 'wave'; st.time = 9; rec.waveStart(st);
+  rec.tick(st, 2.5);
+  rec.kill(st, { def: { reward: 30 } });
+  st.lives = 14; rec.leaked(st, { type: 'hack' });
+  st.time = 40; st.phase = 'build';
+  const run = JSON.parse(rec.finish(st, false));
+  check('recorder: run has the level, board and a build with its cell', run.level === 3 && run.difficulty === 'advanced'
+    && Array.isArray(run.board.spawns) && run.events[0].e === 'build' && run.events[0].cell.length === 2 && run.events[0].ph === 'b');
+  check('recorder: wave summary and samples', run.waves.length === 1 && run.waves[0].kills === 1 && run.waves[0].leaks === 1
+    && run.waves[0].start === 4 && run.samples.length === 1 && run.sampleCols.length === run.samples[0].length);
+  check('recorder: off by default and stops after finish', !rec.on && loadSave().recordRuns === false);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

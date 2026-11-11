@@ -48,6 +48,10 @@ export const DEFAULT_STRINGS = {
   Archive_Back: 'Back',                       // S26: bottom Back button on the Archive pop-up
   Report_Main_Menu: 'Main Menu',               // S25: Battle Report buttons after a win
   Report_Next_Level: 'Next Level',
+  Difficulty_Select: 'Select Difficulty',      // M9: Level Select pop-up "Level N: Select Difficulty"
+  Difficulty_Basic: 'Basic',
+  Difficulty_Advanced: 'Advanced',
+  Analytics_Difficulty: 'Difficulty',
 };
 
 // RFC 4180 CSV: quoted fields may hold commas, quotes ("") and line breaks.

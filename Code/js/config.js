@@ -340,6 +340,21 @@ export const ENEMIES = {
 export { LEVELS } from './levels.js';
 
 // ---------------------------------------------------------------------------
+// Difficulty (M9). The levels are balanced for Advanced; Basic scales each
+// level's enemyDelta by DIFFICULTY.basic (js/difficulty.js, set in the
+// Difficulty Curve tool). The Tutorial always plays as written.
+// ---------------------------------------------------------------------------
+import { DIFFICULTY } from './difficulty.js';
+export { DIFFICULTY };
+export const DIFFICULTIES = ['basic', 'advanced'];
+export function effectiveDelta(level, difficulty = 'advanced') {
+  const d = level.enemyDelta;
+  const k = DIFFICULTY[difficulty];
+  if (level.tutorial || !k) return { health: d.health, damage: d.damage };
+  return { health: +(d.health * k.health).toFixed(6), damage: +(d.damage * k.damage).toFixed(6) };
+}
+
+// ---------------------------------------------------------------------------
 // Global grid constants. Per-level shape lives in LEVELS[i].grid.
 // Lockout colours are shared across themes (enemy-owned = magenta).
 // ---------------------------------------------------------------------------
@@ -371,3 +386,56 @@ export function tierOffer(key, tier) {
   if (def.power?.tier === tier) lines.push(`Special Ability: ${def.power.name}. ${def.power.desc}`);
   return lines;
 }
+
+// ---------------------------------------------------------------------------
+// M9 Daily Quests (Retention Module 4). Logic in quests.js.
+// One quest per tier each day. bits = BITS paid on claim.
+// runs: the target is that many runs of the player's furthest level, read
+//   from QUEST_PROFILE and rounded to two figures (so quests grow with the
+//   player). target: a fixed count. min: the smallest a runs-based target gets.
+// stat: what counts (kills, built, upgraded, spent, earned, damage, bps =
+//   Blueprints collected, builtBy / killedBy for one named tower / enemy,
+//   wins, winNoLeak, winNoLoss, winLean = win with ≤ limit towers built,
+//   winAdvanced). pick: 'tower' / 'enemy' names one each day.
+// needs: 'lockedTower' (a tower still to collect) / 'advanced' (a level open
+//   on Advanced). excludes: never on the same day as these.
+// text: card wording ({n}, {tower}, {enemy}). A Screen Text row with StringID
+//   Quest_<id> overrides it, QuestName_<id> overrides the name.
+export const QUESTS = {
+  perDay: 3,
+  tiers: ['easy', 'medium', 'hard'],
+  swarm: ['slice', 'stinger'],   // pack enemies: Pest Control asks for more of them
+  pool: [
+    { id: 'kills',        name: 'Exterminator',      tier: 'easy',   stat: 'kills',    runs: 1.5,          bits: 2, text: 'Destroy {n} enemies' },
+    { id: 'built',        name: 'Construction Crew', tier: 'easy',   stat: 'built',    runs: 0.6,          bits: 1, text: 'Build {n} towers' },
+    { id: 'upgraded',     name: 'Overclocked',       tier: 'easy',   stat: 'upgraded', runs: 0.5, min: 3,  bits: 2, text: 'Upgrade {n} towers' },
+    { id: 'spent',        name: 'Big Spender',       tier: 'easy',   stat: 'spent',    runs: 1,            bits: 2, text: 'Spend {n} Tokens' },
+    { id: 'earned',       name: 'Token Miner',       tier: 'easy',   stat: 'earned',   runs: 1,            bits: 2, text: 'Earn {n} Tokens' },
+    { id: 'damage',       name: 'Damage Dealer',     tier: 'easy',   stat: 'damage',   runs: 1,            bits: 2, text: 'Cause {n} damage' },
+    { id: 'wins',         name: 'Victory Lap',       tier: 'medium', stat: 'wins',     target: 2,          bits: 2, text: 'Win {n} levels', excludes: ['marathon'] },
+    { id: 'specialist',   name: 'Specialist',        tier: 'medium', stat: 'builtBy',  target: 6, pick: 'tower', bits: 2, text: 'Build {n} {tower} towers' },
+    { id: 'pest',         name: 'Pest Control',      tier: 'medium', stat: 'killedBy', target: 25, pick: 'enemy', swarmMult: 3, bits: 2, text: 'Destroy {n} {enemy} enemies' },
+    { id: 'blueprints',   name: 'Archaeologist',     tier: 'medium', stat: 'bps',      target: 3, needs: 'lockedTower', bits: 2, text: 'Collect {n} Blueprints' },
+    { id: 'firewall',     name: 'Firewall',          tier: 'hard',   stat: 'winNoLeak', target: 1,         bits: 3, text: 'Win a level without losing a Core' },
+    { id: 'nocasualties', name: 'No Casualties',     tier: 'hard',   stat: 'winNoLoss', target: 1,         bits: 3, text: 'Win a level without losing a tower' },
+    { id: 'lean',         name: 'Lean Machine',      tier: 'hard',   stat: 'winLean',  runs: 0.4, min: 6,  bits: 3, text: 'Win a level with {n} towers built or fewer' },
+    { id: 'marathon',     name: 'Marathon',          tier: 'hard',   stat: 'wins',     target: 3,          bits: 3, text: 'Complete {n} levels', excludes: ['wins'] },
+    { id: 'advanced',     name: 'Hard Mode',         tier: 'hard',   stat: 'winAdvanced', target: 1, needs: 'advanced', bits: 3, text: 'Win a level on Advanced' },
+  ],
+};
+
+// One run of each level in numbers (Levels 1–10), from the Sim's skilled bot
+// (3 seeds, 11 Nov 2026). earned ≈ kills × 30; spent = earned. damage =
+// enemy health removed. Re-run when levels change a lot.
+export const QUEST_PROFILE = [
+  { kills: 190,  built: 36,  upgraded: 2,   spent: 5700,  earned: 5700,  damage: 53000 },
+  { kills: 260,  built: 28,  upgraded: 8,   spent: 7800,  earned: 7800,  damage: 75000 },
+  { kills: 370,  built: 39,  upgraded: 16,  spent: 11000, earned: 11000, damage: 108000 },
+  { kills: 640,  built: 49,  upgraded: 32,  spent: 19000, earned: 19000, damage: 190000 },
+  { kills: 760,  built: 60,  upgraded: 42,  spent: 23000, earned: 23000, damage: 250000 },
+  { kills: 1030, built: 74,  upgraded: 55,  spent: 31000, earned: 31000, damage: 435000 },
+  { kills: 1130, built: 76,  upgraded: 65,  spent: 34000, earned: 34000, damage: 560000 },
+  { kills: 1580, built: 77,  upgraded: 100, spent: 47000, earned: 47000, damage: 850000 },
+  { kills: 1250, built: 83,  upgraded: 76,  spent: 37000, earned: 37000, damage: 710000 },
+  { kills: 1540, built: 123, upgraded: 87,  spent: 46000, earned: 46000, damage: 920000 },
+];

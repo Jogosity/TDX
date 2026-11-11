@@ -30,6 +30,7 @@
     --critical: #ff6b6b;
     --warn: #ffc65c;
     --good: #5fd35f;
+    --basic: #7fb6ff;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--page); color: var(--ink);
@@ -82,6 +83,13 @@
     padding: 2px 4px; text-align: right; }
   td input.changed { border-color: var(--warn); }
   .up { color: var(--ink-2); } .flat { color: var(--warn); } .down { color: var(--critical); }
+  td.b { color: var(--basic); }
+  .knobs { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: center; }
+  .knob { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+  .knob input[type=range] { width: 180px; accent-color: var(--basic); }
+  .knob input[type=number] { width: 64px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--border); border-radius: 4px; padding: 2px 4px; text-align: right; }
+  .knob input.changed { border-color: var(--warn); }
+  .knob .pct { color: var(--basic); min-width: 88px; font-variant-numeric: tabular-nums; }
   .p-easy { color: #7fb6ff; } .p-ok { color: var(--good); } .p-hard { color: var(--critical); }
 </style>
 </head>
@@ -91,11 +99,23 @@
   <div id="status">Loading…</div>
   <button id="undo" title="Undo (⌘Z)">Undo</button>
   <button id="redo" title="Redo (⇧⌘Z)">Redo</button>
-  <button id="revert" title="Back to what's saved in js/levels.js">Revert</button>
+  <button id="revert" title="Back to what's saved in js/levels.js and js/difficulty.js">Revert</button>
   <button id="save" class="primary" title="Save (⌘S)">Save</button>
   <a href="../editor/" style="font-size:13px">Level Editor</a>
 </header>
 <main>
+  <section class="panel">
+    <h2>Difficulty: Basic and Advanced</h2>
+    <p class="sub">Global settings. The level lines below are Advanced, the game as balanced. Basic multiplies every level's HP × and damage × by these numbers
+      (the Tutorial ignores them). Shown as dotted lines on both charts. Saved to js/difficulty.js.</p>
+    <div class="knobs">
+      <label class="knob">Basic HP ×<input type="range" id="b-health-r" min="0.3" max="1" step="0.01"><input type="number" id="b-health" min="0.3" max="1" step="0.01"><span class="pct" id="b-health-pct"></span></label>
+      <label class="knob">Basic damage ×<input type="range" id="b-damage-r" min="0.3" max="1" step="0.01"><input type="number" id="b-damage" min="0.3" max="1" step="0.01"><span class="pct" id="b-damage-pct"></span></label>
+      <label class="toggle"><input type="checkbox" id="showBasic" checked> Show Basic on the charts</label>
+    </div>
+    <p class="hint">"Move HP and damage together" (below) links these two as well.</p>
+  </section>
+
   <section class="panel">
     <h2>Enemy HP × and damage × by level</h2>
     <p class="sub">Each level's enemyDelta. Drag a point up or down (snaps to 0.05). Hold Shift while dragging to move that level and every level after it.
@@ -105,6 +125,7 @@
         <span><i style="background:var(--hp)"></i>HP ×</span>
         <span><i style="background:var(--dmg)"></i>Damage ×</span>
         <span><i class="dash"></i>Saved values</span>
+        <span><i style="background:repeating-linear-gradient(90deg,var(--ink-2) 0 2px,transparent 2px 6px)"></i>Basic</span>
       </div>
       <div class="row">
         <label class="toggle"><input type="checkbox" id="link"> Move HP and damage together</label>
@@ -123,6 +144,7 @@
       <span><i style="background:var(--press);opacity:.45"></i>Average pressure</span>
       <span><i style="background:var(--target)"></i>Target peak</span>
       <span><i class="dash"></i>Peak at saved values</span>
+      <span><i style="background:repeating-linear-gradient(90deg,var(--basic) 0 2px,transparent 2px 6px)"></i>Basic peak</span>
     </div>
     <div class="chart" id="pressChart"></div>
   </section>

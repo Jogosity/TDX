@@ -92,7 +92,18 @@ A major document describes all of the 5 most important Retention Patterns here: 
 
 
 
-**Module 4 - Re-Engagement** - NOT READY
+**Module 4 - Re-Engagement** - IN PROGRESS (M9, Daily Quests built S27)
+**Core Components**
+1. Daily Quests: 3 a day (easy, medium, hard) from a pool of 15, new set at local midnight.
+2. Daily streak: days in a row with at least one quest claimed, plus a best-streak record.
+3. BITS hooks: each quest pays 1–3 BITS when claimed (about 5–7 a day).
+
+**How it works**
+- Quests read the level stats from the Analytics screen (kills, builds, upgrades, Tokens, damage), plus per-tower builds, per-enemy kills, Blueprints and "win clean" challenges.
+- Count targets scale with the player's furthest level, so quests stay worth a couple of levels of play.
+- Progress counts from every run except the Tutorial; "win" quests need a win.
+- Claimed by tapping the card on the Main Menu's Daily Quests panel (red dot when ready).
+- Full design: `TDX_M9_Quests_Plan.md`. Still to come: streak rewards and freezes, login rewards.
 
 **Module 5 - Collection (secondary)** - NOT READY
 
