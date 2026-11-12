@@ -2,14 +2,14 @@
 //
 // Built to Jogo's Tutorial_Screen_1–7 mockups.
 //   wave 1, build phase (before START WAVE):
-//           Screen_1 select Threader → Screen_2 place it → Screen_3 place 2 more (tick)
+//           Screen_1 select Threader → Screen_2 place it → Screen_3 place 2 more (closes by itself)
 //   wave 2, once the wave is running (Jogo, S24 playtest):
 //           Screen_4 select Vault → Screen_5 place it
 //   wave 3, once the wave is running: Screen_6 the Repo and Cores (tick) → Screen_7 losing data (tick)
 // A running wave freezes while its box is up (game.update checks tutorial.holds()).
 // when: 'build' (default) or 'wave'; a 'wave' step shows TUTORIAL_WAVE_DELAY s after the wave's first enemy appears.
 // A box without a tick closes when the player does what it asks; a box with a
-// tick closes on the tick (Screen_3's tick appears once both towers are down).
+// tick closes on the tick.
 // While a box is up, taps outside its target are blocked. Text comes from the
 // Tutorials CSV (narrative.js TUTORIAL_DEFAULTS when a row is missing).
 //
@@ -26,7 +26,7 @@ export const tutorialTowers = (waveIndex) => (waveIndex >= 1 ? ['threader', 'vau
 export const TUTORIAL_STEPS = [
   { id: 'Screen_1', wave: 0, do: 'select', tower: 'threader', point: 'tray', box: 'mid' },
   { id: 'Screen_2', wave: 0, do: 'build', tower: 'threader', point: 'board', box: 'low' },
-  { id: 'Screen_3', wave: 0, do: 'build', tower: 'threader', count: 2, tick: true, box: 'mid' },
+  { id: 'Screen_3', wave: 0, do: 'build', tower: 'threader', count: 2, box: 'mid' },   // no tick: closes once both are down (Jogo, 12 Nov)
   { id: 'Screen_4', wave: 1, when: 'wave', do: 'select', tower: 'vault', point: 'tray', box: 'mid' },
   { id: 'Screen_5', wave: 1, when: 'wave', do: 'build', tower: 'vault', box: 'low' },   // no arrow: the player picks the spot (Jogo, 9 Nov)
   { id: 'Screen_6', wave: 2, when: 'wave', tick: true, point: 'base', box: 'mid' },
@@ -268,8 +268,10 @@ export class HintBox {
   // point(): { x, y } in page px for the arrow tip, re-read on every place().
   // allow(target): may this tap through? onDone(): called once when it closes.
   // dir: 'down' (arrow above the point, pointing at it) or 'up' (arrow below it, pointing up).
-  constructor({ text, point, dir = 'down', tick = false, overStory = false, allow = () => false, onDone = () => {} }) {
-    this.point = point; this.allow = allow; this.onDone = onDone; this.dir = dir;
+  // release(target): a tap on it closes the box and then reaches its target as normal
+  // (the Bits hint: the Result screen's Continue, Jogo 12 Nov).
+  constructor({ text, point, dir = 'down', tick = false, overStory = false, allow = () => false, release = () => false, onDone = () => {} }) {
+    this.point = point; this.allow = allow; this.release = release; this.onDone = onDone; this.dir = dir;
     sfx('ui_popup');
     this.root = h('div', 'tut-layer show' + (overStory ? ' over-story' : ''));
     this.box = h('div', 'tut-box in');
@@ -287,6 +289,7 @@ export class HintBox {
     document.getElementById('app').appendChild(this.root);
     this.guard = (ev) => {
       if (ev.target.closest?.('.tut-tick, #cog-btn, #debug-menu') || this.allow(ev.target)) return;
+      if (this.release(ev.target)) { if (ev.type === 'click') this.close(); return; }   // close first, then the tap goes on
       ev.stopPropagation(); ev.preventDefault();
     };
     for (const k of ['pointerdown', 'click']) document.addEventListener(k, this.guard, true);

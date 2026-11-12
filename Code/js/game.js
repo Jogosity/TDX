@@ -534,10 +534,13 @@ class Game {
       ? this.story.showLevelData(text, { wallet, onBack: () => this.story.hide(), onContinue: toArchive })
       : toArchive());
     const toArchive = () => (this.run
-      ? this.story.showArchive(this.run, content.strings, { wallet, onBack: text ? toLevel : () => this.story.hide(), onStart: go,
+      ? this.story.showArchive(this.run, content.strings, { wallet, onBack: text && !LEVELS[levelIndex].tutorial ? toLevel : () => this.story.hide(), onStart: go,
         tutorial: LEVELS[levelIndex].tutorial ? content.tutorial : null })   // S24: Tutorial overlay
       : go());
-    toLevel();
+    // M9: the Tutorial opens on the Welcome screen, every time it's played, then goes
+    // straight to the Archive Record's tutorial overlay; no Level Data (Jogo, 12 Nov)
+    if (LEVELS[levelIndex].tutorial) this.story.showWelcome(content.tutorial, { onBegin: toArchive });
+    else toLevel();
   }
 
   beginLevel(levelIndex, difficulty = 'basic') {
@@ -669,6 +672,7 @@ class Game {
         if (!bits || this.hint) return;
         this.hint = new HintBox({
           text: this.narrative.tutorial.Screen_9, tick: true, overStory: true, dir: 'up',
+          release: (el) => !!el.closest?.('#story .story-btn'),   // Continue: closes the hint and carries on (Jogo, 12 Nov)
           point: () => { const r = bits.getBoundingClientRect(); return { x: r.left + r.width * 0.6, y: r.bottom }; },
           onDone: () => { this.hint = null; this.save.hints.bits = true; writeSave(this.save); },
         });

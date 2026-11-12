@@ -119,7 +119,19 @@ export const TUTORIAL_DEFAULTS = {
   Archive_Tut_Bottom: 'This is the data or memories that the cyber attackers are trying to steal - or delete!',
   Tut_Continue: 'Continue',
   Tut_Skip: 'Skip tutorial',
+  // M9: the Welcome screen before the Tutorial (Welcome_Screen.png)
+  Welcome_line_1_Title: 'Welcome to TDX',
+  Welcome_line_2: 'Cyber crime is rife',
+  Welcome_line_3: 'Hackers are infiltrating cloud archives and personal repositories all over the world.',
+  Welcome_line_4: 'Your job is to protect the people and organisations under attack.',
+  Welcome_line_5: 'Enter each data Archive and defeat the attacking agents using your defences.',
+  Welcome_line_6_Prompt: 'Begin training',
 };
+// M9: the five avatars that drop onto the Welcome screen, in landing order.
+export const WELCOME_AVATARS = [
+  'Av_PersonSetA_1_S.png', 'Av_CompanyStyleB_13_S.png', 'Av_PetStyleB_7_S.png',
+  'Av_PersonSetB_5_S.png', 'Av_OrgStyleB_7_S.png',
+];
 export const tutorialId = (id) => (id || '').replace(/\s+/g, '');
 
 // Parse the CSV exports. Returns { levels, archives, strings, warnings }.

@@ -9,7 +9,7 @@
 // get `in` added on a schedule. Tapping a screen mid-build finishes it at once.
 // All timings live in TIMING so they're easy to tune.
 
-import { AVATAR_DIR, DEFAULT_AVATAR } from './narrative.js';
+import { AVATAR_DIR, DEFAULT_AVATAR, WELCOME_AVATARS } from './narrative.js';
 import { ENEMIES } from './config.js';
 import { drawEnemyShape } from './render.js';
 import { sfx } from './audio.js';
@@ -25,6 +25,10 @@ export const TIMING = {
   verdictHold: 2200,   // ms the SUCCESS / FAILURE verdict sits over the board
   slideIn: 450,        // ms for the Result screen to slide on
   countUp: 600,        // ms for the Cores pill to count up
+  welcomePause: 650,   // ms: Welcome screen, the short pause after each section
+  welcomeQuick: 180,   // ms: Welcome screen, Welcome_line_3 → Welcome_line_4 ("quick succession")
+  avatarDrop: 320,     // ms: one avatar's drop onto the Welcome screen (CSS .rv-drop matches)
+  avatarStep: 300,     // ms between avatar landings
 };
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -189,6 +193,69 @@ export class Story {
     this.popup.classList.remove('show');
   }
 
+  // 0. Welcome (M9, Welcome_Screen.png): shown at the start of every Tutorial run.
+  // Builds in five sections, each teletyped, with a short pause after each:
+  //   title → line 2 → lines 3 + 4 (quick succession) → five avatars drop in
+  //   (a key click as each lands) → line 5, then the Begin Training button.
+  // Tap to skip shows the whole screen at once.
+  showWelcome(text, { onBegin }) {
+    sfx('ui_whoosh');
+    const card = this.card(this.root);
+    card.classList.add('welcome');
+    let skipped = false;
+    // registered first, so it runs before the active teletype's finisher on a skip
+    this.finishers.push(() => {
+      skipped = true;
+      for (const [box, line] of boxes) { box.textContent = line; box.style.visibility = ''; }
+    });
+    const boxes = [];
+    const typed = (cls, id) => {
+      const box = h('div', cls);
+      const line = text[id] || '';
+      box.textContent = line;   // full text laid out from the start, so nothing jumps
+      box.style.visibility = 'hidden';
+      boxes.push([box, line]);
+      return box;
+    };
+    const title = typed('welcome-title', 'Welcome_line_1_Title');
+    const l2 = typed('welcome-line', 'Welcome_line_2');
+    const l3 = typed('welcome-line', 'Welcome_line_3');
+    const l4 = typed('welcome-line', 'Welcome_line_4');
+    const l5 = typed('welcome-line', 'Welcome_line_5');
+    const pics = h('div', 'welcome-avatars');
+    const avs = WELCOME_AVATARS.map((file, i) => {
+      const img = rv(h('img', `welcome-av av-${i + 1}`), 'drop');
+      img.alt = '';
+      img.src = AVATAR_DIR + file;
+      img.onerror = () => { img.onerror = null; img.src = AVATAR_DIR + DEFAULT_AVATAR; };
+      pics.appendChild(img);
+      return img;
+    });
+    const btn = rv(blueBtn(text.Welcome_line_6_Prompt || 'Begin training', onBegin), 'up');
+    const body = h('div', 'welcome-body');
+    body.append(title, l2, l3, l4, pics, l5);
+    card.append(h('div', 'welcome-spacer'), body, h('div', 'welcome-spacer'), btn);
+
+    // teletype one box, then call next after `pause` ms (nothing more once skipped)
+    const type = (box, start, pause, next) => this.later(() => {
+      if (skipped) return;
+      box.style.visibility = '';
+      this.teletype(box, box.textContent, 0, () => { if (!skipped) this.later(next, pause); });
+    }, start);
+    const dropAvatars = () => {
+      avs.forEach((img, i) => {
+        this.later(() => img.classList.add('in'), i * TIMING.avatarStep);
+        this.later(() => sfx('ui_type'), i * TIMING.avatarStep + TIMING.avatarDrop);   // as it lands
+      });
+      this.later(() => type(l5, 0, 250, () => btn.classList.add('in')),
+        (avs.length - 1) * TIMING.avatarStep + TIMING.avatarDrop + TIMING.welcomePause);
+    };
+    type(title, TIMING.cardIn + 200, TIMING.welcomePause, () =>
+      type(l2, 0, TIMING.welcomePause, () =>
+        type(l3, 0, TIMING.welcomeQuick, () =>
+          type(l4, 0, TIMING.welcomePause, dropAvatars))));
+  }
+
   // 1. Level Data: background, then bar, title, teletyped description, Continue.
   showLevelData(levelText, { wallet, onBack, onContinue }) {
     sfx('ui_whoosh');   // M8
@@ -216,7 +283,7 @@ export class Story {
   // lost: memories lost this run (from the Result screen's Info button), shown in red.
   // tutorial: the Tutorial text table (S24). When given, the card opens under Jogo's
   // Archive_Details_Screen_Tut overlay: captions + red outlines + Continue, which
-  // clears it and leaves the normal Archive Record with Start.
+  // starts the level (M9, Jogo 12 Nov: no second, plain Archive Record after it).
   showArchive(run, strings, { wallet, onBack, onStart, host = this.root, lost = [], tutorial = null }) {
     sfx(host === this.root ? 'ui_whoosh' : 'ui_popup');   // M8
     const card = this.card(host, { onBack, wallet });
@@ -282,13 +349,7 @@ export class Story {
       const capBottom = rv(h('div', 'tut-cap bottom', tutorial.Archive_Tut_Bottom), 'fade');
       body.prepend(capTop);
       body.appendChild(capBottom);
-      const start = rv(blueBtn('Start >>', onStart), 'up');
-      const cont = rv(blueBtn(tutorial.Tut_Continue, () => {
-        card.classList.remove('tut-mode');
-        capTop.remove(); capBottom.remove(); cont.remove();
-        card.appendChild(start);
-        this.later(() => start.classList.add('in'), 20);
-      }), 'up');
+      const cont = rv(blueBtn(tutorial.Tut_Continue, onStart), 'up');
       card.append(cont);
       tail.push(capTop, capBottom, cont);
     } else if (onStart) {

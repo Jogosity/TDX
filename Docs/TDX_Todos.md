@@ -51,25 +51,25 @@ After the sim: quest/login rewards feed the economy, so they tune against a bala
 		- [x] If the next level has not been completed on Advanced, the game will silently revert to Basic. (built as: drops to Basic only when Advanced is not open on the next level, Jogo 11 Nov)
 	- [x] The Battle Analytics screen should state the difficulty that the level was just played on.
 	- [x] Extras: HUD difficulty tag, Curve tool Basic knobs, Sim sweep (tools/sim/difficulty.mjs), Economy debug buttons, save v3 migration
-- [ ] READY - Add a Welcome screen at the start of the tutorial to set up the context of the game.
-	- [ ] This screen will always display at the start of the tutorial on replays.
-	- [ ] Welcome_screen.png is available for reference
-	- [ ] The text is available in the Tutorial Tab of the TDX_Text file
-	- [ ] All text will use a teletype reveal and the teletype sound effect
-	- [ ] The screen will reveal each section in sequence
-		- [ ] 1. "Welcome_line_1_Title" will appear, then a short pause
-		- [ ] 2. "Welcome_line_2" will appear, then a short pause
-		- [ ] 3. "Welcome_line_3" and "Welcome_line_4"  will appear in quick succession, then a short pause
-		- [ ] 4. Five avatar images will appear on the screen in sequence. Use a scale and rotate effect as if they are dropping onto the screen, start with the images slightly larger than they appear on the final static.
-			- [ ] Use a Teletype key sound effect as each one lands.
-			- [ ] Pause for a short time after the 5th image
-		- [ ] 5. "Welcome_line_5" will appear, then the prompt button, which use "Welcome_line_6_prompt"
-		- [ ] The following images will be used on the welcome screen
-			- [ ] Av_PersonSetA_1_S.png
-			- [ ] Av_CompanyStyleB_13_S.png
-			- [ ] Av_PetStyleB_7_S.png
-			- [ ] Av_PersonSetB_5_S.png
-			- [ ] Av_OrgStyleB_7_S.png
+- [x] READY - Add a Welcome screen at the start of the tutorial to set up the context of the game.
+	- [x] This screen will always display at the start of the tutorial on replays.
+	- [x] Welcome_screen.png is available for reference
+	- [x] The text is available in the Tutorial Tab of the TDX_Text file
+	- [x] All text will use a teletype reveal and the teletype sound effect
+	- [x] The screen will reveal each section in sequence
+		- [x] 1. "Welcome_line_1_Title" will appear, then a short pause
+		- [x] 2. "Welcome_line_2" will appear, then a short pause
+		- [x] 3. "Welcome_line_3" and "Welcome_line_4"  will appear in quick succession, then a short pause
+		- [x] 4. Five avatar images will appear on the screen in sequence. Use a scale and rotate effect as if they are dropping onto the screen, start with the images slightly larger than they appear on the final static.
+			- [x] Use a Teletype key sound effect as each one lands.
+			- [x] Pause for a short time after the 5th image
+		- [x] 5. "Welcome_line_5" will appear, then the prompt button, which use "Welcome_line_6_prompt"
+		- [x] The following images will be used on the welcome screen
+			- [x] Av_PersonSetA_1_S.png
+			- [x] Av_CompanyStyleB_13_S.png
+			- [x] Av_PetStyleB_7_S.png
+			- [x] Av_PersonSetB_5_S.png
+			- [x] Av_OrgStyleB_7_S.png
 - [ ] NOT READY - Scale the BP drops to the EV of the enemy. Use the Hack and the basis.
 	- [ ] Lower EV units have a lower likelihood to drop a BP, larger RV units have a larger chance of a drop.
 	- [ ] This reduces the BP-drop spam from swarm enemies.

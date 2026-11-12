@@ -376,9 +376,9 @@ check('level bpPool only references real, lockable towers',
   check('tutorial: selecting the Threader moves to Screen_2 (place it)', t.event('select', 'threader') === 'next' && t.next().id === 'Screen_2' && t.allows('board'));
   check('tutorial: placing it moves to Screen_3', t.event('build', 'threader') === 'next' && t.next().id === 'Screen_3');
   const r1 = t.event('build', 'threader');
-  check('tutorial: Screen_3 waits for both towers, then shows the tick', r1 === null && !t.allows('tick')
-    && t.event('build', 'threader') === 'tick' && t.allows('tick') && !t.allows('board'));
-  check('tutorial: the tick ends wave 1\'s steps', t.next() === null && !t.hasSteps(0));
+  check('tutorial: Screen_3 waits for both towers, then closes by itself (no tick)', r1 === null && !t.allows('tick')
+    && t.event('build', 'threader') === 'next');
+  check('tutorial: that ends wave 1\'s steps', t.next() === null && !t.hasSteps(0));
   check('tutorial: after a wave\'s steps, more towers don\'t bring a box back (S24 fix)',
     t.step === null && t.event('build', 'threader') === null && t.event('select', 'threader') === null && t.allows('tray', 'vault'));
   check('tutorial: no build-phase steps on wave 2', t.begin(1) === null);
