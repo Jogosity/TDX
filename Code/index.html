@@ -51,6 +51,8 @@
   .diff-tag { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 5px; font-size: 9px; letter-spacing: 0.8px;
     line-height: 14px; vertical-align: 1px; border: 1px solid var(--cyan); color: var(--cyan); }
   .diff-tag.advanced { background: var(--cyan); color: #001018; }
+  .rec-tag { margin-left: 6px; font-size: 10px; color: #ff3030; letter-spacing: 0.5px; animation: rec-blink 1.2s steps(2, start) infinite; }
+  @keyframes rec-blink { to { visibility: hidden; } }
   #lives-pill {
     background: linear-gradient(180deg, #ffc73c, #ff9210);
     color: #201000;

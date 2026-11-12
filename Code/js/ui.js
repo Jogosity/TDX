@@ -197,6 +197,13 @@ export class UI {
       tag.textContent = s.difficulty === 'advanced' ? 'ADV' : 'BASIC';
       this.el.level.appendChild(tag);
     }
+    // M9: red REC while the run recorder is logging this level
+    if (this.game.rec?.on) {
+      const rec = document.createElement('span');
+      rec.className = 'rec-tag';
+      rec.textContent = '● REC';
+      this.el.level.appendChild(rec);
+    }
     this.el.wave.textContent = `Wave ${Math.min(s.waveIndex + 1, s.level.waves.length)}/${s.level.waves.length}`;
     this.el.lives.textContent = `${s.lives}/${s.maxLives}`;
     this.el.tokens.textContent = s.tokens;

@@ -2,6 +2,26 @@
 I'm keeping this as a rolling log of the big things we did though the Todo's list. No need to be comprehensive, just the big stuff.
 
 
+## M8 — "Hypercard" (v1.08) — Sound and Music ✅ COMPLETE 10 Nov
+Add sound and music to all relevant areas of the game. Sourcing: synth SFX made in code + Meta Sound and Music tracks (swap for free/credit-required before any wider release).
+- [x] UI Sound effects - button-tap noise (bleeps or clicks) - positive/forward movement and negative/backward movement. Error beep noise
+- [x] UI Whoosh for major screens moving on (Eg. Results screen)
+- [x] Music Loops
+	- [x] Menu music
+	- [x] Main game music — became the wave pool: a track runs for 3 waves, lowered between waves (Jogo, 10 Nov)
+	- [x] Final wave game music — dropped in favour of the pool
+	- [x] Victory sting
+	- [x] Fail sting
+- [x] In-game sound effects
+	- [x] Weapon fire
+	- [x] Enemy destruction
+	- [x] Tower Destruction
+	- [x] Virus/Bug attack warning (short spot effect when the attack starts, not a constant alarm)
+- [x] New tool - Sound Mixer
+	- [x] Allow testing and balancing of effects, eg. Tap a Threader icon to trigger the sound.
+	- [x] Allow things like volume, speed, pitch and length changes.
+- [x] Extras: anti-spam voice cap with priorities, SOUND settings tab, teletype + Cores count-up clicks
+
 
 ## M7 — "Fortran" (v1.07) — Onboarding & Presentation ✅ COMPLETE (9 Nov, S26)
 Last of the main beats: onboarding teaches the *final* systems and depends on tuned difficulty.

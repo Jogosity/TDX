@@ -27,25 +27,6 @@ The game is intended as a 360° demonstration of game craft — each milestone s
 
 
 
-## M8 — "Hypercard" (v1.08) — Sound and Music ✅ COMPLETE 10 Nov
-Add sound and music to all relevant areas of the game. Sourcing: synth SFX made in code + Meta Sound and Music tracks (swap for free/credit-required before any wider release).
-- [x] UI Sound effects - button-tap noise (bleeps or clicks) - positive/forward movement and negative/backward movement. Error beep noise
-- [x] UI Whoosh for major screens moving on (Eg. Results screen)
-- [x] Music Loops
-	- [x] Menu music
-	- [x] Main game music — became the wave pool: a track runs for 3 waves, lowered between waves (Jogo, 10 Nov)
-	- [x] Final wave game music — dropped in favour of the pool
-	- [x] Victory sting
-	- [x] Fail sting
-- [x] In-game sound effects
-	- [x] Weapon fire
-	- [x] Enemy destruction
-	- [x] Tower Destruction
-	- [x] Virus/Bug attack warning (short spot effect when the attack starts, not a constant alarm)
-- [x] New tool - Sound Mixer
-	- [x] Allow testing and balancing of effects, eg. Tap a Threader icon to trigger the sound.
-	- [x] Allow things like volume, speed, pitch and length changes.
-- [x] Extras: anti-spam voice cap with priorities, SOUND settings tab, teletype + Cores count-up clicks
 
 ## M9 — "Integer" (v1.09) — Re-engagement
 After the sim: quest/login rewards feed the economy, so they tune against a balanced game.
@@ -70,10 +51,36 @@ After the sim: quest/login rewards feed the economy, so they tune against a bala
 		- [x] If the next level has not been completed on Advanced, the game will silently revert to Basic. (built as: drops to Basic only when Advanced is not open on the next level, Jogo 11 Nov)
 	- [x] The Battle Analytics screen should state the difficulty that the level was just played on.
 	- [x] Extras: HUD difficulty tag, Curve tool Basic knobs, Sim sweep (tools/sim/difficulty.mjs), Economy debug buttons, save v3 migration
+- [ ] READY - Add a Welcome screen at the start of the tutorial to set up the context of the game.
+	- [ ] This screen will always display at the start of the tutorial on replays.
+	- [ ] Welcome_screen.png is available for reference
+	- [ ] The text is available in the Tutorial Tab of the TDX_Text file
+	- [ ] All text will use a teletype reveal and the teletype sound effect
+	- [ ] The screen will reveal each section in sequence
+		- [ ] 1. "Welcome_line_1_Title" will appear, then a short pause
+		- [ ] 2. "Welcome_line_2" will appear, then a short pause
+		- [ ] 3. "Welcome_line_3" and "Welcome_line_4"  will appear in quick succession, then a short pause
+		- [ ] 4. Five avatar images will appear on the screen in sequence. Use a scale and rotate effect as if they are dropping onto the screen, start with the images slightly larger than they appear on the final static.
+			- [ ] Use a Teletype key sound effect as each one lands.
+			- [ ] Pause for a short time after the 5th image
+		- [ ] 5. "Welcome_line_5" will appear, then the prompt button, which use "Welcome_line_6_prompt"
+		- [ ] The following images will be used on the welcome screen
+			- [ ] Av_PersonSetA_1_S.png
+			- [ ] Av_CompanyStyleB_13_S.png
+			- [ ] Av_PetStyleB_7_S.png
+			- [ ] Av_PersonSetB_5_S.png
+			- [ ] Av_OrgStyleB_7_S.png
+- [ ] NOT READY - Scale the BP drops to the EV of the enemy. Use the Hack and the basis.
+	- [ ] Lower EV units have a lower likelihood to drop a BP, larger RV units have a larger chance of a drop.
+	- [ ] This reduces the BP-drop spam from swarm enemies.
+	- [ ] It is part of spreading out the upgrade and unlock paths.
 - [ ]  NOT READY - Extend Bits economy. Longer unlock path, more ways to earn bits. 
-	- [ ] Model economy for longer rollout of features.
-	- [ ] More Bits to upgrade a tower, more BPs to unlock a tower.
+	- [ ] Adapt economy for longer rollout of features.
+	- [x] Daily Quests are a new Bits income path
+	- [ ] More Bits to upgrade the towers, especially the T3 and T4.
+	- [ ] Increase the number BPs to unlock a tower - focus on the later towers. Leave the unlocks of Vault and Defrag at their current initial unlock. (We want the player to get the variation going to make the game more fun)
 	- [ ] Maybe even a few expensive Bits purchase to start each level with +50 Token.
+	- [ ] Add an item store
 - [ ] NOT READY - Daily Specials - New Towers that turn up on a random basis per-day and fit into Slot 8 - see Content Backlog for some ideas. (Would start with just 2)
 - [ ] NOT READY - Firewalled enemies -  Shielded enemies that take less damage whilst shielded.
 	- [ ] Firewalled enemies have a glow around them or some visual cue that makes them clearly a V2 of the base unit.

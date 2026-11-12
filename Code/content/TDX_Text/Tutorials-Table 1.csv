@@ -9,7 +9,13 @@ Screen_6,"Defend the Repo from enemy agents.
 If an enemy reaches the Repo you will lose a Core.",,,
 Screen_7,"If you lose too many Cores, the Repo will start to permanently lose data.
 If you lose them all, the level will be failed.",,,
-Screen _8,"Tap to collect a Blueprint.
+Screen_8,"Tap to collect a Blueprint.
 Blueprints unlock new towers.",,,
-Screen _9,"Earn “Bits” for completing levels.
+Screen_9,"Earn “Bits” for completing levels.
 You can use Bits to unlock tower upgrades.",,,
+Welcome_line_1_Title,Welcome to TDX,,,
+Welcome_line_2,Cyber crime is rife,,,
+Welcome_line_3,Hackers are infiltrating cloud archives and personal repositories all over the world.,,,
+Welcome_line_4,Your job is to protect the people and organisations under attack.,,,
+Welcome_line_5,Enter each data Archive and defeat that attacking agents using your defenses. ,,,
+Welcome_line_6_Prompt,Begin training,,,
