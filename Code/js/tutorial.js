@@ -21,13 +21,15 @@ import { sfx } from './audio.js';
 export const tutorialTowers = (waveIndex) => (waveIndex >= 1 ? ['threader', 'vault'] : ['threader']);
 
 // do: 'select' (tap the tray card) | 'build' (place `count` towers) | none (tick only)
-// point: where the arrow points ('tray' = the step's tower card, 'board', 'base')
-// box: 'mid' (middle of the board) | 'low' (just above the tray)
+// point: where the arrow points ('tray' = the step's tower card, 'board', 'base',
+//        'cycle' = the tower card while it isn't selected, an open cell once it is;
+//        so every placement starts with a tap on the card, Jogo 14 Nov)
+// box: 'mid' (middle of the board) | 'low' (low on the board, just above the tray arrow, Jogo 14 Nov)
 export const TUTORIAL_STEPS = [
-  { id: 'Screen_1', wave: 0, do: 'select', tower: 'threader', point: 'tray', box: 'mid' },
-  { id: 'Screen_2', wave: 0, do: 'build', tower: 'threader', point: 'board', box: 'low' },
-  { id: 'Screen_3', wave: 0, do: 'build', tower: 'threader', count: 2, box: 'mid' },   // no tick: closes once both are down (Jogo, 12 Nov)
-  { id: 'Screen_4', wave: 1, when: 'wave', do: 'select', tower: 'vault', point: 'tray', box: 'mid' },
+  { id: 'Screen_1', wave: 0, do: 'select', tower: 'threader', point: 'tray', box: 'low' },
+  { id: 'Screen_2', wave: 0, do: 'build', tower: 'threader', point: 'cycle', box: 'low' },
+  { id: 'Screen_3', wave: 0, do: 'build', tower: 'threader', count: 2, point: 'cycle', box: 'low' },   // no tick: closes once both are down (Jogo, 12 Nov)
+  { id: 'Screen_4', wave: 1, when: 'wave', do: 'select', tower: 'vault', point: 'tray', box: 'low' },
   { id: 'Screen_5', wave: 1, when: 'wave', do: 'build', tower: 'vault', box: 'low' },   // no arrow: the player picks the spot (Jogo, 9 Nov)
   { id: 'Screen_6', wave: 2, when: 'wave', tick: true, point: 'base', box: 'mid' },
   { id: 'Screen_7', wave: 2, when: 'wave', tick: true, point: 'base', box: 'mid' },
@@ -92,6 +94,7 @@ export class TutorialScript {
 
 const whenOfStep = (s) => (s ? whenOf(s) : null);
 const ICONS = 'assets/icons/';
+const ARROW_H = 72;   // px, the Tutorial arrow (CSS .tut-arrow); 1.5x the hint arrow (Jogo, 14 Nov)
 const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
 // The Tutorial Box suite: text panel (+ tick), arrow, tray-card highlight, Skip.
@@ -170,7 +173,10 @@ export class Tutorial {
     if (r === 'next') this.advance();
     else if (r === 'tick') this.show(this.script.step);
     else if (kind === 'build' && this.script.step) this.show(this.script.step);   // count went up
+    else this.place();   // a 'cycle' arrow follows the selection
   }
+  // The tray selection changed (ui.clearSelection): move a 'cycle' arrow back to the card.
+  selectionChanged() { this.place(); }
 
   onTick() { if (this.script.allows('tick')) this.advance(); }
 
@@ -202,8 +208,8 @@ export class Tutorial {
     this.count.textContent = s.count && left > 0 ? `${this.script.done}/${s.count}` : '';
     this.tick.classList.toggle('show', !!s.tick && this.script.ready);
     this.box.dataset.pos = s.box;
-    this.clearGlow();
-    if (s.do && s.tower) this.game.ui.trayBtns[s.tower]?.btn.classList.add('tut-glow');
+    // Jogo 14 Nov: no highlight on the card before the player taps it (it read as
+    // already selected); the arrow points at it, and tapping gives the normal selected border.
     this.root.classList.add('show');
     this.box.classList.remove('in'); void this.box.offsetWidth; this.box.classList.add('in');
     this.place();
@@ -219,23 +225,26 @@ export class Tutorial {
     const tray = document.getElementById('tray').getBoundingClientRect();
     const canvas = this.game.canvas.getBoundingClientRect();
     const boxH = this.box.offsetHeight;
-    const boxTop = s.box === 'low' ? tray.top - app.top - boxH - 14 : (canvas.top - app.top) + canvas.height * 0.42 - boxH / 2;
+    // 'low' always leaves room for the arrow over a tray card, so the box doesn't jump as the arrow moves
+    const boxTop = s.box === 'low' ? tray.top - app.top - ARROW_H - 22 - boxH : (canvas.top - app.top) + canvas.height * 0.42 - boxH / 2;
     this.box.style.top = `${Math.round(boxTop)}px`;
     this.skipBtn.style.top = `${Math.round(canvas.top - app.top + 6)}px`;
     const a = this.arrow;
     a.className = 'tut-arrow';
-    if (s.point === 'tray' && s.tower) {
+    let point = s.point;
+    if (point === 'cycle') point = this.game.ui.selectedType === s.tower ? 'board' : 'tray';
+    if (point === 'tray' && s.tower) {
       const r = this.game.ui.trayBtns[s.tower].btn.getBoundingClientRect();
       a.classList.add('down');
       a.style.left = `${r.left - app.left + r.width / 2}px`;
-      a.style.top = `${r.top - app.top - 52}px`;
-    } else if (s.point === 'board') {
+      a.style.top = `${r.top - app.top - ARROW_H - 4}px`;
+    } else if (point === 'board') {
       // S26: aim at an open, buildable cell (never a Blocked one) nearest the
       // spot just above the box's centre; fall back to that spot if none.
       a.classList.add('up');
       const g = this.game.grid;
       const ox = canvas.left - app.left, oy = canvas.top - app.top;
-      const wantX = app.width / 2, wantY = boxTop - 58 - g.size * 0.7;
+      const wantX = app.width / 2, wantY = boxTop - ARROW_H - 10 - g.size * 0.7;
       let best = null, bd = Infinity;
       for (const c of g.cells.values()) {
         if (c.occupied || c.spawn || c.exit || c.lockout) continue;
@@ -246,12 +255,12 @@ export class Tutorial {
         if (d < bd) { bd = d; best = c; }
       }
       a.style.left = `${best ? ox + best.x : wantX}px`;
-      a.style.top = `${best ? oy + best.y + g.size * 0.3 : boxTop - 58}px`;
-    } else if (s.point === 'base') {
+      a.style.top = `${best ? oy + best.y + g.size * 0.3 : boxTop - ARROW_H - 10}px`;
+    } else if (point === 'base') {
       const g = this.game.grid;
       a.classList.add('down');
       a.style.left = `${canvas.left - app.left + g.baseX}px`;
-      a.style.top = `${canvas.top - app.top + g.baseY - g.baseR - 56}px`;
+      a.style.top = `${canvas.top - app.top + g.baseY - g.baseR - ARROW_H - 8}px`;
     } else a.classList.add('none');
   }
 }
@@ -276,7 +285,7 @@ export class HintBox {
     this.root = h('div', 'tut-layer show' + (overStory ? ' over-story' : ''));
     this.box = h('div', 'tut-box in');
     for (const line of (text ?? '').split('\n')) this.box.appendChild(h('p', 'tut-msg', line));
-    this.arrow = h('div', 'tut-arrow ' + dir);
+    this.arrow = h('div', 'tut-arrow small ' + dir);
     this.root.append(this.arrow, this.box);
     if (tick) {
       const t = h('button', 'tut-tick show');

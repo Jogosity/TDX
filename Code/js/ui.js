@@ -145,6 +145,7 @@ export class UI {
     this.selectedType = null;
     for (const b of this.el.tray.children) b.classList.remove('selected');
     this.game.cancelPlacing();
+    this.game.tutorial?.selectionChanged();   // 14 Nov: the Tutorial arrow goes back to the card
   }
 
   bind() {
@@ -229,6 +230,7 @@ export class UI {
   showBanner(title, text, btnLabel) {
     this.el.bannerTitle.textContent = title;
     this.el.bannerText.textContent = text;
+    this.el.bannerText.hidden = !text;   // the level-start banner has no subline (14 Nov)
     if (btnLabel) {
       this.el.bannerBtn.style.display = '';
       this.el.bannerBtn.textContent = btnLabel;
@@ -796,6 +798,7 @@ export class UI {
     const a = this.el.alert;
     this.el.alertTitle.textContent = title;
     this.el.alertText.textContent = text;
+    this.el.alertText.hidden = !text;   // one-line alerts (the wave countdown)
     a.className = `show ${kind}`;
     void a.offsetWidth;                 // restart the entry animation
     a.classList.add('pop');
@@ -817,6 +820,11 @@ export class UI {
   surgeCountdown(secs) {
     sfx('surge_tick');
     this.alert('warn', 'BREACH DETECTED', `Surge in ${secs}`, 1.2);
+  }
+
+  // 14 Nov (Jogo): the wave's grace period, one re-pop per second (game.syncArrival)
+  arrivalCountdown(secs) {
+    this.alert('good', `Enemies arriving in ${secs}`, '', 1.2);
   }
 
   surgeBreach() {

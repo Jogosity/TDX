@@ -2,7 +2,7 @@
 
 import { Tutorial, tutorialTowers, HintBox } from './tutorial.js';
 const NEXT_LEVEL_KEY = 'tdx-next-level';
-import { PLAYER, TOWERS, TOWER_ORDER, ENEMIES, LEVELS, UPGRADE, BLUEPRINTS, CRASH, effectiveDelta } from './config.js';
+import { PLAYER, TOWERS, TOWER_ORDER, ENEMIES, LEVELS, UPGRADE, BLUEPRINTS, CRASH, WAVE_START_DELAY, effectiveDelta } from './config.js';
 import { loadSave, writeSave, clearSave } from './save.js';
 import * as saveApi from './save.js';   // M9: optional Difficulty helpers (advancedOpen) for the quests
 import * as quests from './quests.js';
@@ -553,8 +553,8 @@ class Game {
     this.ui.hideMainMenu();
     audio.stopMusic();   // M8: the menu music fades; each wave picks its own track
     this.ui.refresh();
-    this.buildPhaseBanner(this.state.level.name.toUpperCase(),
-      'Viral agents are inbound. Deploy towers to defend the data repo, then start the wave.');
+    // 14 Nov (Jogo): no subline here; "deploy towers, then start the wave" read as the wrong order
+    this.buildPhaseBanner(this.state.level.name.toUpperCase(), '');
   }
 
   // The START WAVE banner; in the Tutorial, the wave's tutorial boxes come first.
@@ -588,6 +588,14 @@ class Game {
     } else if (s.phase === 'levelComplete' || s.phase === 'gameOver') {
       window.location.reload(); // fresh boot lands on the main menu
     }
+  }
+
+  // 14 Nov (Jogo): after START WAVE, the alert strip counts down the grace period
+  // (WAVE_START_DELAY) before the first enemy: "Enemies arriving in 3, 2, 1".
+  syncArrival() {
+    const left = WAVE_START_DELAY - this.wave.clock;
+    const secs = left > 0 ? Math.ceil(left) : null;
+    if (secs !== this.arrivalCount) { this.arrivalCount = secs; if (secs) this.ui.arrivalCountdown(secs); }
   }
 
   // Breach Surge (S21): the alert strip counts down, then shouts as it pours.
@@ -631,7 +639,7 @@ class Game {
       audio.musicBreak(true);   // the track keeps going, lowered, until the next wave
       sfx('wave_clear');
       this.ui.refresh();
-      this.buildPhaseBanner(`WAVE ${s.waveIndex} CLEARED`, 'Rebuild and reinforce, then launch the next wave.');
+      this.buildPhaseBanner(`WAVE ${s.waveIndex} CLEARED`, '');   // 14 Nov (Jogo): subline removed
     }
   }
 
@@ -809,7 +817,7 @@ class Game {
     // Debug: spawning can be paused (debug-spawned enemies still arrive)
     if (inWave && !this.spawnPaused) this.wave.update(dt, s.enemies);
     this.rec.tick(s, dt);
-    if (inWave) this.syncSurge();
+    if (inWave) { this.syncSurge(); this.syncArrival(); }
 
     for (const t of s.towers) t.update(dt, s.enemies, s.projectiles, this.grid);
     this.towerSounds();

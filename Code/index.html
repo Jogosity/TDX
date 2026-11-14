@@ -642,7 +642,7 @@
   .tut-mode .archive-scroll > .mem-list { margin-bottom: 0; }
   .tut-mode .archive-avatar { width: 84px; height: 84px; }
   .tut-mode .archive-who { margin-top: 0; }
-  .tut-mode .archive-who > *, .tut-mode .archive-scroll > * { opacity: 0.55; }
+  /* 14 Nov (Jogo): narrative text back to full white; the dimming only made sense next to the plain Archive Record */
   .tut-mode .archive-scroll { -webkit-mask-image: none; mask-image: none; }
   .story-warning {
     display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -858,11 +858,12 @@
   @keyframes tut-pop { from { transform: scale(0.3); } }
   @keyframes tut-pulse { 50% { transform: scale(1.08); } }
   .tut-arrow {
-    position: absolute; width: 44px; height: 48px; margin-left: -22px;
+    position: absolute; width: 66px; height: 72px; margin-left: -33px;   /* 14 Nov: 1.5x; js ARROW_H */
     background: var(--teal);
     clip-path: polygon(30% 0, 70% 0, 70% 50%, 100% 50%, 50% 100%, 0 50%, 30% 50%);
     filter: drop-shadow(0 0 6px rgba(0, 255, 204, 0.9));
   }
+  .tut-arrow.small { width: 44px; height: 48px; margin-left: -22px; }   /* the one-time hints */
   .tut-arrow.down { animation: tut-bob-down 0.9s ease-in-out infinite; }
   .tut-arrow.up { transform: rotate(180deg); animation: tut-bob-up 0.9s ease-in-out infinite; }
   .tut-arrow.none { display: none; }
@@ -924,7 +925,7 @@
     </div>
     <div id="banner">
       <h1 id="banner-title">TDX</h1>
-      <p id="banner-text">Viral agents are inbound. Deploy towers to defend the data repo.</p>
+      <p id="banner-text"></p>
       <button id="banner-btn" class="neon-btn">START WAVE</button>
     </div>
   </div>

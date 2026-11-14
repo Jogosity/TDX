@@ -81,11 +81,15 @@ After the sim: quest/login rewards feed the economy, so they tune against a bala
 	- [ ] Increase the number BPs to unlock a tower - focus on the later towers. Leave the unlocks of Vault and Defrag at their current initial unlock. (We want the player to get the variation going to make the game more fun)
 	- [ ] Maybe even a few expensive Bits purchase to start each level with +50 Token.
 	- [ ] Add an item store
-- [ ] NOT READY - Daily Specials - New Towers that turn up on a random basis per-day and fit into Slot 8 - see Content Backlog for some ideas. (Would start with just 2)
-- [ ] NOT READY - Firewalled enemies -  Shielded enemies that take less damage whilst shielded.
-	- [ ] Firewalled enemies have a glow around them or some visual cue that makes them clearly a V2 of the base unit.
-	- [ ] Some specialist towers rip shields to shreds allowing normal damage. (Deleter, Tracer)
-- [ ] NOT READY - New Enemies - See Content Backlog for ideas
+
+- [ ] READY - FTUE improvements based on feedback
+	- [x] The place Threader tutorial needs a larger arrow pointer
+	- [x] The “place 2 more towers” tutorial needs to reinforce that you must tap to select a tower for every placement. Add a pointer to the tower select tab for each tower that must be placed.
+	- [x] Move the prompt box slightly further down the screen, nearer the tower select menu. At the moment it is obscuring the centre of the screen where you need to place the tower.
+	- [x] Don’t put the highlight around the required tower until the player has actually selected that tower. Currently it looks ready-selected, which is not true.
+	- [x] This rule applies to the Vault tutorial too. ✅ 14 Nov: 1.5x arrows, arrow cycles card → cell per placement, boxes low, no pre-select glow
+	- [x] Jogo to… reduce the number of rows in the tutorial map. This will speed it up.
+	- [ ] We might need to need to highlight specific cells to place the tutorial towers… hold that back for now.
 
 
 
@@ -93,6 +97,11 @@ After the sim: quest/login rewards feed the economy, so they tune against a bala
 
 ## Content backlog
 Specced in TDX_Towers_and_Enemies.md. If any return after M3, re-run the difficulty sim with them in.
+- [ ] NOT READY - Daily Specials - New Towers that turn up on a random basis per-day and fit into Slot 8 - see Content Backlog for some ideas. (Would start with just 2)
+- [ ] NOT READY - Firewalled enemies -  Shielded enemies that take less damage whilst shielded.
+	- [ ] Firewalled enemies have a glow around them or some visual cue that makes them clearly a V2 of the base unit.
+	- [ ] Some specialist towers rip shields to shreds allowing normal damage. (Deleter, Tracer)
+- [ ] NOT READY - New Enemies - See Content Backlog for ideas
 - [ ] Limiter Tower (slows enemies, but is expensive)
 	- [ ] Already built. Needs Balancing
 - [ ] Data Mine Tower (Temp tower that explodes after a few seconds delay)
