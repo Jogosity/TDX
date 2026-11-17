@@ -18,6 +18,8 @@ Direction (Jogo): Advanced is the real balance target. The Breach is the emotion
 - (Fix: the first write of the L2/L4/L6 rollout didn't land on the Mac; re-applied with the roster change below.)
 - **Stingers out of every roster (Jogo, 17 Nov):** they died too fast to cause chaos and added little. Removed from `unlocked` and `weights` on all waves in `js/levels.js`; the Stinger itself stays in `config.js` so it can come back with a new job.
 - **Bugs swarm:** `ENEMIES.bug.pack = { min: 2, max: 4 }` (the Stinger's old pack size). Each Bug still picks its own random tower. HP unchanged for now; test this first.
+- **Basic ×0.6** (was ×0.8), F14 in the Balance Notes: after today's changes the jogo bot won only 76% on Basic ×0.8; at ×0.6 it wins every run on L1–L7 and 63–88% on L8–L10.
+- **Openings:** L3 start 390 → 490 and its wave 2 is Hack + Slice (Worms from wave 3); L4 Bugs from wave 4 (were in waves 2–3); L1 300 → 350, L6 570 → 620, L7 610 → 660. `jogo` bot, Advanced, Cores lost waves 1–4: L3 24.4 → 10.1, L4 17.0 → 4.8, L7 4.4 → 2.8. The +50 on L1 and L6 trims waves 1–2 slightly but the bot's overall result there doesn't improve (a bot quirk, not a real cost). Tool: `node tools/sim/starttok.mjs <seeds> <bot> <difficulty> [+a,+b]`.
 
 ## Session 27b — 2026-11-11 — M9 "Integer": Difficulty (Basic and Advanced)
 

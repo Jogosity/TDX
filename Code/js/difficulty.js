@@ -2,6 +2,6 @@
 // The levels are balanced for Advanced. Basic multiplies every level's
 // enemyDelta (HP ×, damage ×) by the numbers below. The Tutorial ignores them.
 export const DIFFICULTY = {
-  basic: { health: 0.8, damage: 0.8 },
+  basic: { health: 0.6, damage: 0.6 },
   advanced: { health: 1, damage: 1 },
 };

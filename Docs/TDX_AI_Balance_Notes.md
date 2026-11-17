@@ -442,3 +442,11 @@ Live: L1–L5 become near-certain wins from ×0.8. L8 and L9 stay at 0% even at 
 - **Advanced stays exactly where it was.** The multiplier is 1, and the tests pin it to the balanced numbers.
 
 **Recommendation.** Ship ×0.8 for HP and damage (the plan's default). That gives a clear step down without making Basic a walkover. If playtests show Basic still bites on L6+, ×0.7 is the next stop. The Curve tool's Basic knobs and dotted Ledger line show the effect live, and HP and damage can be split if only one of them needs to move.
+
+## F14 — Basic re-check after the 17 Nov pressure changes (2026-11-17)
+After the denser waves 5+ (L2, L4–L7), Stingers out and Bug swarms, `node tools/sim/difficulty.mjs 8 <bot> 0.8,0.7,0.6`, all levels:
+- **jogo bot** (Jogo's tier unlocks): Advanced 46% · Basic ×0.8 76% · ×0.7 79% · ×0.6 94%.
+- **skilled bot** (all tiers open): Advanced 60% · ×0.8 95% · ×0.7 98% · ×0.6 98%.
+- Hardest on Basic ×0.8 for the jogo bot: L9 (13%), L1 (75%), L3 (63%), L10 (63%). L1 stays at 75% down to ×0.7: its opening, not enemy HP, is the problem.
+- Both bots are expert players; a newcomer has fewer tier unlocks and fewer tricks, so ×0.8 is likely too hard for them. ×0.6 is the first setting where the capped bot clears nearly everything.
+- **Applied 17 Nov (Jogo):** `DIFFICULTY.basic` = ×0.6 HP and damage (was ×0.8).
