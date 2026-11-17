@@ -3,6 +3,22 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 28 — 2026-11-17 — Difficulty on Advanced: Stingers, run recorder, a bot that plays like Jogo
+
+Direction (Jogo): Advanced is the real balance target. The Breach is the emotional spike, not the only hard moment; steady pressure should be real across the level.
+- **Stingers** (11 Nov): weight 0.5 on all 78 waves that use them (`js/levels.js`). They were 28% of spawns and 29% of Token income but only 17% of leaks. Skilled bot: win rate 66% → 61%, Tokens −5%.
+- **Run recorder** (`js/recorder.js`, debug ECONOMY → Record runs). Records builds, upgrades, sells, losses, leaks, kills, Surge and a sample every 2 s; keeps the last 5 in localStorage and saves to `Notes/runs/<name>.json` through `serve.py` `/runs/save` (works from the phone on the LAN). A blinking red **● REC** tag shows in the HUD while it's on. Tests 243 → 246.
+- **Jogo's runs** (17 Nov, L5 ×2 and L7 ×2, Advanced): won all four with 6–10 Cores left. Almost nothing leaks on waves 5+ outside the Breach (23 of 24 waves clean); 1.8–2.6k Tokens banked into the late waves, 4–5k at the end. ~20–30 towers: Threaders mostly T2, lots of Pulses, Deleters, Vaults upgraded to T2.
+- **Sim: play a recorded board.** `opts.board` (a run's spawns, blockers, Lockouts) replaces the random board. `node tools/sim/vsrun.mjs ../Notes/runs/<run>.json [seeds] [bot]` prints the bot wave by wave beside the run. On Jogo's own boards the skilled bot already matched him on Cores (avg 8.7 vs his 8.75); the random boards were simply harder than his.
+- **Sim: new `jogo` bot** (`BOT_PRESETS.jogo`): Jogo's tier unlocks (`tierUnlocks`), Vault upgrades (`upgradeVaults`), full spend in waves 1–2 (`reserveFromWave`), a Pulse/Deleter mix (`JOGO_MIX`), upgrades from 16 guns keeping the next tower's price back, and a 24-gun cap (`maxGuns`). On his 4 boards: 8.8 Cores left vs his 8.75, ~30 towers like him. Across all levels (random boards) 60% wins vs skilled 65%: its tier caps cost it most on L8–L10.
+- Still different: the bot spends its slack on upgrades where Jogo banks it. `upgradeOnLeak: N` makes it bank (only upgrades after a leak), but then the Breach costs it more than it costs Jogo, so it stays off by default.
+- **Step 2 started: steady pressure on L5 and L7.** Raising TEV made levels *easier* (more enemies = more Tokens), so TEV is self-funding and not the lever. Density is: on waves 5+ that aren't the Breach, **MAV and RTV ×1.4 and spawnInterval ×0.6** (12 waves in `js/levels.js`). `jogo` bot on Jogo's 4 boards, 10 seeds: Cores lost in those steady waves 0.3 → about 2.75 on average (0.3 / 2.2 / 2.3 / 6.2 by board), the Breach still the worst single wave, Cores left 8.8 → 7.5, wins 32/40. Tool: `node tools/sim/pressure.mjs <seeds> mav|tev|json <x,…> ../Notes/runs/*.json`. Jogo's playtest (L5, L7): "kept my head above water", banking again near the end; close enough to roll out.
+- **Rollout:** same change on **L2, L4, L6** (15 more wave lines). `jogo` bot, random boards, 8 seeds: L2 100% wins / 10.5 Cores left, L4 88% / 9.6, L6 75% / 5.9 (Breach 6.5 → 3.4, steady 0.6 → 2.1). **Held back:** L1 and L3 already lose Cores in steady waves and have no Breach (L1 would drop 63% → 38%); L8–L10 the bot already loses (tier caps), so it can't judge them: needs Jogo's runs there.
+- **Deleter check (Sim, damage per Token invested, L5 + L7, even specialist mix):** Threader 17.6, Compressor 10.5, Defrag 9.8, Deleter 9.1, Pulse 8.0, DDOS 2.6. The Deleter's damage goes to Viruses 32%, Cracks 28%, Bugs 22%; its kills are mostly Viruses and Bugs. Tool: `OPTS='{…}' node tools/sim/dmgprobe.mjs <seeds> <bot> <levels> <levelsFile>`.
+- (Fix: the first write of the L2/L4/L6 rollout didn't land on the Mac; re-applied with the roster change below.)
+- **Stingers out of every roster (Jogo, 17 Nov):** they died too fast to cause chaos and added little. Removed from `unlocked` and `weights` on all waves in `js/levels.js`; the Stinger itself stays in `config.js` so it can come back with a new job.
+- **Bugs swarm:** `ENEMIES.bug.pack = { min: 2, max: 4 }` (the Stinger's old pack size). Each Bug still picks its own random tower. HP unchanged for now; test this first.
+
 ## Session 27b — 2026-11-11 — M9 "Integer": Difficulty (Basic and Advanced)
 
 Plan: `Docs/TDX_M9_Difficulty_Plan.md` (D1–D6 agreed by Jogo). Screen design: `Assets/Screens/Engagement_Screens.png`. Built alongside Daily Quests (same day, shared save and debug tab).

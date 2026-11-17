@@ -316,7 +316,8 @@ export const ENEMIES = {
     // retargets randomly when it dies. Only heads for the base once no towers remain.
     hunter: true,
     attack: { damage: 10, reload: 1.0 },
-    desc: 'Tower hunter. Picks a random tower and swarms it — ignores the base.',
+    pack: { min: 2, max: 4 },   // 17 Nov 2026: arrives in swarms (takes over from the Stinger, which is out of the rosters for now)
+    desc: 'Tower hunter. Swarms of 2–4, each picks a random tower and drains it — ignores the base.',
     color: '#ff8a1f', size: 0.30,
   },
   stinger: {

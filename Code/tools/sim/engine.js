@@ -52,6 +52,12 @@ export const DEFAULT_OPTS = {
   standoff: null,            // { ddos: 2.6 } = keep that tower ≥ 2.6 cells from the route
   upgrade: false,            // spend spare Tokens upgrading guns once no build cell is left
   upgradeAt: 0,              // >0: from this many guns, upgrade before building (fewer, better towers)
+  tierUnlocks: null,         // { threader: 3, … } highest tier per type (absent = 1); null = all tiers open
+  upgradeVaults: false,      // upgrades may also go into Vaults (once no gun upgrade is affordable)
+  upgradeOnLeak: -1,         // ≥0: upgrade only after a leak within that many waves (spare Tokens banked)
+  maxGuns: 0,                // >0: stop building guns at this many; spare Tokens upgrade or are banked
+  reserveFromWave: 0,        // mid-wave `reserve` applies only from this wave index (open at full spend)
+  board: null,               // a recorded run's board to play instead of a random one
   noDrain: false,            // Virus keeps HP/speed/reward but loses its attack (walks like a Hack)
   viewport: [390, 844],      // phone portrait; speeds are in cells so this only sets px scale
 };
@@ -62,9 +68,12 @@ function initLevel(idx, opts) {
   const grid = new HexGrid(level.grid);
   grid.layout(...opts.viewport);
   const field = new PathField(grid);
-  if (level.spawns > 1) placeExtraSpawns(grid, field, level.spawns - 1);
-  placeBlockers(grid, field, level.blockers);
-  placeLockouts(grid, level.lockouts);
+  if (opts.board) useBoard(grid, opts.board);
+  else {
+    if (level.spawns > 1) placeExtraSpawns(grid, field, level.spawns - 1);
+    placeBlockers(grid, field, level.blockers);
+    placeLockouts(grid, level.lockouts);
+  }
   field.recompute();
   return {
     levelIndex: idx, level, grid, field,
@@ -73,6 +82,15 @@ function initLevel(idx, opts) {
     towers: [], enemies: [], projectiles: [], effects: [],
     wavesToCrash: rollCrashInterval(),
   };
+}
+
+// A recorded board (Notes/runs/*.json `board`: spawns, blockers, lockouts as
+// [q, r]) instead of a random one, so a bot can play the exact board a person did.
+function useBoard(grid, board) {
+  for (const c of grid.spawns) c.spawn = false;
+  grid.spawns = board.spawns.map(([q, r]) => { const c = grid.get(q, r); c.spawn = true; return c; });
+  for (const [q, r] of board.blockers) grid.get(q, r).blocker = true;
+  for (const [q, r] of board.lockouts) grid.get(q, r).lockout = true;
 }
 
 const rollCrashInterval = () =>
@@ -159,7 +177,7 @@ function runWave(s, opts, bot) {
     for (const e of s.enemies) {
       if (e.alive || e.resolved) continue;
       e.resolved = true; dirty = true;
-      if (e.reachedBase) { s.lives--; m.leaks++; m.leakedBy[e.type] = (m.leakedBy[e.type] || 0) + 1; }
+      if (e.reachedBase) { s.lives--; m.leaks++; s.lastLeakWave = s.waveIndex; m.leakedBy[e.type] = (m.leakedBy[e.type] || 0) + 1; }
       else { s.tokens += e.def.reward; m.kills++; }
     }
     s.projectiles = s.projectiles.filter(p => p.alive);
@@ -195,6 +213,7 @@ export function runLevel(levelIndex, userOpts = {}) {
       s.spentThisBreak = before - s.tokens;
       const m = runWave(s, opts, bot);
       waves.push(m);
+      opts.onWave?.(s, m);       // analysis hook (tools/sim): the board after each wave
       if (lostAtWave === null && s.lives <= 0) lostAtWave = m.wave;
     }
     const towers = s.towers.filter(t => t.alive).map(t => ({ type: t.type, tier: t.tier }));
@@ -268,12 +287,23 @@ export const KILLING_GROUND = ['threader', 'threader', 'ddos', 'threader', 'thre
 // are down: Threaders stay the backbone, specialists mixed in.
 export const DIVERSE = ['threader', 'defrag', 'threader', 'compressor', 'threader', 'pulse', 'threader', 'ddos'];
 
+// Jogo's mix after the opening Threaders (from his 17 Nov runs: Pulses the
+// most, then Deleters, Defrag, Compressor, DDOS) and his tier unlocks then.
+export const JOGO_MIX = ['pulse', 'threader', 'deleter', 'pulse', 'defrag', 'threader', 'pulse', 'compressor', 'deleter', 'ddos'];
+export const JOGO_TIERS = { threader: 3, ddos: 3, defrag: 2, vault: 2, compressor: 2, pulse: 2, deleter: 2 };
+
 const greedyBuild = (s, opts, reserve = 0) => {
   let builds = s.towers.length, full = false;
   // upgradeAt: once this many guns are down, upgrades come before new builds
   // (Jogo's style: fewer, better towers, cells left empty)
-  if (opts.upgrade && opts.upgradeAt && s.towers.filter(t => t.weapon).length >= opts.upgradeAt) {
-    upgradeBusiest(s, reserve);
+  if (opts.upgrade && opts.upgradeAt) {
+    const guns = s.towers.filter(t => t.weapon).length;
+    if (guns >= opts.upgradeAt) {
+      // keep the price of the next mix tower back (unless the gun cap is reached)
+      const next = opts.mix && guns >= opts.screen ? opts.mix[(guns - opts.screen) % opts.mix.length] : 'threader';
+      const capped = opts.maxGuns && s.towers.filter(t => t.alive && t.weapon).length >= opts.maxGuns;
+      upgradeBusiest(s, reserve + (capped ? 0 : TOWERS[next].cost), opts);
+    }
   }
   for (let guard = 0; guard < 60; guard++) {
     const wantVault = opts.vaultShare > 0 && s.towers.some(t => t.weapon)
@@ -289,6 +319,7 @@ const greedyBuild = (s, opts, reserve = 0) => {
     const save = opts.mixSave === 'calm' ? !(s.metrics?.leaks > 0) : opts.mixSave !== false;
     if (type !== 'threader' && !wantVault && !save && s.tokens - reserve < TOWERS[type].cost) type = 'threader';
     if (s.tokens - reserve < TOWERS[type].cost) break;
+    if (opts.maxGuns && type !== 'vault' && s.towers.filter(t => t.alive && t.weapon).length >= opts.maxGuns) { full = true; break; }
     const range = TOWERS[type].weapon ? WEAPONS[TOWERS[type].weapon].range : 0;
     const standoff = opts.standoff?.[type] ?? 0;
     let cell = type === 'vault' ? bestVaultCell(s) : bestGunCell(s, range, opts.baseBias, standoff);
@@ -301,24 +332,36 @@ const greedyBuild = (s, opts, reserve = 0) => {
     buildTower(s, type, cell);
     builds++;
   }
-  if (opts.upgrade && full) upgradeBusiest(s, reserve);
+  if (opts.upgrade && full) upgradeBusiest(s, reserve, opts);
 };
 
 // Upgrades (S19): with nowhere left to build, spare Tokens go into the gun
 // that covers the most path, preferring lower tiers (path covered ÷ tier).
-// All tiers are assumed unlocked: a skilled player's ceiling.
-function upgradeBusiest(s, reserve = 0) {
+// opts.tierUnlocks caps each type's tier as the player's unlocks do (null =
+// all open); opts.upgradeVaults lets spare Tokens toughen Vaults once no gun
+// upgrade is affordable (lowest tier first).
+function upgradeBusiest(s, reserve = 0, opts = {}) {
+  // upgradeOnLeak N: upgrade only after a leak in this wave or the N before it (bank otherwise)
+  if (opts.upgradeOnLeak >= 0 && !(s.lastLeakWave >= s.waveIndex - opts.upgradeOnLeak)) return;
+  const cap = t => opts.tierUnlocks ? (opts.tierUnlocks[t.type] || 1) : Infinity;
   const pts = pathSamples(s);
   const px = cellPx(s.grid);
   for (let guard = 0; guard < 20; guard++) {
     let best = null, bestScore = 0;
     for (const t of s.towers) {
-      if (!t.alive || !t.weapon || t.upgrading || t.upgradeCost === null) continue;
+      if (!t.alive || !t.weapon || t.upgrading || t.upgradeCost === null || t.tier >= cap(t)) continue;
       if (s.tokens - reserve < t.upgradeCost) continue;
       const r = t.weapon.range * px;
       const cover = pts.filter(p => Math.hypot(p.x - t.x, p.y - t.y) <= r).length;
       const score = cover / t.tier;
       if (score > bestScore) { bestScore = score; best = t; }
+    }
+    if (!best && opts.upgradeVaults) {
+      for (const t of s.towers) {
+        if (!t.alive || t.type !== 'vault' || t.upgrading || t.upgradeCost === null || t.tier >= cap(t)) continue;
+        if (s.tokens - reserve < t.upgradeCost) continue;
+        if (!best || t.tier < best.tier) best = t;
+      }
     }
     if (!best) return;
     s.tokens -= best.upgradeCost;
@@ -335,6 +378,14 @@ const BOT_PRESETS = {
   // starved the early waves: L5 5/8 lost vs 1/8) + DDOS kept back from the
   // route, as Jogo plays it + upgrades once the board is full (S19)
   skilled: { mix: DIVERSE, screen: 8, mixFromWave: 3, mixSave: 'calm', standoff: { ddos: 2.6 }, upgrade: true },
+  // 'jogo' (17 Nov 2026): fitted to Jogo's recorded Advanced runs on L5 and L7.
+  // Full spend in the opening, a Pulse/Deleter-heavy mix, his tier unlocks,
+  // upgraded Vaults, and a cap on guns so spare Tokens are banked as he does.
+  jogo: {
+    mix: JOGO_MIX, screen: 8, mixFromWave: 2, mixSave: 'calm', standoff: { ddos: 2.6 },
+    upgrade: true, upgradeAt: 16, upgradeVaults: true, maxGuns: 24, reserveFromWave: 2,
+    tierUnlocks: JOGO_TIERS,
+  },
 };
 
 const BOTS = {
@@ -405,13 +456,14 @@ const BOTS = {
         s.metrics.rebuilds++;
         return false;
       });
-      if (Math.floor(t) !== Math.floor(t - DT)) greedyBuild(s, opts, opts.reserve);
+      if (Math.floor(t) !== Math.floor(t - DT)) greedyBuild(s, opts, s.waveIndex < opts.reserveFromWave ? 0 : opts.reserve);
     },
   },
 };
 // 'skilled' (S19): the reactive bot's Virus reflexes; its BOT_PRESETS entry
 // adds the DIVERSE build mix and upgrades.
 BOTS.skilled = BOTS.reactive;
+BOTS.jogo = BOTS.reactive;
 
 // Where a walking Virus will first find a tower within its scan range:
 // { tower, before: a route point ~1 cell earlier } or null.
