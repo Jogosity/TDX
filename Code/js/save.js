@@ -19,7 +19,8 @@ const DEFAULTS = () => ({
   saveVersion: SAVE_VERSION,
   hints: {},                    // S25 one-time hints shown: { blueprint, bits }
   audio: { ...AUDIO.defaults }, // M8: { muted, music, sfx } — the cog menu's SOUND tab
-  recordRuns: false,            // M9 debug: run recorder (js/recorder.js)
+  recordRuns: true,             // M9 debug: run recorder (js/recorder.js); on by default since 18 Nov 2026 (tuning)
+  recordRunsDefaulted: true,    // the one-time switch-on below has happened
 });
 
 export function loadSave() {
@@ -28,6 +29,10 @@ export function loadSave() {
     const raw = globalThis.localStorage?.getItem(KEY);
     if (raw) { s.saveVersion = 1; Object.assign(s, JSON.parse(raw)); }   // old saves carry no version
   } catch { /* corrupt or unavailable — fall back to defaults */ }
+  // 18 Nov 2026: recording is on by default while we tune; saves from before
+  // that (recordRuns false by default) are switched on once. Turning it off
+  // in the debug menu afterwards sticks.
+  if (s.recordRunsDefaulted !== true) { s.recordRuns = true; s.recordRunsDefaulted = true; }
   // migrate pre-Collection saves (blueprints was a plain number)
   if (typeof s.blueprints !== 'object' || s.blueprints === null) s.blueprints = {};
   if (!Array.isArray(s.towersUnlocked)) s.towersUnlocked = ['threader'];

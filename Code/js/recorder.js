@@ -1,4 +1,4 @@
-// TDX run recorder (M9). A debug switch (ECONOMY tab, saved as save.recordRuns)
+// TDX run recorder (M9). A debug switch (ECONOMY tab, saved as save.recordRuns; on by default since 18 Nov 2026)
 // logs one run as compact JSON: the board, every build / upgrade / sell, towers
 // lost, leaks, waves, surges and CRASHes, plus a sample every 2 s. At the end
 // of the run it POSTs to serve.py (/runs/save → Notes/runs/), and keeps the

@@ -12,6 +12,7 @@ Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial
 - **Slot density (F16)** in the Ledger and the Level Editor: free cells whose Threader range (2.3) reaches the route ÷ route length, averaged over random boards (`tools/ledger/slots.js`, DOM-free). Ledger: a line on every level card. Editor: under the board (live, cached per board shape) and on each level card in the strip. Bands describe, they don't block: **Tight** < 3.5, **Brink** 3.5–4.0 (L5–L7 at the edge, 18 Nov), **Open** > 4.0 (Jogo: some wide levels on purpose, for a wider roster). Now: L3 4.18 and L4 4.15 Open, L10 5.11 Open, L9 3.99, the rest 3.6–3.7. Tests 246 → **251**.
 - **Pause button** (Jogo): small ❚❚ at the top right of the board. Tapping it freezes everything (waves, towers, timers, the recorder's clock) under a PAUSED overlay; tap the overlay or ▶ to resume. Not available once the level is over. `Game.setPaused`, `UI.showPaused`.
 - **Analytics Report** now shows the level number and name under the heading (`showAnalytics(..., { levelName })`).
+- **Record runs is on by default** (Jogo): new saves and data resets start with it on, and older saves are switched on once (`recordRunsDefaulted`). Switching it off in the debug menu sticks.
 
 ## Session 28 — 2026-11-17 — Difficulty on Advanced: Stingers, run recorder, a bot that plays like Jogo
 

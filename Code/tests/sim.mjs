@@ -1109,7 +1109,7 @@ check('every level defines a starting budget',
     && Array.isArray(run.board.spawns) && run.events[0].e === 'build' && run.events[0].cell.length === 2 && run.events[0].ph === 'b');
   check('recorder: wave summary and samples', run.waves.length === 1 && run.waves[0].kills === 1 && run.waves[0].leaks === 1
     && run.waves[0].start === 4 && run.samples.length === 1 && run.sampleCols.length === run.samples[0].length);
-  check('recorder: off by default and stops after finish', !rec.on && loadSave().recordRuns === false);
+  check('recorder: on by default (18 Nov) and stops after finish', !rec.on && loadSave().recordRuns === true);
 }
 
 // --- Slot density (F16): gun slots per cell of route ------------------------------
