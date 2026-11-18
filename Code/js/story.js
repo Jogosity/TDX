@@ -443,7 +443,7 @@ export class Story {
   // stats from game.js newLevelStats(); labels from Screen Text (narrative.js).
   // S25: onNext given (a won level with a level after it) → Main Menu (left, dark) +
   // Next Level (right, bright blue) instead of Continue. onContinue = Main Menu.
-  showAnalytics(stats, strings, { wallet, onContinue, onNext = null, difficulty = null }) {
+  showAnalytics(stats, strings, { wallet, onContinue, onNext = null, difficulty = null, levelName = null }) {
     sfx('ui_whoosh');   // M8
     const card = this.card(this.root, { wallet });
     card.classList.add('analytics');
@@ -452,9 +452,11 @@ export class Story {
     const label = rv(h('span', '', strings.Analytics_Heading), 'fade');
     bar.appendChild(label);
     card.appendChild(bar);
+    const order = [bar, label];
+    // 18 Nov 2026: which level this report is for
+    if (levelName) { const lv = rv(h('div', 'an-level', levelName), 'fade'); card.appendChild(lv); order.push(lv); }
 
     const body = h('div', 'story-body');
-    const order = [bar, label];
     const row = (name, value, cls = '') => {
       const r = rv(h('div', 'an-row ' + cls), 'up');
       r.append(h('span', 'an-label', name), h('span', 'an-value', String(value)));

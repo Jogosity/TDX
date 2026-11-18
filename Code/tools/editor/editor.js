@@ -7,6 +7,7 @@ import { COL } from '../../js/render.js';
 import { buildBoard, validateLevels, LIMITS } from './validate.js';
 import { formatLevels } from './format.js';
 import { targetCurve } from '../ledger/target.js';
+import { slotDensity } from '../ledger/slots.js';
 import {
   curveLine, curveAt, applyCurve, setWaveCount, rosterLanes, setRosterLanes,
   normalizeLevel, blankLevel, ENEMY_KEYS, OPENING,
@@ -198,7 +199,7 @@ function renderStrip() {
     const [cls, label] = verdictOf(campaign?.[i]);
     return `<div class="card${i === cur ? ' on' : ''}" draggable="true" data-i="${i}">
       <span class="n">L${i} · ${esc(shortName(L))}</span><span class="pill ${cls}">${label}</span>
-      <span class="m">${L.waves.length} waves · ${L.spawns} entr${L.spawns > 1 ? 'ies' : 'y'} · ${L.grid.rowWidths.length} rows · ${fmt(L.startTokens)} T</span></div>`;
+      <span class="m">${L.waves.length} waves · ${L.spawns} entr${L.spawns > 1 ? 'ies' : 'y'} · ${L.grid.rowWidths.length} rows · ${fmt(L.startTokens)} T · slots <span class="sb ${slotsOf(L).band.key}">${fmt(slotsOf(L).density, 1)}</span></span></div>`;
   }).join('');
 }
 const strip = $('strip');
@@ -261,6 +262,13 @@ function seeded(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+// Slot density (tools/ledger/slots.js), cached per board shape so dragging stays smooth.
+const slotCache = new Map();
+function slotsOf(L) {
+  const key = JSON.stringify([L.grid, L.spawns, L.blockers, L.lockouts]);
+  if (!slotCache.has(key)) { if (slotCache.size > 300) slotCache.clear(); slotCache.set(key, slotDensity(L, { boards: 12 })); }
+  return slotCache.get(key);
+}
 let rowHandles = [];
 function renderBoard() {
   const L = level(), canvas = $('board'), wrap = $('boardWrap');
@@ -321,7 +329,9 @@ function renderBoard() {
   const cells = [...grid.cells.values()];
   const open = cells.filter(c => !c.spawn && !c.exit && !c.blocker && !c.lockout).length;
   const routes = grid.spawns.map(sp => field.dist.get(sp.key)).filter(v => v != null);
-  $('boardStats').textContent = `${cells.length} cells · ${open} buildable · route${routes.length > 1 ? 's' : ''} ${routes.join(' / ')} steps · roll #${boardSeed}`;
+  const sd = slotsOf(L);
+  $('boardStats').innerHTML = `${cells.length} cells · ${open} buildable · route${routes.length > 1 ? 's' : ''} ${routes.join(' / ')} steps · roll #${boardSeed}`
+    + `<br><span title="Free cells in Threader range of the route ÷ route length, averaged over 12 random boards. Brink 3.5–4.0 (L5–L7 at the edge, 18 Nov). Open = room for a wider roster.">Slot density <b>${fmt(sd.density, 2)}</b> <span class="sb ${sd.band.key}">${sd.band.label}</span> · ${fmt(sd.slots)} slots ÷ ${fmt(sd.route, 1)}-cell route</span>`;
 }
 let dragRow = null;
 const boardWrap = $('boardWrap');

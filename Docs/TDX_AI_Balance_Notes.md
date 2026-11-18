@@ -450,3 +450,10 @@ After the denser waves 5+ (L2, L4–L7), Stingers out and Bug swarms, `node tool
 - Hardest on Basic ×0.8 for the jogo bot: L9 (13%), L1 (75%), L3 (63%), L10 (63%). L1 stays at 75% down to ×0.7: its opening, not enemy HP, is the problem.
 - Both bots are expert players; a newcomer has fewer tier unlocks and fewer tricks, so ×0.8 is likely too hard for them. ×0.6 is the first setting where the capped bot clears nearly everything.
 - **Applied 17 Nov (Jogo):** `DIFFICULTY.basic` = ×0.6 HP and damage (was ×0.8).
+
+## F15 — Difficulty calibration point (2026-11-18)
+Jogo: Advanced is now "at the brink". An expert on a fresh save, unlocking as they go, needs full focus to survive L5–L7 (L5 lost then won with 10 Cores; L6 won with 6; L7 lost to drain before the Virus cut). That is the reference for Advanced. Basic ×0.6 is the accessible setting (`jogo` bot 96% wins). Measure new levels against this with `tools/sim/asrun.mjs` on recorded runs and `tools/sim/difficulty.mjs`.
+
+## F16 — Slot density (2026-11-18)
+Gun slots per cell of route = free cells within Threader range (2.3) of the route ÷ route length (cells), averaged over random boards. A full board's firepower ceiling ≈ slot density × DPS per tower × tier: it bites once Tokens stop being the limit (late waves, banking), which is why narrowing the wide levels restored late pressure. Jogo's narrowing moved L5 5.06 → 3.56, L6 4.34 → 3.63, L9 4.85 → 3.87; L5–L7 at ~3.6 played at the brink. Bands: Tight < 3.5 · Brink 3.5–4.0 · Open > 4.0. Open is allowed on purpose (room for a varied roster). Shown in the Ledger and Level Editor (`tools/ledger/slots.js`); sweep with `node tools/sim/boardmath.mjs <levelsFile>`.
+

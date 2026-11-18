@@ -35,6 +35,7 @@ class Game {
     this.grid = null;
     this.field = null;
     this.spawnPaused = false;   // debug: hold natural wave spawning
+    this.paused = false;        // Pause button (18 Nov 2026): the board freezes, nothing ticks
     this.rec = new Recorder();  // M9: records runs when save.recordRuns is on
 
     this.save = loadSave();
@@ -693,6 +694,7 @@ class Game {
     this.story.showAnalytics(this.state.stats, this.narrative.strings, {
       wallet: { tokens: this.state.tokens, bits: this.save.bits },
       difficulty: this.state.level.tutorial ? null : this.state.difficulty,   // M9
+      levelName: this.state.level.name,   // e.g. "Level 5: The Sprawl"
       onContinue: () => window.location.reload(),
       // S25: after a win, Next Level goes straight into the next level's story screens
       onNext: this.state.phase === 'levelComplete' && this.state.levelIndex + 1 < LEVELS.length
@@ -758,9 +760,17 @@ class Game {
   frame(now) {
     const dt = Math.min((now - this.last) / 1000, 0.05);
     this.last = now;
-    this.update(dt);
+    if (!this.paused) this.update(dt);
     this.renderer.draw(this.state);
     requestAnimationFrame((t) => this.frame(t));
+  }
+
+  // Pause: freezes the whole board (waves, towers, timers, the recorder's clock).
+  // Not once the level is over.
+  setPaused(on) {
+    const over = this.state.phase === 'levelComplete' || this.state.phase === 'gameOver';
+    this.paused = !!on && !over;
+    this.ui.showPaused(this.paused);
   }
 
   update(dt) {

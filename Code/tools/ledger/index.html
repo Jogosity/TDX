@@ -64,6 +64,7 @@
   aside details > summary { font-size: 15px; font-weight: 600; color: var(--ink); }
   .row { display: flex; gap: 8px; flex-wrap: wrap; }
   .tile .d { color: var(--ink-2); font-size: 12px; }
+  .sb { font-weight: 600; } .sb.tight { color: #ff8a80; } .sb.brink { color: #5fd35f; } .sb.open { color: #7fb6ff; }
   .tile svg.donut { height: auto; aspect-ratio: 1; max-width: 150px; margin: 6px auto 0; }
   .chart { position: relative; width: 100%; }
   .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -182,6 +183,7 @@
         <li><b>Target curve</b>: per level a start and end pressure (set in the Level Editor, stored in <code>js/levels.js</code>), a straight climb between, and a dip on the wave after the middle one. The game never reads it.</li>
         <li><b>Token income</b>: starting Tokens plus expected kills × reward per enemy, per level. It's what a player who kills everything earns; leaks and the Virus tax aren't taken off.</li>
         <li><b>Level summary verdict</b>: the level's average pressure minus the target's average. More than 0.1 below = <i>Too easy</i>, more than 0.1 above = <i>Too hard</i>, otherwise <i>On target</i>. "Off by" is the average distance from the curve, wave by wave, so a level can be on target on average but the wrong shape.</li>
+        <li><b>Slot density</b> (on each card) = free cells whose Threader range (2.3) reaches the route ÷ route length in cells, averaged over 20 random boards. It's how many towers a full board can bring to bear on each cell enemies walk: the ceiling once Tokens stop being the limit. <i>Brink</i> = 3.5–4.0, where L5–L7 sat when Advanced played at the edge (Jogo's fresh-save run, 18 Nov). <i>Open</i> (above 4.0) leaves room for a wider roster and softer late waves; <i>Tight</i> (below 3.5) caps the defence early. A description, not a verdict: wide levels are allowed.</li>
         <li><b>Calibration</b>: how the ledger models a player. Build tower, grenade and pellet hit rates, tower distance and maze factor are hand guesses; Virus tax and Entry split were measured with the sim (E13, E7).</li>
         <li><b>Fill</b>: time to fill = MAV ÷ EV spawned per second. Full-field HP = the HP that MAV's worth of this wave's mix carries. Time to clear = full-field HP ÷ your DPS at that wave. A wave whose whole budget is below MAV never fills.</li>
         <li><b>Threat EV</b> = HP × speed × (Hack EV ÷ Hack HP × speed). Price ratio = EV ÷ Threat EV: below 1 is underpriced (more threat than the budget charges), above 1 overpriced. Tokens per 100 threat shows how generously each enemy pays for the trouble it causes.</li>
@@ -195,6 +197,8 @@
 <script type="module">
 import * as C from '../../js/config.js';
 import { computeLedger, towerTable, enemyThreat, DEFAULT_KNOBS, DEFAULT_ASSUMPTIONS } from './ledger.js';
+import { slotDensity } from './slots.js';
+const SLOTS = C.LEVELS.map(L => slotDensity(L));   // board geometry only: computed once per load
 
 const SERIES = ['--s1', '--s2', '--s3', '--s4', '--s5', '--s6', '--s7'];
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -414,6 +418,7 @@ function drawTiles() {
       <div class="v ${cls}">${label}</div>
       ${spark(l)}
       <div class="d">off by ${fmt(l.gap, 2)} avg · hardest W${peak.wave + 1} ${fmt(peak.pressure, 2)}</div>
+      <div class="d slots" title="Slot density: free cells in Threader range of the route ÷ route length (${fmt(SLOTS[li].slots)} slots ÷ ${fmt(SLOTS[li].route, 1)} cells)">slots ${fmt(SLOTS[li].density, 2)} · <span class="sb ${SLOTS[li].band.key}">${SLOTS[li].band.label}</span></div>
       </div>`;
   }).join('');
   host.querySelectorAll('.tile').forEach(t => t.addEventListener('click', () => setLevel(+t.dataset.l)));

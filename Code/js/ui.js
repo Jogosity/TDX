@@ -45,6 +45,8 @@ export class UI {
       alertTitle: document.getElementById('alert-title'),
       alertText: document.getElementById('alert-text'),
       cogBtn: document.getElementById('cog-btn'),
+      pauseBtn: document.getElementById('pause-btn'),
+      pauseOverlay: document.getElementById('pause-overlay'),
       debugMenu: document.getElementById('debug-menu'),
       debugTabs: document.getElementById('debug-tabs'),
       debugBody: document.getElementById('debug-body'),
@@ -172,6 +174,8 @@ export class UI {
     this.el.tiersBtn.addEventListener('click', () => this.showUpgradeMenu());
     this.el.umClose.addEventListener('click', () => this.hideUpgradeMenu());
     this.el.cogBtn.addEventListener('click', () => this.showDebugMenu());
+    this.el.pauseBtn.addEventListener('click', () => this.game.setPaused(!this.game.paused));
+    this.el.pauseOverlay.addEventListener('click', () => this.game.setPaused(false));
     this.el.mmCog.addEventListener('click', () => this.showDebugMenu());
     this.el.debugClose.addEventListener('click', () => this.hideDebugMenu());
     // M4: PLAY → Level Select. S23: until the Tutorial (Level 0) is cleared, PLAY goes straight into it.
@@ -766,6 +770,11 @@ export class UI {
   }
 
   recLabel() { return this.game.save.recordRuns ? 'Record runs: ON' : 'Record runs: OFF'; }
+  showPaused(on) {
+    this.el.pauseOverlay.classList.toggle('show', on);
+    this.el.pauseBtn.textContent = on ? '▶' : '❚❚';
+    this.el.pauseBtn.title = on ? 'Resume' : 'Pause';
+  }
   pauseLabel() { return this.game.spawnPaused ? 'Resume wave spawning' : 'Pause wave spawning'; }
 
   showDebugMenu() {

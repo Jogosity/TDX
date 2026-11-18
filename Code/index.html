@@ -717,6 +717,7 @@
   .an-value { font-weight: 800; font-variant-numeric: tabular-nums; }
   .an-row.tok .an-value { color: var(--green); }
   .an-head { margin-top: 18px; margin-bottom: 4px; }
+  .an-level { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; color: var(--cyan); margin: 10px 0 0; text-align: center; }   /* level number + name */
   .an-leak .an-value { color: rgb(247, 0, 93); }
   .an-icon { width: 30px; height: 30px; flex: none; }
   .an-none { font-size: 15px; opacity: 0.6; }
@@ -792,6 +793,21 @@
     transition: opacity 0.4s;
   }
   #verdict.show { opacity: 1; }
+  /* Pause (18 Nov 2026): small button top right of the board; the overlay freezes play until tapped */
+  #pause-btn {
+    position: absolute; top: 6px; right: 10px; z-index: 6;
+    width: 30px; height: 30px; padding: 0; cursor: pointer;
+    font-family: inherit; font-size: 12px; letter-spacing: -1px; color: var(--text);
+    background: rgba(5, 8, 32, 0.55); border: 1px solid var(--line); border-radius: 8px; opacity: 0.85;
+  }
+  #pause-overlay {
+    position: absolute; inset: 0; z-index: 19;
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    background: rgba(5, 8, 32, 0.7); cursor: pointer;
+  }
+  #pause-overlay.show { display: flex; }
+  .pause-title { font-size: 44px; font-weight: 900; letter-spacing: 3px; color: var(--cyan); text-shadow: 0 0 18px rgba(0, 255, 204, 0.7); }
+  .pause-sub { font-size: 14px; opacity: 0.75; }
   .verdict-icon { width: 120px; filter: drop-shadow(0 0 14px #00ffcc); }
   #verdict.lose .verdict-icon { filter: drop-shadow(0 0 14px var(--red)); }
   .verdict-title {
@@ -906,6 +922,8 @@
   </div>
   <div id="canvas-wrap">
     <canvas id="game-canvas"></canvas>
+    <button id="pause-btn" title="Pause" aria-label="Pause">❚❚</button>
+    <div id="pause-overlay"><div class="pause-title">PAUSED</div><div class="pause-sub">Tap to resume</div></div>
     <div id="sell-popup">
       <button id="upgrade-btn">UPGRADE</button>
       <button id="sell-btn">SELL</button>

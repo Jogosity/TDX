@@ -1112,5 +1112,19 @@ check('every level defines a starting budget',
   check('recorder: off by default and stops after finish', !rec.on && loadSave().recordRuns === false);
 }
 
+// --- Slot density (F16): gun slots per cell of route ------------------------------
+{
+  const { slotDensity, slotBand, boardSlots } = await import('../tools/ledger/slots.js');
+  const all = LEVELS.map(L => slotDensity(L, { boards: 6 }));
+  check('slot density: a finite number for every level', all.every(d => Number.isFinite(d.density) && d.density > 0 && d.slots <= d.free));
+  check('slot density: same numbers on every run (seeded boards)', slotDensity(LEVELS[5], { boards: 6 }).density === all[5].density);
+  check('slot density: bands Tight < 3.5 ≤ Brink ≤ 4.0 < Open', slotBand(3.2).key === 'tight' && slotBand(3.6).key === 'brink' && slotBand(4.0).key === 'brink' && slotBand(4.4).key === 'open');
+  const wide = structuredClone(LEVELS[5]); wide.grid.rowWidths = wide.grid.rowWidths.map(w => Math.min(12, w + 3));
+  check('slot density: widening every row raises it', slotDensity(wide, { boards: 6 }).density > all[5].density);
+  const g = new HexGrid(LEVELS[1].grid); g.layout(390, 620); const f = new PathField(g); f.recompute();
+  const one = boardSlots(g, f);
+  check('slot density: one empty board counts slots within reach of the route', one.slots > 0 && one.slots <= one.free && one.strong <= one.slots);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

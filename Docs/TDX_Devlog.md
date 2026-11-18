@@ -3,6 +3,16 @@
 Cross-session continuity notes. Newest session at top. Companion to `TDX_Initial_Design.md`.
 
 ---
+## Session 29 — 2026-11-18 — Narrower boards, fresh-save playtest
+
+- **Jogo narrowed the wide levels** (fewer build cells: L5 84 → 65, L6 86 → 71, L9 96 → 82; L1, L2, L3, L8, L10 trimmed) so a full board can't strip the pressure away. Sim on the new layouts, `jogo` bot, 10 seeds: Advanced 60% wins overall, Basic ×0.6 96%.
+- **Fresh-save run (Advanced, recorder on, unlocking as he goes):** L1–L4 won, L5 lost then won (10 Cores, spent almost everything), L6 won (Breach took 8, all Worms), L7 lost in the Breach after losing 48 towers to drain (24 Virus, 19 Bug).
+- New `tools/sim/asrun.mjs <run.json> [seeds]`: the `jogo` bot on a run's exact board **with that run's tier unlocks and tower types**. At T2 the bot is now weaker than Jogo (L6 2/10, L7 3/10); with nothing left to buy it banks 4–6k.
+- **L7 drain softened (Jogo, option 2):** Virus weight 1.5 → 1 on all 9 Virus waves. On Jogo's board the bot's drained towers drop 48 → 27 (L6 is ~19); wins barely move (3 → 4 of 10) because the Breach still costs ~8, which is the intended spike.
+- **Slot density (F16)** in the Ledger and the Level Editor: free cells whose Threader range (2.3) reaches the route ÷ route length, averaged over random boards (`tools/ledger/slots.js`, DOM-free). Ledger: a line on every level card. Editor: under the board (live, cached per board shape) and on each level card in the strip. Bands describe, they don't block: **Tight** < 3.5, **Brink** 3.5–4.0 (L5–L7 at the edge, 18 Nov), **Open** > 4.0 (Jogo: some wide levels on purpose, for a wider roster). Now: L3 4.18 and L4 4.15 Open, L10 5.11 Open, L9 3.99, the rest 3.6–3.7. Tests 246 → **251**.
+- **Pause button** (Jogo): small ❚❚ at the top right of the board. Tapping it freezes everything (waves, towers, timers, the recorder's clock) under a PAUSED overlay; tap the overlay or ▶ to resume. Not available once the level is over. `Game.setPaused`, `UI.showPaused`.
+- **Analytics Report** now shows the level number and name under the heading (`showAnalytics(..., { levelName })`).
+
 ## Session 28 — 2026-11-17 — Difficulty on Advanced: Stingers, run recorder, a bot that plays like Jogo
 
 Direction (Jogo): Advanced is the real balance target. The Breach is the emotional spike, not the only hard moment; steady pressure should be real across the level.
