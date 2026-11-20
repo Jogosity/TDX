@@ -89,7 +89,7 @@ After the sim: quest/login rewards feed the economy, so they tune against a bala
 	- [x] Don’t put the highlight around the required tower until the player has actually selected that tower. Currently it looks ready-selected, which is not true.
 	- [x] This rule applies to the Vault tutorial too. ✅ 14 Nov: 1.5x arrows, arrow cycles card → cell per placement, boxes low, no pre-select glow
 	- [x] Jogo to… reduce the number of rows in the tutorial map. This will speed it up.
-	- [ ] We might need to need to highlight specific cells to place the tutorial towers… hold that back for now.
+	- [x] We might need to need to highlight specific cells to place the tutorial towers… hold that back for now. (NOT DOING)
 
 
 
@@ -102,34 +102,34 @@ Specced in TDX_Towers_and_Enemies.md. If any return after M3, re-run the difficu
 	- [ ] Firewalled enemies have a glow around them or some visual cue that makes them clearly a V2 of the base unit.
 	- [ ] Some specialist towers rip shields to shreds allowing normal damage. (Deleter, Tracer)
 - [ ] NOT READY - New Enemies - See Content Backlog for ideas
-- [ ] Limiter Tower (slows enemies, but is expensive)
-	- [ ] Already built. Needs Balancing
-- [ ] Data Mine Tower (Temp tower that explodes after a few seconds delay)
-	- [ ] Should be easy. Basic version explodes on a timer, or when attacked by Virus/Bug
-	- [ ] Special Power - detonates on contact from any tower.
-- [ ] Reloop  - Tower- Mobile tower that pathfinds through the maze to find damaged towers to repair
-	- [ ] Works autonomously
-	- [ ] Has very low health
-	- [ ] Cannot pass through cells occupied by a tower/lockout/blocker/entrypoint.
-	- [ ] Can pass mobile enemies
-- [ ] Tracer Tower (laser-beam weapon class)
-	- [ ] Medium range
-	- [ ] Slow damage
-	- [ ] Rips away shields very quickly
-- [ ] Overclock Tower  - applies damage buff to adjacent towers.
-	- [ ] T1 can only feed 1 tower, T2 can feed 2 etc.
-- [ ] Cypher  (Enemy) can teleport, untargetable while teleporting.
-	- [ ] Can teleport through blockers, vaults and towers
-	- [ ] Will move a few sectors, then teleport a few sectors
-- [ ] Bit Rot  (enemy) - Infected Tank
-	- [ ] Moves slowly, has high health
-	- [ ] Applies health loss to all player towers that it touches
-- [ ] Trojan (enemy) - converts towers to enemies
-	- [ ] Picks a random enemy to convert a tower to
-- [ ] Spawner (enemy)
-	- [ ] Delivers a set of Hacks to a specific point
-- [ ] Glitch (enemy)
-	- [ ] Picks a sector and converts it to a lockout
+	- [ ] Limiter Tower (slows enemies, but is expensive)
+		- [ ] Already built. Needs Balancing
+	- [ ] Data Mine Tower (Temp tower that explodes after a few seconds delay)
+		- [ ] Should be easy. Basic version explodes on a timer, or when attacked by Virus/Bug
+		- [ ] Special Power - detonates on contact from any tower.
+	- [ ] Reloop  - Tower- Mobile tower that pathfinds through the maze to find damaged towers to repair
+		- [ ] Works autonomously
+		- [ ] Has very low health
+		- [ ] Cannot pass through cells occupied by a tower/lockout/blocker/entrypoint.
+		- [ ] Can pass mobile enemies
+	- [ ] Tracer Tower (laser-beam weapon class)
+		- [ ] Medium range
+		- [ ] Slow damage
+		- [ ] Rips away shields very quickly
+	- [ ] Overclock Tower  - applies damage buff to adjacent towers.
+		- [ ] T1 can only feed 1 tower, T2 can feed 2 etc.
+	- [ ] Cypher  (Enemy) can teleport, untargetable while teleporting.
+		- [ ] Can teleport through blockers, vaults and towers
+		- [ ] Will move a few sectors, then teleport a few sectors
+	- [ ] Bit Rot  (enemy) - Infected Tank
+		- [ ] Moves slowly, has high health
+		- [ ] Applies health loss to all player towers that it touches
+	- [ ] Trojan (enemy) - converts towers to enemies
+		- [ ] Picks a random enemy to convert a tower to
+	- [ ] Spawner (enemy)
+		- [ ] Delivers a set of Hacks to a specific point
+	- [ ] Glitch (enemy)
+		- [ ] Picks a sector and converts it to a lockout
 - [ ] Expand game to 15 or 20 levels
 - [ ] Set up a Cloudflare account and link it to my Github, then swap the published version to Cloudflare and abandon the GitHub Pages and set my Repo to Private again
 
@@ -145,21 +145,5 @@ Specced in TDX_Towers_and_Enemies.md. If any return after M3, re-run the difficu
 
 *End of doc*
 
-
-## MAD IDEA for M5
-Build me a proper game editor where I can make simple drag and drop edits to the levels.
-
-What enemies are in them
-Drag and drop
-
-What is the TEV and MAEV - sliders
-
-Intensity curve - start, mid and end wave intensity
-Pull points on a curve
-
-Level design
-Number of locked sectors, entry points - 
-Sliders, hit shuffle
-Min distance to base for entry points
 
 

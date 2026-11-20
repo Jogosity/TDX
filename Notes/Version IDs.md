@@ -7,7 +7,7 @@
 05 - Fortran
 06 - Goto
 07 - Hypercard
-08 - Int
+08 - Integer
 09 - Java
 10 - Kernel
 
